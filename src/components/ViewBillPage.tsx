@@ -1,46 +1,32 @@
 import React, { useState } from 'react';
-import { Navigation } from './Navigation';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { VoidBillModal } from './VoidBillModal';
 import { ApproveRejectModal } from './ApproveRejectModal';
 import { ChevronRight, Printer, Download, Edit2 } from 'lucide-react';
+import { Bill, getBillById } from '../data/mockBills';
 
-interface PaymentBreakdown {
-  category: string;
-  description: string;
-  amount: number;
-}
+export function ViewBillPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const bill = id ? getBillById(id) : undefined;
 
-interface Bill {
-  id: string;
-  date: string;
-  reference: string;
-  vendor: string;
-  purpose: string;
-  paymentMethod: string;
-  priority: 'Urgent' | 'High' | 'Standard' | 'Low';
-  amount: number;
-  status: 'Draft' | 'Awaiting Approval' | 'Approved' | 'Paid' | 'Void';
-  requestedBy: string;
-  bankName?: string;
-  accountHolder?: string;
-  accountNumber?: string;
-  breakdowns: PaymentBreakdown[];
-  reasonForPayment: string;
-  attachments: string[];
-  checkedBy?: string;
-  approvedBy?: string;
-  submittedDate?: string;
-  approvedDate?: string;
-}
-
-interface ViewBillPageProps {
-  bill: Bill;
-  onLogout: () => void;
-  onBack: () => void;
-  onEdit: () => void;
-}
-
-export function ViewBillPage({ bill, onLogout, onBack, onEdit }: ViewBillPageProps) {
+  if (!bill) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <div className="max-w-[1440px] mx-auto px-6 py-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Bill not found</h1>
+            <p className="text-gray-600 mb-4">
+              The bill you are looking for does not exist.
+            </p>
+            <Link to="/bills" className="text-blue-600 hover:text-blue-700 font-medium">
+              Back to Bills
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const getStatusColor = (status: Bill['status']) => {
     switch (status) {
       case 'Draft':
@@ -90,13 +76,13 @@ export function ViewBillPage({ bill, onLogout, onBack, onEdit }: ViewBillPagePro
     console.log(`${approveRejectModal.action}ing bill:`, bill.id, 'Notes:', notes);
     // Handle approve/reject action
     setApproveRejectModal({ isOpen: false, action: 'approve' });
-    onBack();
+    navigate('/bills');
   };
 
   const handleMarkAsPaid = () => {
     console.log('Marking as paid:', bill.id);
     // Handle mark as paid action
-    onBack();
+    navigate('/bills');
   };
 
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
@@ -109,12 +95,12 @@ export function ViewBillPage({ bill, onLogout, onBack, onEdit }: ViewBillPagePro
     console.log('Voiding bill:', bill.id, 'Reason:', reason);
     // Handle void action
     setIsVoidModalOpen(false);
-    onBack();
+    navigate('/bills');
   };
 
   const handleEdit = () => {
     console.log('Editing bill:', bill.id);
-    onEdit();
+    navigate(`/bills/${bill.id}/edit`);
   };
 
   const handlePrint = () => {
@@ -128,13 +114,11 @@ export function ViewBillPage({ bill, onLogout, onBack, onEdit }: ViewBillPagePro
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation currentPage="bills" onLogout={onLogout} />
-      
       <div className="pt-16">
         <div className="max-w-[1440px] mx-auto px-6 py-8">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-            <button onClick={onBack} className="hover:text-blue-600">
+            <button onClick={() => navigate('/bills')} className="hover:text-blue-600">
               Bills
             </button>
             <ChevronRight className="w-4 h-4" />
@@ -364,7 +348,7 @@ export function ViewBillPage({ bill, onLogout, onBack, onEdit }: ViewBillPagePro
           {/* Footer Actions (contextual based on status) */}
           <div className="mt-8 flex items-center justify-end gap-3 pb-8">
             <button
-              onClick={onBack}
+              onClick={() => navigate('/bills')}
               className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium"
             >
               Back to List

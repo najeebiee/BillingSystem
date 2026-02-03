@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Navigation } from './Navigation';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { VoidBillModal } from './VoidBillModal';
 import { ChevronRight, AlertCircle, Plus, X, Upload } from 'lucide-react';
+import { Bill, getBillById } from '../data/mockBills';
 
 interface PaymentBreakdown {
   id: string;
@@ -10,41 +11,29 @@ interface PaymentBreakdown {
   amount: string;
 }
 
-interface Bill {
-  id: string;
-  date: string;
-  reference: string;
-  vendor: string;
-  purpose: string;
-  paymentMethod: string;
-  priority: 'Urgent' | 'High' | 'Standard' | 'Low';
-  amount: number;
-  status: 'Draft' | 'Awaiting Approval' | 'Approved' | 'Paid' | 'Void';
-  requestedBy: string;
-  bankName?: string;
-  accountHolder?: string;
-  accountNumber?: string;
-  breakdowns: Array<{
-    category: string;
-    description: string;
-    amount: number;
-  }>;
-  reasonForPayment: string;
-  attachments: string[];
-  checkedBy?: string;
-  approvedBy?: string;
-  submittedDate?: string;
-  approvedDate?: string;
-}
+export function EditBillPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const bill = id ? getBillById(id) : undefined;
 
-interface EditBillPageProps {
-  bill: Bill;
-  onLogout: () => void;
-  onBack: () => void;
-  onSave: () => void;
-}
+  if (!bill) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <div className="max-w-[1440px] mx-auto px-6 py-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Bill not found</h1>
+            <p className="text-gray-600 mb-4">
+              The bill you are trying to edit does not exist.
+            </p>
+            <Link to="/bills" className="text-blue-600 hover:text-blue-700 font-medium">
+              Back to Bills
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-export function EditBillPage({ bill, onLogout, onBack, onSave }: EditBillPageProps) {
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
   const [vendor, setVendor] = useState(bill.vendor);
   const [requestDate, setRequestDate] = useState(bill.date);
@@ -138,12 +127,12 @@ export function EditBillPage({ bill, onLogout, onBack, onSave }: EditBillPagePro
       attachments,
       newFiles
     });
-    onSave();
+    navigate(`/bills/${bill.id}`);
   };
 
   const handleCancel = () => {
     if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
-      onBack();
+      navigate('/bills');
     }
   };
 
@@ -161,14 +150,12 @@ export function EditBillPage({ bill, onLogout, onBack, onSave }: EditBillPagePro
       attachments,
       newFiles
     });
-    onSave();
+    navigate('/bills');
     setIsVoidModalOpen(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation currentPage="bills" onLogout={onLogout} />
-      
       <div className="pt-16">
         <div className="max-w-[1440px] mx-auto px-6 py-8">
           {/* Edit Mode Banner */}
@@ -179,7 +166,7 @@ export function EditBillPage({ bill, onLogout, onBack, onSave }: EditBillPagePro
 
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-            <button onClick={onBack} className="hover:text-blue-600">
+            <button onClick={() => navigate('/bills')} className="hover:text-blue-600">
               Bills
             </button>
             <ChevronRight className="w-4 h-4" />

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 
-interface NavigationProps {
-  currentPage: string;
-  onLogout: () => void;
-}
-
-export function Navigation({ currentPage, onLogout }: NavigationProps) {
+export function Navigation() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isBillsRoute = location.pathname.startsWith('/bills');
 
   return (
     <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
@@ -16,15 +15,16 @@ export function Navigation({ currentPage, onLogout }: NavigationProps) {
         <div className="flex items-center gap-8">
           <div className="text-xl font-semibold text-gray-900">AccuCount</div>
           <div className="flex items-center gap-1">
-            <button
+            <Link
+              to="/bills"
               className={`px-4 py-2 rounded-md transition-colors ${
-                currentPage === 'bills'
+                isBillsRoute
                   ? 'bg-blue-50 text-blue-600 font-medium'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
               Bills
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -57,7 +57,7 @@ export function Navigation({ currentPage, onLogout }: NavigationProps) {
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   onClick={() => {
                     setDropdownOpen(false);
-                    onLogout();
+                    navigate('/login');
                   }}
                 >
                   Logout

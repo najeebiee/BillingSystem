@@ -1,154 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Plus, FileText } from 'lucide-react';
-import { Navigation } from './Navigation';
+import { Bill, mockBills } from '../data/mockBills';
 
-interface Bill {
-  id: string;
-  date: string;
-  reference: string;
-  vendor: string;
-  purpose: string;
-  paymentMethod: string;
-  priority: 'Urgent' | 'High' | 'Standard' | 'Low';
-  amount: number;
-  status: 'Draft' | 'Awaiting Approval' | 'Approved' | 'Paid' | 'Void';
-  requestedBy: string;
-  bankName?: string;
-  accountHolder?: string;
-  accountNumber?: string;
-  breakdowns?: Array<{
-    category: string;
-    description: string;
-    amount: number;
-  }>;
-  reasonForPayment?: string;
-  attachments?: string[];
-  checkedBy?: string;
-  approvedBy?: string;
-  submittedDate?: string;
-  approvedDate?: string;
-}
-
-const mockBills: Bill[] = [
-  {
-    id: '1',
-    date: '01/28/2026',
-    reference: 'PRF-012826-004',
-    vendor: 'Kevlinda Empoy',
-    purpose: 'Savings, Loan Assistance',
-    paymentMethod: 'Bank Transfer',
-    priority: 'Urgent',
-    amount: 200000.00,
-    status: 'Awaiting Approval',
-    requestedBy: 'Kenny',
-    bankName: 'BDO',
-    accountHolder: 'Kevlinda Empoy',
-    accountNumber: '1234567890',
-    breakdowns: [
-      { category: 'Savings', description: 'Monthly savings deposit', amount: 150000.00 },
-      { category: 'Loan Assistance', description: 'Emergency loan assistance', amount: 50000.00 }
-    ],
-    reasonForPayment: 'Employee financial assistance for savings and emergency loan requirement.',
-    attachments: ['PRF-012826-004-signed.pdf', 'ID-copy.jpg'],
-    submittedDate: '01/28/2026'
-  },
-  {
-    id: '2',
-    date: '01/27/2026',
-    reference: 'PRF-012726-003',
-    vendor: 'Office Supplies Co.',
-    purpose: 'Monthly office supplies purchase',
-    paymentMethod: 'Check',
-    priority: 'Standard',
-    amount: 15750.00,
-    status: 'Approved',
-    requestedBy: 'Maria',
-    breakdowns: [
-      { category: 'Other', description: 'Office supplies - pens, paper, folders', amount: 15750.00 }
-    ],
-    reasonForPayment: 'Monthly office supplies replenishment for Q1 2026.',
-    attachments: ['invoice-jan2026.pdf'],
-    submittedDate: '01/27/2026',
-    checkedBy: 'Finance Manager',
-    approvedBy: 'CFO',
-    approvedDate: '01/28/2026'
-  },
-  {
-    id: '3',
-    date: '01/25/2026',
-    reference: 'PRF-012526-002',
-    vendor: 'Tech Solutions Inc.',
-    purpose: 'Software licensing renewal',
-    paymentMethod: 'Bank Transfer',
-    priority: 'High',
-    amount: 85000.00,
-    status: 'Paid',
-    requestedBy: 'John',
-    bankName: 'BPI',
-    accountHolder: 'Tech Solutions Inc.',
-    accountNumber: '9876543210',
-    breakdowns: [
-      { category: 'Other', description: 'Annual software license renewal', amount: 85000.00 }
-    ],
-    reasonForPayment: 'Annual renewal of accounting software licenses for 10 users.',
-    attachments: ['license-invoice.pdf'],
-    submittedDate: '01/25/2026',
-    checkedBy: 'IT Manager',
-    approvedBy: 'CFO',
-    approvedDate: '01/26/2026'
-  },
-  {
-    id: '4',
-    date: '01/24/2026',
-    reference: 'PRF-012426-001',
-    vendor: 'Utility Company',
-    purpose: 'Monthly electricity bill',
-    paymentMethod: 'Bank Transfer',
-    priority: 'Standard',
-    amount: 12500.00,
-    status: 'Paid',
-    requestedBy: 'Admin',
-    bankName: 'Metrobank',
-    accountHolder: 'Utility Company',
-    accountNumber: '5555123456',
-    breakdowns: [
-      { category: 'Other', description: 'January 2026 electricity consumption', amount: 12500.00 }
-    ],
-    reasonForPayment: 'Monthly electricity bill payment for office premises.',
-    attachments: [],
-    submittedDate: '01/24/2026',
-    checkedBy: 'Admin',
-    approvedBy: 'Finance Manager',
-    approvedDate: '01/24/2026'
-  },
-  {
-    id: '5',
-    date: '01/23/2026',
-    reference: 'PRF-012326-005',
-    vendor: 'Cleaning Services Ltd.',
-    purpose: 'Q1 cleaning services',
-    paymentMethod: 'Cash',
-    priority: 'Low',
-    amount: 8000.00,
-    status: 'Draft',
-    requestedBy: 'Kenny',
-    breakdowns: [
-      { category: 'Other', description: 'Q1 2026 cleaning services', amount: 8000.00 }
-    ],
-    reasonForPayment: 'Quarterly cleaning services for office building.',
-    attachments: []
-  }
-];
-
-interface BillsPageProps {
-  onLogout: () => void;
-  onNavigateToCreateBill: () => void;
-  onNavigateToViewBill: (bill: Bill) => void;
-}
-
-export function BillsPage({ onLogout, onNavigateToCreateBill, onNavigateToViewBill }: BillsPageProps) {
+export function BillsPage() {
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   const tabs = ['All', 'Draft', 'Awaiting Approval', 'Approved', 'Paid', 'Void'];
 
@@ -199,8 +57,6 @@ export function BillsPage({ onLogout, onNavigateToCreateBill, onNavigateToViewBi
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation currentPage="bills" onLogout={onLogout} />
-      
       <div className="pt-16">
         <div className="max-w-[1440px] mx-auto px-6 py-8">
           {/* Page Header */}
@@ -209,8 +65,8 @@ export function BillsPage({ onLogout, onNavigateToCreateBill, onNavigateToViewBi
               <h1 className="text-2xl font-semibold text-gray-900">Payment Requests</h1>
               <p className="text-gray-600 mt-1">View and manage payment requests</p>
             </div>
-            <button 
-              onClick={onNavigateToCreateBill}
+            <button
+              onClick={() => navigate('/bills/new')}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -370,8 +226,8 @@ export function BillsPage({ onLogout, onNavigateToCreateBill, onNavigateToViewBi
                           {bill.requestedBy}
                         </td>
                         <td className="px-4 py-4">
-                          <button 
-                            onClick={() => onNavigateToViewBill(bill)}
+                          <button
+                            onClick={() => navigate(`/bills/${bill.id}`)}
                             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                           >
                             View
@@ -414,8 +270,8 @@ export function BillsPage({ onLogout, onNavigateToCreateBill, onNavigateToViewBi
               <p className="text-gray-600 mb-6">
                 Try adjusting your filters or create a new bill
               </p>
-              <button 
-                onClick={onNavigateToCreateBill}
+              <button
+                onClick={() => navigate('/bills/new')}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md inline-flex items-center gap-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />

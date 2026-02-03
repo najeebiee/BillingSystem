@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navigation } from './Navigation';
+import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Plus, X, Upload } from 'lucide-react';
 
 interface PaymentBreakdown {
@@ -9,12 +9,7 @@ interface PaymentBreakdown {
   amount: string;
 }
 
-interface CreateBillPageProps {
-  onLogout: () => void;
-  onBack: () => void;
-}
-
-export function CreateBillPage({ onLogout, onBack }: CreateBillPageProps) {
+export function CreateBillPage() {
   const [vendor, setVendor] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [requestDate, setRequestDate] = useState('');
@@ -25,6 +20,7 @@ export function CreateBillPage({ onLogout, onBack }: CreateBillPageProps) {
   const [accountNumber, setAccountNumber] = useState('');
   const [reasonForPayment, setReasonForPayment] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
+  const navigate = useNavigate();
 
   const [breakdowns, setBreakdowns] = useState<PaymentBreakdown[]>([
     { id: '1', category: 'Savings', description: '', amount: '' }
@@ -70,23 +66,21 @@ export function CreateBillPage({ onLogout, onBack }: CreateBillPageProps) {
     e.preventDefault();
     console.log('Submitting bill...');
     // Handle form submission
-    onBack();
+    navigate('/bills');
   };
 
   const handleSaveDraft = () => {
     console.log('Saving draft...');
-    onBack();
+    navigate('/bills');
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation currentPage="bills" onLogout={onLogout} />
-      
       <div className="pt-16">
         <div className="max-w-[1440px] mx-auto px-6 py-8">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-            <button onClick={onBack} className="hover:text-blue-600">
+            <button onClick={() => navigate('/bills')} className="hover:text-blue-600">
               Bills
             </button>
             <ChevronRight className="w-4 h-4" />
@@ -441,7 +435,7 @@ export function CreateBillPage({ onLogout, onBack }: CreateBillPageProps) {
             <div className="mt-8 flex items-center justify-end gap-3 pb-8">
               <button
                 type="button"
-                onClick={onBack}
+                onClick={() => navigate('/bills')}
                 className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium"
               >
                 Cancel
