@@ -60,6 +60,17 @@ export function EditBillPage() {
     []
   );
 
+  const categoryMap: Record<string, string> = useMemo(
+    () => ({
+      Savings: "savings",
+      "Loan Assistance": "loan_assistance",
+      "Car Amortization": "car_amortization",
+      "SMS Allowance": "sms_allowance",
+      "Gas Allowance": "gas_allowance",
+      Other: "other"
+    }),
+    []
+  );
   const canEdit = billStatus === "draft" || billStatus === "awaiting_approval";
 
   useEffect(() => {
@@ -267,7 +278,7 @@ export function EditBillPage() {
         total_amount: totalAmount
       },
       breakdowns: breakdowns.map((b) => ({
-        category: b.category,
+        category: categoryMap[b.category] || "other",
         description: b.description ? b.description : "",
         amount: parseFloat(b.amount) || 0
       }))

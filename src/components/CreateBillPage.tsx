@@ -57,6 +57,17 @@ export function CreateBillPage() {
     []
   );
 
+  const categoryMap: Record<string, string> = useMemo(
+    () => ({
+      Savings: "savings",
+      "Loan Assistance": "loan_assistance",
+      "Car Amortization": "car_amortization",
+      "SMS Allowance": "sms_allowance",
+      "Gas Allowance": "gas_allowance",
+      Other: "other"
+    }),
+    []
+  );
   useEffect(() => {
     let isMounted = true;
     if (!vendorInput.trim()) {
@@ -162,7 +173,7 @@ export function CreateBillPage() {
         created_by: user.id
       },
       breakdowns: breakdowns.map((b) => ({
-        category: b.category,
+        category: categoryMap[b.category] || "other",
         description: b.description ? b.description : "",
         amount: parseFloat(b.amount) || 0
       }))
