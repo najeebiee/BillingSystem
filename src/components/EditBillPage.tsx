@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+ï»¿import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { VoidBillModal } from "./VoidBillModal";
 import { ChevronRight, AlertCircle, Plus, X, Upload } from "lucide-react";
@@ -188,7 +188,7 @@ export function EditBillPage() {
       case "void":
         return "Void";
       default:
-        return "—";
+        return "â€”";
     }
   };
 
@@ -267,9 +267,8 @@ export function EditBillPage() {
         total_amount: totalAmount
       },
       breakdowns: breakdowns.map((b) => ({
-        bill_id: id,
         category: b.category,
-        description: b.description || null,
+        description: b.description ? b.description : "",
         amount: parseFloat(b.amount) || 0
       }))
     };
@@ -405,7 +404,7 @@ export function EditBillPage() {
 
           <form onSubmit={(e) => { e.preventDefault(); handleSaveChanges(); }}>
             <fieldset disabled={!canEdit || isSaving} className="space-y-6">
-              {/* SECTION 1 — Payee & Reference */}
+              {/* SECTION 1 â€” Payee & Reference */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Payee & Reference</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -491,7 +490,7 @@ export function EditBillPage() {
                 </div>
               </div>
 
-              {/* SECTION 2 — Payment Method */}
+              {/* SECTION 2 â€” Payment Method */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment Method</h2>
 
@@ -560,7 +559,7 @@ export function EditBillPage() {
                 )}
               </div>
 
-              {/* SECTION 3 — Payment Breakdown */}
+              {/* SECTION 3 â€” Payment Breakdown */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment Breakdown</h2>
 
@@ -646,7 +645,7 @@ export function EditBillPage() {
                   <div className="text-right">
                     <div className="text-sm text-gray-600 mb-1">Total Amount</div>
                     <div className="text-2xl font-semibold text-gray-900">
-                      ?{calculateTotal().toLocaleString("en-PH", {
+                      â‚±{calculateTotal().toLocaleString("en-PH", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                       })}
@@ -655,7 +654,7 @@ export function EditBillPage() {
                 </div>
               </div>
 
-              {/* SECTION 4 — Reason for Payment */}
+              {/* SECTION 4 â€” Reason for Payment */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Reason for Payment</h2>
                 <div>
@@ -674,7 +673,7 @@ export function EditBillPage() {
                 </div>
               </div>
 
-              {/* SECTION 5 — Attachments */}
+              {/* SECTION 5 â€” Attachments */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h2>
 
@@ -745,14 +744,14 @@ export function EditBillPage() {
                 <p className="text-sm text-gray-500 mt-3">Attach scanned forms or proof</p>
               </div>
 
-              {/* SECTION 6 — Request & Approval Info (Read-only) */}
+              {/* SECTION 6 â€” Request & Approval Info (Read-only) */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Request & Approval Info</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <div className="text-sm font-medium text-gray-500 mb-1">Requested By</div>
                     <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-600">
-                      —
+                      â€”
                     </div>
                   </div>
                   <div>
@@ -764,13 +763,13 @@ export function EditBillPage() {
                   <div>
                     <div className="text-sm font-medium text-gray-500 mb-1">Checked By</div>
                     <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-600">
-                      —
+                      â€”
                     </div>
                   </div>
                   <div>
                     <div className="text-sm font-medium text-gray-500 mb-1">Approved By</div>
                     <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-600">
-                      —
+                      â€”
                     </div>
                   </div>
                 </div>

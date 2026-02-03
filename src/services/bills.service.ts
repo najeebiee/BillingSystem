@@ -138,7 +138,7 @@ export async function getBillById(id: string) {
 
 export interface CreateBillPayload {
   bill: Omit<Bill, "id" | "created_at" | "updated_at">;
-  breakdowns: Array<Omit<BillBreakdown, "id">>;
+  breakdowns: Array<Omit<BillBreakdown, "id" | "bill_id">>;
 }
 
 export async function createBill(payload: CreateBillPayload) {
@@ -171,8 +171,10 @@ export async function createBill(payload: CreateBillPayload) {
   }
 
   const breakdowns = payload.breakdowns.map((b) => ({
-    ...b,
-    bill_id: bill.id
+    bill_id: bill.id,
+    category: b.category,
+    description: b.description ?? "",
+    amount: Number.isFinite(b.amount) ? b.amount : 0
   }));
 
   if (breakdowns.length > 0) {
@@ -193,7 +195,7 @@ export async function createBill(payload: CreateBillPayload) {
 
 export interface UpdateBillPayload {
   bill: Partial<Omit<Bill, "id" | "created_at" | "updated_at">>;
-  breakdowns: Array<Omit<BillBreakdown, "id">>;
+  breakdowns: Array<Omit<BillBreakdown, "id" | "bill_id">>;
 }
 
 export async function updateBill(id: string, payload: UpdateBillPayload) {
@@ -236,8 +238,10 @@ export async function updateBill(id: string, payload: UpdateBillPayload) {
   }
 
   const breakdowns = payload.breakdowns.map((b) => ({
-    ...b,
-    bill_id: id
+    bill_id: id,
+    category: b.category,
+    description: b.description ?? "",
+    amount: Number.isFinite(b.amount) ? b.amount : 0
   }));
 
   if (breakdowns.length > 0) {

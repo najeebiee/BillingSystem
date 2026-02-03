@@ -162,9 +162,8 @@ export function CreateBillPage() {
         created_by: user.id
       },
       breakdowns: breakdowns.map((b) => ({
-        bill_id: "placeholder",
         category: b.category,
-        description: b.description || null,
+        description: b.description ? b.description : "",
         amount: parseFloat(b.amount) || 0
       }))
     };

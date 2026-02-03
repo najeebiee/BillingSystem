@@ -182,6 +182,8 @@ export function ViewBillPage() {
     window.print();
   };
 
+  const totalAmount = breakdowns.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
@@ -209,10 +211,6 @@ export function ViewBillPage() {
       </div>
     );
   }
-
-  const totalAmount = useMemo(() => {
-    return breakdowns.reduce((sum, b) => sum + Number(b.amount || 0), 0);
-  }, [breakdowns]);
 
   return (
     <div className="min-h-screen bg-gray-50">
