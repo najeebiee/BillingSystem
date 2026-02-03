@@ -1,59 +1,159 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Plus, FileText } from 'lucide-react';
-import { Bill, mockBills } from '../data/mockBills';
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search, Plus, FileText } from "lucide-react";
+import { listBills } from "../services/bills.service";
+import type { BillStatus } from "../types/billing";
+
+type BillRow = {
+  id: string;
+  request_date: string;
+  reference_no: string;
+  vendor?: { id: string; name: string };
+  payment_method: string;
+  priority_level: string;
+  total_amount: number;
+  status: string;
+  created_by: string;
+  remarks?: string | null;
+};
 
 export function BillsPage() {
-  const [activeTab, setActiveTab] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [bills, setBills] = useState<BillRow[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const tabs = ['All', 'Draft', 'Awaiting Approval', 'Approved', 'Paid', 'Void'];
+  const tabs = ["All", "Draft", "Awaiting Approval", "Approved", "Paid", "Void"];
 
-  const getStatusColor = (status: Bill['status']) => {
+  const statusFilter = useMemo<BillStatus | undefined>(() => {
+    switch (activeTab) {
+      case "Draft":
+        return "draft";
+      case "Awaiting Approval":
+        return "awaiting_approval";
+      case "Approved":
+        return "approved";
+      case "Paid":
+        return "paid";
+      case "Void":
+        return "void";
+      default:
+        return undefined;
+    }
+  }, [activeTab]);
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Draft':
-        return 'bg-gray-100 text-gray-700';
-      case 'Awaiting Approval':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'Approved':
-        return 'bg-blue-100 text-blue-700';
-      case 'Paid':
-        return 'bg-green-100 text-green-700';
-      case 'Void':
-        return 'bg-red-100 text-red-700';
+      case "draft":
+        return "bg-gray-100 text-gray-700";
+      case "awaiting_approval":
+        return "bg-yellow-100 text-yellow-700";
+      case "approved":
+        return "bg-blue-100 text-blue-700";
+      case "paid":
+        return "bg-green-100 text-green-700";
+      case "void":
+        return "bg-red-100 text-red-700";
       default:
-        return 'bg-gray-100 text-gray-700';
+        return "bg-gray-100 text-gray-700";
     }
   };
 
-  const getPriorityColor = (priority: Bill['priority']) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Urgent':
-        return 'bg-red-100 text-red-700';
-      case 'High':
-        return 'bg-orange-100 text-orange-700';
-      case 'Standard':
-        return 'bg-blue-100 text-blue-700';
-      case 'Low':
-        return 'bg-gray-100 text-gray-600';
+      case "urgent":
+        return "bg-red-100 text-red-700";
+      case "high":
+        return "bg-orange-100 text-orange-700";
+      case "standard":
+        return "bg-blue-100 text-blue-700";
+      case "low":
+        return "bg-gray-100 text-gray-600";
       default:
-        return 'bg-gray-100 text-gray-600';
+        return "bg-gray-100 text-gray-600";
     }
   };
 
-  const filteredBills = mockBills.filter(bill => {
-    if (activeTab !== 'All' && bill.status !== activeTab) return false;
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return (
-        bill.vendor.toLowerCase().includes(query) ||
-        bill.reference.toLowerCase().includes(query) ||
-        bill.requestedBy.toLowerCase().includes(query)
-      );
+  const formatStatus = (status: string) => {
+    switch (status) {
+      case "draft":
+        return "Draft";
+      case "awaiting_approval":
+        return "Awaiting Approval";
+      case "approved":
+        return "Approved";
+      case "paid":
+        return "Paid";
+      case "void":
+        return "Void";
+      default:
+        return status;
     }
-    return true;
-  });
+  };
+
+  const formatPriority = (priority: string) => {
+    switch (priority) {
+      case "urgent":
+        return "Urgent";
+      case "high":
+        return "High";
+      case "standard":
+        return "Standard";
+      case "low":
+        return "Low";
+      default:
+        return priority;
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    listBills({
+      status: statusFilter,
+      search: searchQuery,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      page,
+      pageSize
+    })
+      .then((result) => {
+        if (!isMounted) return;
+        if (result.error) {
+          setErrorMessage(result.error);
+          setBills([]);
+          setTotalCount(0);
+        } else {
+          setBills(result.data as BillRow[]);
+          setTotalCount(result.count);
+        }
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        setErrorMessage(error.message || "Failed to load bills.");
+        setBills([]);
+        setTotalCount(0);
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [statusFilter, searchQuery, dateFrom, dateTo, page, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -66,7 +166,7 @@ export function BillsPage() {
               <p className="text-gray-600 mt-1">View and manage payment requests</p>
             </div>
             <button
-              onClick={() => navigate('/bills/new')}
+              onClick={() => navigate("/bills/new")}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -79,11 +179,14 @@ export function BillsPage() {
             {tabs.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setPage(1);
+                }}
                 className={`px-4 py-3 font-medium transition-colors relative ${
                   activeTab === tab
-                    ? 'text-blue-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? "text-blue-600"
+                    : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 {tab}
@@ -103,9 +206,12 @@ export function BillsPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search by vendor, reference, or requester"
+                    placeholder="Search by vendor or reference"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setPage(1);
+                    }}
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -115,6 +221,11 @@ export function BillsPage() {
               <div>
                 <input
                   type="date"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value);
+                    setPage(1);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="From"
                 />
@@ -122,6 +233,11 @@ export function BillsPage() {
               <div>
                 <input
                   type="date"
+                  value={dateTo}
+                  onChange={(e) => {
+                    setDateTo(e.target.value);
+                    setPage(1);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="To"
                 />
@@ -130,7 +246,12 @@ export function BillsPage() {
               {/* Clear Filters */}
               <div className="flex items-center">
                 <button
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setDateFrom("");
+                    setDateTo("");
+                    setPage(1);
+                  }}
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
                   Clear Filters
@@ -140,7 +261,15 @@ export function BillsPage() {
           </div>
 
           {/* Bills Table */}
-          {filteredBills.length > 0 ? (
+          {isLoading ? (
+            <div className="bg-white rounded-lg border border-gray-200 py-16 text-center">
+              <p className="text-gray-600">Loading bills...</p>
+            </div>
+          ) : errorMessage ? (
+            <div className="bg-white rounded-lg border border-gray-200 py-16 text-center">
+              <p className="text-red-600">{errorMessage}</p>
+            </div>
+          ) : bills.length > 0 ? (
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -179,39 +308,42 @@ export function BillsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {filteredBills.map((bill, index) => (
+                    {bills.map((bill, index) => (
                       <tr
                         key={bill.id}
                         className={`hover:bg-gray-50 transition-colors ${
-                          index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                          index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
                         }`}
                       >
                         <td className="px-4 py-4 text-sm text-gray-900">
-                          {bill.date}
+                          {bill.request_date}
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-900 font-medium">
-                          {bill.reference}
+                          {bill.reference_no}
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-900">
-                          {bill.vendor}
+                          {bill.vendor?.name || "—"}
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-600">
-                          {bill.purpose}
+                          {bill.remarks || "—"}
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-900">
-                          {bill.paymentMethod}
+                          {bill.payment_method}
                         </td>
                         <td className="px-4 py-4">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(
-                              bill.priority
+                              bill.priority_level
                             )}`}
                           >
-                            {bill.priority}
+                            {formatPriority(bill.priority_level)}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-900 font-semibold text-right">
-                          ₱{bill.amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ₱{Number(bill.total_amount).toLocaleString("en-PH", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })}
                         </td>
                         <td className="px-4 py-4">
                           <span
@@ -219,11 +351,11 @@ export function BillsPage() {
                               bill.status
                             )}`}
                           >
-                            {bill.status}
+                            {formatStatus(bill.status)}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-900">
-                          {bill.requestedBy}
+                          {bill.created_by}
                         </td>
                         <td className="px-4 py-4">
                           <button
@@ -242,19 +374,24 @@ export function BillsPage() {
               {/* Pagination */}
               <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
                 <div className="text-sm text-gray-600">
-                  Showing {filteredBills.length} of {mockBills.length} results
+                  Showing {bills.length} of {totalCount} results
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <button
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    disabled={page <= 1}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Previous
                   </button>
                   <button className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">
-                    1
+                    {page}
                   </button>
-                  <button className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50">
-                    2
-                  </button>
-                  <button className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50">
+                  <button
+                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={page >= totalPages}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Next
                   </button>
                 </div>
@@ -271,7 +408,7 @@ export function BillsPage() {
                 Try adjusting your filters or create a new bill
               </p>
               <button
-                onClick={() => navigate('/bills/new')}
+                onClick={() => navigate("/bills/new")}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md inline-flex items-center gap-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />
