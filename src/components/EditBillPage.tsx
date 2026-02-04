@@ -4,6 +4,7 @@ import { VoidBillModal } from "./VoidBillModal";
 import { ChevronRight, AlertCircle, Plus, X, Upload } from "lucide-react";
 import { getBillById, updateBill } from "../services/bills.service";
 import { createVendor, listVendors } from "../services/vendors.service";
+import { confirmDiscardChanges } from "../lib/alerts";
 import type { PaymentMethod, PriorityLevel, Vendor } from "../types/billing";
 
 interface PaymentBreakdown {
@@ -318,8 +319,9 @@ export function EditBillPage() {
     navigate(`/bills/${id}`);
   };
 
-  const handleCancel = () => {
-    if (confirm("Are you sure you want to cancel? All unsaved changes will be lost.")) {
+  const handleCancel = async () => {
+    const shouldDiscard = await confirmDiscardChanges();
+    if (shouldDiscard) {
       navigate("/bills");
     }
   };
