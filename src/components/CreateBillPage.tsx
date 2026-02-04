@@ -129,7 +129,7 @@ export function CreateBillPage() {
     setAttachments(attachments.filter((_, i) => i !== index));
   };
 
-  const createBillRecord = async () => {
+  const createBillRecord = async (status: "draft" | "awaiting_approval") => {
     setErrorMessage(null);
 
     if (!user) {
@@ -167,7 +167,7 @@ export function CreateBillPage() {
         bank_name: bankName || null,
         bank_account_name: accountHolder || null,
         bank_account_no: accountNumber || null,
-        status: "draft" as const,
+        status,
         remarks: reasonForPayment || null,
         total_amount: totalAmount,
         created_by: user.id
@@ -192,11 +192,11 @@ export function CreateBillPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createBillRecord();
+    await createBillRecord("awaiting_approval");
   };
 
   const handleSaveDraft = async () => {
-    await createBillRecord();
+    await createBillRecord("draft");
   };
 
   return (
