@@ -2,7 +2,7 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { VoidBillModal } from "./VoidBillModal";
 import { ChevronRight, AlertCircle, Plus, X, Upload } from "lucide-react";
-import { getBillById, updateBill } from "../services/bills.service";
+import { getBillById, updateBill, updateBillStatus } from "../services/bills.service";
 import { createVendor, listVendors } from "../services/vendors.service";
 import { confirmDiscardChanges } from "../lib/alerts";
 import type { PaymentMethod, PriorityLevel, Vendor } from "../types/billing";
@@ -326,21 +326,16 @@ export function EditBillPage() {
     }
   };
 
-  const handleConfirmVoid = () => {
+  const handleConfirmVoid = async () => {
     if (!id) return;
-    console.log("Voiding bill...", {
-      vendorInput,
-      requestDate,
-      priority,
-      paymentMethod,
-      bankName,
-      accountHolder,
-      accountNumber,
-      breakdowns,
-      reasonForPayment,
-      attachments,
-      newFiles
-    });
+    setErrorMessage(null);
+    setIsSaving(true);
+    const result = await updateBillStatus(id, "void");
+    setIsSaving(false);
+    if (result.error) {
+      setErrorMessage(result.error);
+      return;
+    }
     setIsVoidModalOpen(false);
     navigate("/bills");
   };

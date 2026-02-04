@@ -256,3 +256,36 @@ export async function updateBill(id: string, payload: UpdateBillPayload) {
 
   return { data: updated as Bill, error: null as string | null };
 }
+
+export async function updateBillStatus(id: string, status: BillStatus) {
+  const { data, error } = await supabase
+    .from("bills")
+    .update({ status })
+    .eq("id", id)
+    .select(
+      `
+      id,
+      vendor_id,
+      reference_no,
+      request_date,
+      priority_level,
+      payment_method,
+      bank_name,
+      bank_account_name,
+      bank_account_no,
+      status,
+      remarks,
+      total_amount,
+      created_by,
+      created_at,
+      updated_at
+    `
+    )
+    .single();
+
+  if (error || !data) {
+    return { data: null as Bill | null, error: error?.message || "Failed to update bill status." };
+  }
+
+  return { data: data as Bill, error: null as string | null };
+}
