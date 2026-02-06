@@ -1927,6 +1927,7 @@ html {
   align-items: center;
   flex-wrap: wrap;
   justify-content: space-between;
+  margin-bottom: 18px;
 }
 
 .form-toolbar__left {
