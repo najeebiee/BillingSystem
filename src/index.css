@@ -1942,7 +1942,7 @@ html {
   flex-wrap: wrap;
 }
 
-.toolbar-btn {
+.form-toolbar .toolbar-btn {
   appearance: none;
   background: #fff;
   color: #111;
@@ -1964,7 +1964,7 @@ html {
     color 180ms ease;
 }
 
-.toolbar-btn:hover {
+.form-toolbar .toolbar-btn:hover {
   background: #2563eb;
   border-color: #2563eb;
   color: #fff;
@@ -1972,22 +1972,27 @@ html {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
-.toolbar-btn:active {
+.form-toolbar .toolbar-btn:active {
   transform: translateY(0px);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
 }
 
-.toolbar-btn:focus {
+.form-toolbar .toolbar-btn:focus {
   outline: none;
 }
 
-.toolbar-btn:focus-visible {
+.form-toolbar .toolbar-btn:focus-visible {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
-.toolbar-btn--back {
+.form-toolbar .toolbar-btn--back {
   border-radius: 999px;
   padding: 6px 14px;
+}
+
+.form-toolbar .toolbar-btn svg {
+  color: currentColor;
+  stroke: currentColor;
 }
 
 .form-btn__icon {
