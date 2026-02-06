@@ -235,7 +235,6 @@
   }
 
   img, svg, video, canvas, audio, iframe, embed, object {
-    vertical-align: middle;
     display: block;
   }
 
@@ -1742,4 +1741,33 @@ html {
 @property --tw-drop-shadow-size {
   syntax: "*";
   inherits: false
+}
+
+.event-form-card {
+  min-height: 200px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 32px 32px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.event-form-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+}
+
+.event-form-card--active {
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.6), 0 8px 22px rgba(0, 0, 0, 0.1);
+}
+
+.event-form-icon {
+  transition: transform 0.2s ease;
+}
+
+.event-form-card:hover .event-form-icon {
+  transform: scale(1.05);
 }

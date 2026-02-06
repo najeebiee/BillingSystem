@@ -63,16 +63,14 @@ function FormCard({ title, subtitle, to, icon: Icon, tone, isActive }: FormCardP
     <Link
       to={to}
       className={cn(
-        "group min-h-[200px] bg-white border border-black/10 rounded-[16px] px-8 py-10 text-center shadow-[0_6px_18px_rgba(0,0,0,0.08)] cursor-pointer transition-all duration-200 ease-out hover:-translate-y-[3px] hover:shadow-[0_10px_28px_rgba(0,0,0,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400/60",
-        isActive
-          ? "ring-2 ring-green-400/70 shadow-[0_0_0_2px_rgba(34,197,94,0.6),0_8px_22px_rgba(0,0,0,0.1)]"
-          : "",
+        "group event-form-card",
+        isActive ? "event-form-card--active" : "",
       )}
       aria-current={isActive ? "page" : undefined}
     >
       <div
         className={cn(
-          "mx-auto flex h-12 w-12 items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-105",
+          "event-form-icon mx-auto flex h-12 w-12 items-center justify-center rounded-full",
           styles.iconBg,
         )}
       >
