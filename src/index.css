@@ -1923,9 +1923,10 @@ html {
 
 .form-toolbar {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: space-between;
 }
 
 .form-toolbar__left {
@@ -1935,20 +1936,25 @@ html {
 }
 
 .form-toolbar__right {
-  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .form-btn {
   appearance: none;
-  border: 1px solid rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;
   color: #111;
   border-radius: 10px;
-  padding: 8px 14px;
-  font-size: 13px;
+  padding: 7px 12px;
+  font-size: 12.5px;
   line-height: 1;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   transition:
     transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -1988,14 +1994,17 @@ html {
 }
 
 .form-btn-back {
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #f3f4f6;
   color: #111;
   border-radius: 999px;
-  padding: 6px 14px;
+  padding: 7px 14px;
   font-size: 12.5px;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   transition:
     background-color 180ms ease,
     box-shadow 180ms ease,
@@ -2003,7 +2012,12 @@ html {
 }
 
 .form-btn-back:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: #e5e7eb;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-color: rgba(0, 0, 0, 0.28);
+  border-color: rgba(0, 0, 0, 0.22);
+}
+
+.form-btn__icon {
+  width: 14px;
+  height: 14px;
 }

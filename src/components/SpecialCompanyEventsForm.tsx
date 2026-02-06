@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Download, Printer, Save, Trash2 } from "lucide-react";
 
 type ChecklistRow = {
   id: string;
@@ -132,25 +133,30 @@ export function SpecialCompanyEventsForm() {
         <div className="max-w-[1440px] mx-auto px-6 py-8">
           <div className="form-toolbar">
             <div className="form-toolbar__left">
-              <button onClick={handleSave} className="form-btn form-btn--primary">
-                Save
-              </button>
-              <button onClick={handleLoad} className="form-btn">
-                Load
-              </button>
-              <button onClick={handleClear} className="form-btn">
-                Clear
-              </button>
-              <button onClick={handlePrint} className="form-btn">
-                Print
-              </button>
-            </div>
-            <div className="form-toolbar__right">
               <button
                 onClick={() => navigate("/event-forms")}
                 className="form-btn-back"
               >
-                ← Back to Forms
+                <ArrowLeft className="form-btn__icon" />
+                Back to Forms
+              </button>
+            </div>
+            <div className="form-toolbar__right">
+              <button onClick={handleLoad} className="form-btn">
+                <Download className="form-btn__icon" />
+                Load
+              </button>
+              <button onClick={handleClear} className="form-btn">
+                <Trash2 className="form-btn__icon" />
+                Clear
+              </button>
+              <button onClick={handlePrint} className="form-btn">
+                <Printer className="form-btn__icon" />
+                Print
+              </button>
+              <button onClick={handleSave} className="form-btn form-btn--primary">
+                <Save className="form-btn__icon" />
+                Save
               </button>
             </div>
           </div>
