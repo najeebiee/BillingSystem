@@ -133,31 +133,31 @@ export function SpecialCompanyEventsForm() {
           <div className="form-toolbar flex flex-wrap items-center gap-3 mb-6">
             <button
               onClick={handleSave}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+              className="form-btn form-btn--primary"
             >
               Save
             </button>
             <button
               onClick={handleLoad}
-              className="px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="form-btn"
             >
               Load
             </button>
             <button
               onClick={handleClear}
-              className="px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="form-btn"
             >
               Clear
             </button>
             <button
               onClick={handlePrint}
-              className="px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="form-btn"
             >
               Print
             </button>
             <button
               onClick={() => navigate("/event-forms")}
-              className="px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="form-btn"
             >
               Back to Forms
             </button>
