@@ -41,7 +41,7 @@ type EventRequestFormState = {
   testimony2: string;
 };
 
-const storageKey = "event-request-form";
+const storageKey = "eventForms.eventRequest";
 
 const initialState: EventRequestFormState = {
   name: "",
@@ -79,15 +79,31 @@ const initialState: EventRequestFormState = {
   testimony2: "",
 };
 
+const normalizeEventRequestFormState = (value: unknown): EventRequestFormState => {
+  if (!value || typeof value !== "object") return initialState;
+
+  const parsed = value as Partial<EventRequestFormState>;
+
+  return {
+    ...initialState,
+    ...parsed,
+    roomSetupClassroomStyle: Boolean(parsed.roomSetupClassroomStyle),
+    avProjector: Boolean(parsed.avProjector),
+    avMicrophone: Boolean(parsed.avMicrophone),
+    avSpeakers: Boolean(parsed.avSpeakers),
+    avLaptopComputer: Boolean(parsed.avLaptopComputer),
+    avZoomStreamingSupport: Boolean(parsed.avZoomStreamingSupport),
+  };
+};
+
 type EventRequestFormProps = {
   showBackButton?: boolean;
   embedded?: boolean;
   showToolbar?: boolean;
   onRegisterActions?: (actions: {
-    save: () => void;
-    load: () => void;
-    clear: () => void;
-    print: () => void;
+    getState: () => unknown;
+    setState: (state: unknown) => void;
+    resetState: () => void;
   }) => void;
 };
 
@@ -113,20 +129,20 @@ export function EventRequestForm({
 
   const handleLoad = () => {
     const saved = localStorage.getItem(storageKey);
-    if (!saved) return;
+    if (!saved) {
+      window.alert("No saved data yet.");
+      return;
+    }
 
     try {
-      const parsed = JSON.parse(saved) as Partial<EventRequestFormState>;
-      setFormState({
-        ...initialState,
-        ...parsed,
-      });
+      setFormState(normalizeEventRequestFormState(JSON.parse(saved)));
     } catch {
-      // Ignore malformed storage data.
+      window.alert("No saved data yet.");
     }
   };
 
   const handleClear = () => {
+    if (!window.confirm("Clear this form?")) return;
     setFormState(initialState);
     localStorage.removeItem(storageKey);
   };
@@ -137,10 +153,9 @@ export function EventRequestForm({
 
   useEffect(() => {
     onRegisterActions?.({
-      save: handleSave,
-      load: handleLoad,
-      clear: handleClear,
-      print: handlePrint,
+      getState: () => formState,
+      setState: (nextState) => setFormState(normalizeEventRequestFormState(nextState)),
+      resetState: () => setFormState(initialState),
     });
   }, [onRegisterActions, formState]);
 

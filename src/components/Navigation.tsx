@@ -14,7 +14,7 @@ export function Navigation() {
     location.pathname.startsWith('/forms');
 
   return (
-    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
+    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50 print:hidden">
       <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
         {/* Left: App Name & Navigation */}
         <div className="flex items-center gap-8">

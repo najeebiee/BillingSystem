@@ -57,7 +57,7 @@ const checklistRows: ChecklistRow[] = [
   { id: "speaker", step: "Speaker", assigned: "", isSpeaker: true },
 ];
 
-const storageKey = "special-company-events-form";
+const storageKey = "eventForms.specialCompanyEvents";
 
 type FormState = {
   eventDetails: string;
@@ -81,15 +81,37 @@ const initialState: FormState = {
   checks: createInitialChecks(),
 };
 
+const normalizeSpecialCompanyEventsState = (value: unknown): FormState => {
+  if (!value || typeof value !== "object") return initialState;
+
+  const parsed = value as Partial<FormState>;
+  const parsedChecks =
+    parsed.checks && typeof parsed.checks === "object"
+      ? (parsed.checks as Record<string, unknown>)
+      : {};
+
+  const normalizedChecks = createInitialChecks();
+  for (const row of checklistRows) {
+    normalizedChecks[row.id] = Boolean(parsedChecks[row.id]);
+  }
+
+  return {
+    eventDetails: typeof parsed.eventDetails === "string" ? parsed.eventDetails : "",
+    eventDate: typeof parsed.eventDate === "string" ? parsed.eventDate : "",
+    location: typeof parsed.location === "string" ? parsed.location : "",
+    speaker: typeof parsed.speaker === "string" ? parsed.speaker : "",
+    checks: normalizedChecks,
+  };
+};
+
 type SpecialCompanyEventsFormProps = {
   showBackButton?: boolean;
   embedded?: boolean;
   showToolbar?: boolean;
   onRegisterActions?: (actions: {
-    save: () => void;
-    load: () => void;
-    clear: () => void;
-    print: () => void;
+    getState: () => unknown;
+    setState: (state: unknown) => void;
+    resetState: () => void;
   }) => void;
 };
 
@@ -120,22 +142,19 @@ export function SpecialCompanyEventsForm({
 
   const handleLoad = () => {
     const saved = localStorage.getItem(storageKey);
-    if (!saved) return;
+    if (!saved) {
+      window.alert("No saved data yet.");
+      return;
+    }
     try {
-      const parsed = JSON.parse(saved) as FormState;
-      setFormState({
-        eventDetails: parsed.eventDetails ?? "",
-        eventDate: parsed.eventDate ?? "",
-        location: parsed.location ?? "",
-        speaker: parsed.speaker ?? "",
-        checks: { ...createInitialChecks(), ...(parsed.checks ?? {}) },
-      });
+      setFormState(normalizeSpecialCompanyEventsState(JSON.parse(saved)));
     } catch {
-      // Ignore malformed storage data.
+      window.alert("No saved data yet.");
     }
   };
 
   const handleClear = () => {
+    if (!window.confirm("Clear this form?")) return;
     setFormState(initialState);
     localStorage.removeItem(storageKey);
   };
@@ -146,10 +165,9 @@ export function SpecialCompanyEventsForm({
 
   useEffect(() => {
     onRegisterActions?.({
-      save: handleSave,
-      load: handleLoad,
-      clear: handleClear,
-      print: handlePrint,
+      getState: () => formState,
+      setState: (nextState) => setFormState(normalizeSpecialCompanyEventsState(nextState)),
+      resetState: () => setFormState(initialState),
     });
   }, [onRegisterActions, formState]);
 
@@ -193,7 +211,7 @@ export function SpecialCompanyEventsForm({
             </div>
           )}
 
-          <div className="form-paper mx-auto">
+          <div className="form-paper special-company-events-print-area mx-auto">
             <div className="form-title">
               <div className="form-title__line form-title__primary">SPECIAL COMPANY EVENTS</div>
               <div className="form-title__line">(with speaker)</div>

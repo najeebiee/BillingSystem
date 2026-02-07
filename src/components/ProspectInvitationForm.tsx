@@ -10,7 +10,7 @@ type ProspectRow = {
   remarks: string;
 };
 
-const storageKey = "prospect-invitation-form";
+const storageKey = "eventForms.prospectInvitation";
 const defaultRowCount = 30;
 
 const createEmptyRow = (): ProspectRow => ({
@@ -24,6 +24,27 @@ const createEmptyRow = (): ProspectRow => ({
 const createInitialRows = (): ProspectRow[] =>
   Array.from({ length: defaultRowCount }, () => createEmptyRow());
 
+const normalizeProspectRows = (value: unknown): ProspectRow[] => {
+  if (!Array.isArray(value)) return createInitialRows();
+
+  const loadedRows = value.map((row) => {
+    const parsed = row && typeof row === "object" ? (row as Partial<ProspectRow>) : {};
+    return {
+      leaderName: typeof parsed.leaderName === "string" ? parsed.leaderName : "",
+      guestName: typeof parsed.guestName === "string" ? parsed.guestName : "",
+      date1: typeof parsed.date1 === "string" ? parsed.date1 : "",
+      date2: typeof parsed.date2 === "string" ? parsed.date2 : "",
+      remarks: typeof parsed.remarks === "string" ? parsed.remarks : "",
+    };
+  });
+
+  if (loadedRows.length < defaultRowCount) {
+    loadedRows.push(...Array.from({ length: defaultRowCount - loadedRows.length }, createEmptyRow));
+  }
+
+  return loadedRows;
+};
+
 const hasRowContent = (row: ProspectRow) =>
   row.leaderName.trim() ||
   row.guestName.trim() ||
@@ -36,10 +57,9 @@ type ProspectInvitationFormProps = {
   embedded?: boolean;
   showToolbar?: boolean;
   onRegisterActions?: (actions: {
-    save: () => void;
-    load: () => void;
-    clear: () => void;
-    print: () => void;
+    getState: () => unknown;
+    setState: (state: unknown) => void;
+    resetState: () => void;
   }) => void;
 };
 
@@ -71,31 +91,20 @@ export function ProspectInvitationForm({
 
   const handleLoad = () => {
     const saved = localStorage.getItem(storageKey);
-    if (!saved) return;
+    if (!saved) {
+      window.alert("No saved data yet.");
+      return;
+    }
 
     try {
-      const parsed = JSON.parse(saved) as Partial<ProspectRow>[];
-      if (!Array.isArray(parsed)) return;
-
-      const loadedRows = parsed.map((row) => ({
-        leaderName: row.leaderName ?? "",
-        guestName: row.guestName ?? "",
-        date1: row.date1 ?? "",
-        date2: row.date2 ?? "",
-        remarks: row.remarks ?? "",
-      }));
-
-      if (loadedRows.length < defaultRowCount) {
-        loadedRows.push(...Array.from({ length: defaultRowCount - loadedRows.length }, createEmptyRow));
-      }
-
-      setRows(loadedRows);
+      setRows(normalizeProspectRows(JSON.parse(saved)));
     } catch {
-      // Ignore malformed storage data.
+      window.alert("No saved data yet.");
     }
   };
 
   const handleClear = () => {
+    if (!window.confirm("Clear this form?")) return;
     setRows(createInitialRows());
     localStorage.removeItem(storageKey);
   };
@@ -106,10 +115,9 @@ export function ProspectInvitationForm({
 
   useEffect(() => {
     onRegisterActions?.({
-      save: handleSave,
-      load: handleLoad,
-      clear: handleClear,
-      print: handlePrint,
+      getState: () => rows,
+      setState: (nextRows) => setRows(normalizeProspectRows(nextRows)),
+      resetState: () => setRows(createInitialRows()),
     });
   }, [onRegisterActions, rows]);
 

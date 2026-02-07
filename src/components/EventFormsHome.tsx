@@ -1,17 +1,16 @@
 import React, { useRef, useState } from "react";
-import { Download, Printer, Save, Trash2 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { EventRequestForm } from "./EventRequestForm";
+import { EventFormsToolbar } from "./EventFormsToolbar";
 import { ProspectInvitationForm } from "./ProspectInvitationForm";
 import { SpecialCompanyEventsForm } from "./SpecialCompanyEventsForm";
 
 type EventFormTab = "special" | "request" | "prospect";
 
 type FormActions = {
-  save: () => void;
-  load: () => void;
-  clear: () => void;
-  print: () => void;
+  getState: () => unknown;
+  setState: (state: unknown) => void;
+  resetState: () => void;
 };
 
 type TabItem = {
@@ -20,6 +19,11 @@ type TabItem = {
 };
 
 const activeTabStorageKey = "eventForms.activeTab";
+const formStorageKeys: Record<EventFormTab, string> = {
+  special: "eventForms.specialCompanyEvents",
+  request: "eventForms.eventRequest",
+  prospect: "eventForms.prospectInvitation",
+};
 
 const tabs: TabItem[] = [
   { key: "special", label: "Special Company Events" },
@@ -67,36 +71,6 @@ function EventFormsTabs({ activeTab, onChange }: EventFormsTabsProps) {
   );
 }
 
-type EventFormsToolbarProps = {
-  onSave: () => void;
-  onLoad: () => void;
-  onClear: () => void;
-  onPrint: () => void;
-};
-
-function EventFormsToolbar({ onSave, onLoad, onClear, onPrint }: EventFormsToolbarProps) {
-  return (
-    <div className="flex items-center justify-end gap-2 pb-2 w-full md:w-auto md:shrink-0 flex-wrap md:flex-nowrap">
-      <button onClick={onSave} className="toolbar-btn min-h-9">
-        <Save className="form-btn__icon" />
-        Save
-      </button>
-      <button onClick={onLoad} className="toolbar-btn min-h-9">
-        <Download className="form-btn__icon" />
-        Load
-      </button>
-      <button onClick={onClear} className="toolbar-btn min-h-9">
-        <Trash2 className="form-btn__icon" />
-        Clear
-      </button>
-      <button onClick={onPrint} className="toolbar-btn min-h-9">
-        <Printer className="form-btn__icon" />
-        Print
-      </button>
-    </div>
-  );
-}
-
 export function EventFormsHome() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<EventFormTab>(() => getInitialTab(searchParams.get("tab")));
@@ -113,7 +87,41 @@ export function EventFormsHome() {
   };
 
   const runActive = (action: keyof FormActions) => {
-    actionsRef.current[activeTab]?.[action]?.();
+    const actions = actionsRef.current[activeTab];
+    if (!actions) return;
+
+    const storageKey = formStorageKeys[activeTab];
+
+    switch (action) {
+      case "getState":
+        localStorage.setItem(storageKey, JSON.stringify(actions.getState()));
+        break;
+      case "setState": {
+        const saved = localStorage.getItem(storageKey);
+        if (!saved) {
+          window.alert("No saved data yet.");
+          return;
+        }
+
+        try {
+          actions.setState(JSON.parse(saved));
+        } catch {
+          window.alert("No saved data yet.");
+        }
+        break;
+      }
+      case "resetState":
+        if (!window.confirm("Clear this form?")) return;
+        actions.resetState();
+        localStorage.removeItem(storageKey);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
@@ -129,10 +137,10 @@ export function EventFormsHome() {
 
           <div className="flex flex-col gap-2 md:gap-0 md:flex-row md:items-end md:justify-end mb-6">
             <EventFormsToolbar
-              onSave={() => runActive("save")}
-              onLoad={() => runActive("load")}
-              onClear={() => runActive("clear")}
-              onPrint={() => runActive("print")}
+              onSave={() => runActive("getState")}
+              onLoad={() => runActive("setState")}
+              onClear={() => runActive("resetState")}
+              onPrint={handlePrint}
             />
           </div>
 

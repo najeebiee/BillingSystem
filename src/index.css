@@ -2359,3 +2359,15 @@ html {
     inset: 0 auto auto 0;
   }
 }
+
+@media print {
+  .special-company-events-print-area,
+  .special-company-events-print-area * {
+    visibility: visible;
+  }
+
+  .special-company-events-print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+  }
+}
