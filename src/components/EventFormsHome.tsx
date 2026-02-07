@@ -72,7 +72,7 @@ type EventFormsToolbarProps = {
 
 function EventFormsToolbar({ onSave, onLoad, onClear, onPrint }: EventFormsToolbarProps) {
   return (
-    <div className="form-toolbar__right">
+    <div className="flex items-center gap-2 pb-2 shrink-0">
       <button onClick={onSave} className="toolbar-btn">
         <Save className="form-btn__icon" />
         Save
