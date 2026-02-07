@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, Printer, Save, Trash2 } from "lucide-react";
 
@@ -34,11 +34,20 @@ const hasRowContent = (row: ProspectRow) =>
 type ProspectInvitationFormProps = {
   showBackButton?: boolean;
   embedded?: boolean;
+  showToolbar?: boolean;
+  onRegisterActions?: (actions: {
+    save: () => void;
+    load: () => void;
+    clear: () => void;
+    print: () => void;
+  }) => void;
 };
 
 export function ProspectInvitationForm({
   showBackButton = true,
   embedded = false,
+  showToolbar = true,
+  onRegisterActions,
 }: ProspectInvitationFormProps) {
   const navigate = useNavigate();
   const [rows, setRows] = useState<ProspectRow[]>(createInitialRows);
@@ -95,43 +104,54 @@ export function ProspectInvitationForm({
     window.print();
   };
 
+  useEffect(() => {
+    onRegisterActions?.({
+      save: handleSave,
+      load: handleLoad,
+      clear: handleClear,
+      print: handlePrint,
+    });
+  }, [onRegisterActions, rows]);
+
   return (
     <div className={embedded ? "prospect-page" : "prospect-page min-h-screen bg-gray-50"}>
       <div className={embedded ? "" : "pt-16"}>
         <div className={embedded ? "" : "max-w-[1440px] mx-auto px-6 py-8"}>
-          <div className="form-toolbar">
-            {showBackButton ? (
-              <div className="form-toolbar__left">
-                <button
-                  onClick={() => navigate("/event-forms")}
-                  className="toolbar-btn toolbar-btn--back"
-                >
-                  <ArrowLeft className="form-btn__icon" />
-                  Back to Forms
+          {showToolbar && (
+            <div className="form-toolbar">
+              {showBackButton ? (
+                <div className="form-toolbar__left">
+                  <button
+                    onClick={() => navigate("/event-forms")}
+                    className="toolbar-btn toolbar-btn--back"
+                  >
+                    <ArrowLeft className="form-btn__icon" />
+                    Back to Forms
+                  </button>
+                </div>
+              ) : (
+                <div />
+              )}
+              <div className="form-toolbar__right">
+                <button onClick={handleSave} className="toolbar-btn">
+                  <Save className="form-btn__icon" />
+                  Save
+                </button>
+                <button onClick={handleLoad} className="toolbar-btn">
+                  <Download className="form-btn__icon" />
+                  Load
+                </button>
+                <button onClick={handleClear} className="toolbar-btn">
+                  <Trash2 className="form-btn__icon" />
+                  Clear
+                </button>
+                <button onClick={handlePrint} className="toolbar-btn">
+                  <Printer className="form-btn__icon" />
+                  Print
                 </button>
               </div>
-            ) : (
-              <div />
-            )}
-            <div className="form-toolbar__right">
-              <button onClick={handleSave} className="toolbar-btn">
-                <Save className="form-btn__icon" />
-                Save
-              </button>
-              <button onClick={handleLoad} className="toolbar-btn">
-                <Download className="form-btn__icon" />
-                Load
-              </button>
-              <button onClick={handleClear} className="toolbar-btn">
-                <Trash2 className="form-btn__icon" />
-                Clear
-              </button>
-              <button onClick={handlePrint} className="toolbar-btn">
-                <Printer className="form-btn__icon" />
-                Print
-              </button>
             </div>
-          </div>
+          )}
 
           <div className="prospect-paper prospect-print-area mx-auto">
             <header className="prospect-header">PROSPECT INVITATION GUIDE</header>
