@@ -46,19 +46,23 @@ type EventFormsTabsProps = {
 
 function EventFormsTabs({ activeTab, onChange }: EventFormsTabsProps) {
   return (
-    <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap pb-2 -mx-1 px-1">
-      {tabs.map((tab) => (
-        <button
-          key={tab.key}
-          onClick={() => onChange(tab.key)}
-          className={`px-4 py-3 min-h-10 font-medium transition-colors relative whitespace-nowrap ${
-            activeTab === tab.key ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
-          }`}
-        >
-          {tab.label}
-          {activeTab === tab.key && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
-        </button>
-      ))}
+    <div className="overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex min-w-max items-center gap-1 border-b border-gray-200 mb-6">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => onChange(tab.key)}
+            className={`px-4 py-3 font-medium transition-colors relative whitespace-nowrap ${
+              activeTab === tab.key ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            {tab.label}
+            {activeTab === tab.key && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -121,8 +125,9 @@ export function EventFormsHome() {
             <p className="text-gray-600 mt-1">Choose a form to get started with your event requests.</p>
           </div>
 
-          <div className="flex flex-col gap-2 md:gap-0 md:flex-row md:items-end md:justify-between border-b border-gray-200 mb-6">
-            <EventFormsTabs activeTab={activeTab} onChange={setTab} />
+          <EventFormsTabs activeTab={activeTab} onChange={setTab} />
+
+          <div className="flex flex-col gap-2 md:gap-0 md:flex-row md:items-end md:justify-end mb-6">
             <EventFormsToolbar
               onSave={() => runActive("save")}
               onLoad={() => runActive("load")}
