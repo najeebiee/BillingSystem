@@ -2039,14 +2039,34 @@ html {
 
 .twoColWrap {
   position: relative;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 .twoColWrap::after {
-  display: none;
+  content: none !important;
+  display: none !important;
+}
+
+.twoColWrap::before {
+  content: none !important;
+  display: none !important;
 }
 
 .event-request-col {
   min-width: 0;
+}
+
+.event-request-right-col {
+  border-left: none !important;
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+.event-request-right-col::before,
+.event-request-right-col::after {
+  content: none !important;
+  display: none !important;
 }
 
 .event-request-section {
