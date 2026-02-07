@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, Printer, Save, Trash2 } from "lucide-react";
 
@@ -40,6 +40,10 @@ type EventRequestFormState = {
   testimony1: string;
   testimony2: string;
 };
+
+type EventRequestValidationErrors = Partial<
+  Record<"name" | "eventTitle" | "eventDate" | "preferredVenueRoom" | "requestedBy", string>
+>;
 
 const storageKey = "eventForms.eventRequest";
 
@@ -96,6 +100,18 @@ const normalizeEventRequestFormState = (value: unknown): EventRequestFormState =
   };
 };
 
+const getValidationErrors = (state: EventRequestFormState): EventRequestValidationErrors => {
+  const errors: EventRequestValidationErrors = {};
+
+  if (!state.name.trim()) errors.name = "Name is required.";
+  if (!state.eventTitle.trim()) errors.eventTitle = "Event title is required.";
+  if (!state.eventDate.trim()) errors.eventDate = "Date(s) is required.";
+  if (!state.preferredVenueRoom.trim()) errors.preferredVenueRoom = "Preferred venue/room is required.";
+  if (!state.requestedBy.trim()) errors.requestedBy = "Requested by is required.";
+
+  return errors;
+};
+
 type EventRequestFormProps = {
   showBackButton?: boolean;
   embedded?: boolean;
@@ -104,6 +120,7 @@ type EventRequestFormProps = {
     getState: () => unknown;
     setState: (state: unknown) => void;
     resetState: () => void;
+    validateBeforeSave?: () => boolean;
   }) => void;
 };
 
@@ -115,6 +132,12 @@ export function EventRequestForm({
 }: EventRequestFormProps) {
   const navigate = useNavigate();
   const [formState, setFormState] = useState<EventRequestFormState>(initialState);
+  const [showValidation, setShowValidation] = useState(false);
+
+  const validationErrors = useMemo(
+    () => (showValidation ? getValidationErrors(formState) : {}),
+    [showValidation, formState],
+  );
 
   const updateField = <K extends keyof EventRequestFormState>(
     key: K,
@@ -123,7 +146,13 @@ export function EventRequestForm({
     setFormState((prev) => ({ ...prev, [key]: value }));
   };
 
+  const validateBeforeSave = () => {
+    setShowValidation(true);
+    return Object.keys(getValidationErrors(formState)).length === 0;
+  };
+
   const handleSave = () => {
+    if (!validateBeforeSave()) return;
     localStorage.setItem(storageKey, JSON.stringify(formState));
   };
 
@@ -135,6 +164,7 @@ export function EventRequestForm({
     }
 
     try {
+      setShowValidation(false);
       setFormState(normalizeEventRequestFormState(JSON.parse(saved)));
     } catch {
       window.alert("No saved data yet.");
@@ -143,6 +173,7 @@ export function EventRequestForm({
 
   const handleClear = () => {
     if (!window.confirm("Clear this form?")) return;
+    setShowValidation(false);
     setFormState(initialState);
     localStorage.removeItem(storageKey);
   };
@@ -154,8 +185,15 @@ export function EventRequestForm({
   useEffect(() => {
     onRegisterActions?.({
       getState: () => formState,
-      setState: (nextState) => setFormState(normalizeEventRequestFormState(nextState)),
-      resetState: () => setFormState(initialState),
+      setState: (nextState) => {
+        setShowValidation(false);
+        setFormState(normalizeEventRequestFormState(nextState));
+      },
+      resetState: () => {
+        setShowValidation(false);
+        setFormState(initialState);
+      },
+      validateBeforeSave,
     });
   }, [onRegisterActions, formState]);
 
@@ -198,34 +236,42 @@ export function EventRequestForm({
 
           <div className="event-request-paper event-request-print-area mx-auto">
             <header className="event-request-header">
-              <h1>EVENT REQUEST FORM</h1>
+              <h1>Event Request Form</h1>
               <p>
-                IMPORTANT: ALL EVENT REQUEST SHOULD BE DONE 5 DAYS PRIOR AND ARE OPEN TO ALL
-                GRINDERS GUILD DISTRIBUTORS.
+                Submit at least 5 days before the event date. Use clear details for faster review.
               </p>
             </header>
 
             <div className="event-request-grid twoColWrap">
               <div className="event-request-col">
                 <section className="event-request-section">
-                  <h2>1. CONTACT INFORMATION</h2>
-                  <label className="event-request-row">
-                    <span>Name</span>
-                    <input value={formState.name} onChange={(e) => updateField("name", e.target.value)} />
+                  <h2>1. Contact Information</h2>
+                  <label className="event-request-field">
+                    <span className="event-request-label">
+                      Name <span className="event-request-required">*</span>
+                    </span>
+                    <input
+                      value={formState.name}
+                      onChange={(e) => updateField("name", e.target.value)}
+                    />
+                    {validationErrors.name && <span className="event-request-error">{validationErrors.name}</span>}
                   </label>
-                  <label className="event-request-row">
-                    <span>Organization/Department</span>
+                  <label className="event-request-field">
+                    <span className="event-request-label">Organization/Department</span>
                     <input
                       value={formState.organizationDepartment}
                       onChange={(e) => updateField("organizationDepartment", e.target.value)}
                     />
                   </label>
-                  <label className="event-request-row">
-                    <span>Phone No.</span>
-                    <input value={formState.phoneNo} onChange={(e) => updateField("phoneNo", e.target.value)} />
+                  <label className="event-request-field">
+                    <span className="event-request-label">Phone No.</span>
+                    <input
+                      value={formState.phoneNo}
+                      onChange={(e) => updateField("phoneNo", e.target.value)}
+                    />
                   </label>
-                  <label className="event-request-row">
-                    <span>Email Address</span>
+                  <label className="event-request-field">
+                    <span className="event-request-label">Email Address</span>
                     <input
                       value={formState.emailAddress}
                       onChange={(e) => updateField("emailAddress", e.target.value)}
@@ -234,297 +280,336 @@ export function EventRequestForm({
                 </section>
 
                 <section className="event-request-section">
-                  <h2>2. EVENT DETAILS</h2>
-                  <label className="event-request-row">
-                    <span>Event Title</span>
+                  <h2>2. Event Details</h2>
+                  <label className="event-request-field">
+                    <span className="event-request-label">
+                      Event Title <span className="event-request-required">*</span>
+                    </span>
                     <input
                       value={formState.eventTitle}
                       onChange={(e) => updateField("eventTitle", e.target.value)}
                     />
+                    {validationErrors.eventTitle && (
+                      <span className="event-request-error">{validationErrors.eventTitle}</span>
+                    )}
                   </label>
-                  <label className="event-request-row event-request-row--stacked">
-                    <span>Event Description</span>
+                  <label className="event-request-field">
+                    <span className="event-request-label">Event Description</span>
                     <textarea
-                      rows={3}
+                      rows={4}
                       value={formState.eventDescription}
                       onChange={(e) => updateField("eventDescription", e.target.value)}
                     />
                   </label>
 
-                  <div className="event-request-group">
-                    <div className="event-request-group-title">Event Type (Check One)</div>
-                    <label className="event-request-check">
+                  <fieldset className="event-request-choice-group">
+                    <legend>Event Type</legend>
+                    <label className="event-request-choice">
                       <input
-                        type="checkbox"
+                        type="radio"
+                        name="event-type"
                         checked={formState.eventType === "meeting"}
-                        onChange={(e) => updateField("eventType", e.target.checked ? "meeting" : "")}
+                        onChange={() => updateField("eventType", "meeting")}
                       />
                       <span>Meeting - GBP Product Presentation</span>
                     </label>
-                    <label className="event-request-check">
+                    <label className="event-request-choice">
                       <input
-                        type="checkbox"
+                        type="radio"
+                        name="event-type"
                         checked={formState.eventType === "workshop"}
-                        onChange={(e) => updateField("eventType", e.target.checked ? "workshop" : "")}
+                        onChange={() => updateField("eventType", "workshop")}
                       />
                       <span>Workshop - Grinders Distributors Orientation</span>
                     </label>
-                  </div>
+                  </fieldset>
 
-                  <label className="event-request-row">
-                    <span>Date(s)</span>
+                  <label className="event-request-field">
+                    <span className="event-request-label">
+                      Date(s) <span className="event-request-required">*</span>
+                    </span>
                     <input
                       placeholder="dd/mm/yyyy"
                       value={formState.eventDate}
                       onChange={(e) => updateField("eventDate", e.target.value)}
                     />
+                    {validationErrors.eventDate && (
+                      <span className="event-request-error">{validationErrors.eventDate}</span>
+                    )}
                   </label>
 
-                  <div className="event-request-inline">
-                    <span className="event-request-inline-label">Time</span>
-                    <label>
-                      <span>From</span>
-                      <input value={formState.timeFrom} onChange={(e) => updateField("timeFrom", e.target.value)} />
+                  <div className="event-request-inline-grid">
+                    <label className="event-request-field">
+                      <span className="event-request-label">Time From</span>
+                      <input
+                        value={formState.timeFrom}
+                        onChange={(e) => updateField("timeFrom", e.target.value)}
+                      />
                     </label>
-                    <label>
-                      <span>To</span>
-                      <input value={formState.timeTo} onChange={(e) => updateField("timeTo", e.target.value)} />
+                    <label className="event-request-field">
+                      <span className="event-request-label">Time To</span>
+                      <input
+                        value={formState.timeTo}
+                        onChange={(e) => updateField("timeTo", e.target.value)}
+                      />
                     </label>
                   </div>
 
-                  <div className="event-request-group">
-                    <div className="event-request-group-title">Is this a recurring event?</div>
-                    <div className="event-request-radio-row">
-                      <label className="event-request-check">
+                  <fieldset className="event-request-choice-group">
+                    <legend>Recurring Event?</legend>
+                    <div className="event-request-yesno-row">
+                      <label className="event-request-choice">
                         <input
                           type="radio"
                           name="recurring"
                           checked={formState.recurring === "yes"}
                           onChange={() => updateField("recurring", "yes")}
                         />
-                        <span>YES</span>
+                        <span>Yes</span>
                       </label>
-                      <label className="event-request-check">
+                      <label className="event-request-choice">
                         <input
                           type="radio"
                           name="recurring"
                           checked={formState.recurring === "no"}
                           onChange={() => updateField("recurring", "no")}
                         />
-                        <span>NO</span>
+                        <span>No</span>
                       </label>
                     </div>
-                    <label className="event-request-row">
-                      <span>If YES, please specify recurrence</span>
+                    <label className="event-request-field">
+                      <span className="event-request-label">If yes, specify recurrence</span>
                       <input
                         value={formState.recurrenceDetails}
                         onChange={(e) => updateField("recurrenceDetails", e.target.value)}
                       />
                     </label>
-                  </div>
+                  </fieldset>
                 </section>
 
                 <section className="event-request-section">
-                  <h2>3. LOCATION &amp; SET-UP NEEDS</h2>
-                  <label className="event-request-row">
-                    <span>Preferred Venue/Room</span>
+                  <h2>3. Location &amp; Set-up Needs</h2>
+                  <label className="event-request-field">
+                    <span className="event-request-label">
+                      Preferred Venue/Room <span className="event-request-required">*</span>
+                    </span>
                     <input
                       value={formState.preferredVenueRoom}
                       onChange={(e) => updateField("preferredVenueRoom", e.target.value)}
                     />
+                    {validationErrors.preferredVenueRoom && (
+                      <span className="event-request-error">{validationErrors.preferredVenueRoom}</span>
+                    )}
                   </label>
-                  <label className="event-request-row">
-                    <span>Expected attendance</span>
+                  <label className="event-request-field">
+                    <span className="event-request-label">Expected Attendance</span>
                     <input
                       value={formState.expectedAttendance}
                       onChange={(e) => updateField("expectedAttendance", e.target.value)}
                     />
                   </label>
 
-                  <div className="event-request-group">
-                    <div className="event-request-group-title">Room Set-Up Required</div>
-                    <label className="event-request-check">
+                  <fieldset className="event-request-choice-group">
+                    <legend>Room Set-up</legend>
+                    <label className="event-request-choice">
                       <input
                         type="checkbox"
                         checked={formState.roomSetupClassroomStyle}
                         onChange={(e) => updateField("roomSetupClassroomStyle", e.target.checked)}
                       />
-                      <span>Classroom Style</span>
+                      <span>Classroom style</span>
                     </label>
-                  </div>
+                  </fieldset>
 
-                  <div className="event-request-group">
-                    <div className="event-request-group-title">Audio/Visual Requirements</div>
-                    <label className="event-request-check">
+                  <fieldset className="event-request-choice-group">
+                    <legend>Audio/Visual Requirements</legend>
+                    <div className="event-request-checkbox-grid">
+                      <label className="event-request-choice">
+                        <input
+                          type="checkbox"
+                          checked={formState.avProjector}
+                          onChange={(e) => updateField("avProjector", e.target.checked)}
+                        />
+                        <span>Projector</span>
+                      </label>
+                      <label className="event-request-choice">
+                        <input
+                          type="checkbox"
+                          checked={formState.avMicrophone}
+                          onChange={(e) => updateField("avMicrophone", e.target.checked)}
+                        />
+                        <span>Microphone</span>
+                      </label>
+                      <label className="event-request-choice">
+                        <input
+                          type="checkbox"
+                          checked={formState.avSpeakers}
+                          onChange={(e) => updateField("avSpeakers", e.target.checked)}
+                        />
+                        <span>Speakers</span>
+                      </label>
+                      <label className="event-request-choice">
+                        <input
+                          type="checkbox"
+                          checked={formState.avLaptopComputer}
+                          onChange={(e) => updateField("avLaptopComputer", e.target.checked)}
+                        />
+                        <span>Laptop/Computer</span>
+                      </label>
+                      <label className="event-request-choice">
+                        <input
+                          type="checkbox"
+                          checked={formState.avZoomStreamingSupport}
+                          onChange={(e) => updateField("avZoomStreamingSupport", e.target.checked)}
+                        />
+                        <span>Zoom/Streaming Support</span>
+                      </label>
+                    </div>
+                    <label className="event-request-field">
+                      <span className="event-request-label">Others</span>
                       <input
-                        type="checkbox"
-                        checked={formState.avProjector}
-                        onChange={(e) => updateField("avProjector", e.target.checked)}
+                        value={formState.avOthers}
+                        onChange={(e) => updateField("avOthers", e.target.value)}
                       />
-                      <span>Projector</span>
                     </label>
-                    <label className="event-request-check">
-                      <input
-                        type="checkbox"
-                        checked={formState.avMicrophone}
-                        onChange={(e) => updateField("avMicrophone", e.target.checked)}
-                      />
-                      <span>Microphone</span>
-                    </label>
-                    <label className="event-request-check">
-                      <input
-                        type="checkbox"
-                        checked={formState.avSpeakers}
-                        onChange={(e) => updateField("avSpeakers", e.target.checked)}
-                      />
-                      <span>Speakers</span>
-                    </label>
-                    <label className="event-request-check">
-                      <input
-                        type="checkbox"
-                        checked={formState.avLaptopComputer}
-                        onChange={(e) => updateField("avLaptopComputer", e.target.checked)}
-                      />
-                      <span>Laptop/Computer</span>
-                    </label>
-                    <label className="event-request-check">
-                      <input
-                        type="checkbox"
-                        checked={formState.avZoomStreamingSupport}
-                        onChange={(e) => updateField("avZoomStreamingSupport", e.target.checked)}
-                      />
-                      <span>Zoom/Streaming Support</span>
-                    </label>
-                    <label className="event-request-row">
-                      <span>Others</span>
-                      <input value={formState.avOthers} onChange={(e) => updateField("avOthers", e.target.value)} />
-                    </label>
-                  </div>
+                  </fieldset>
 
-                  <div className="event-request-note">
-                    <div className="event-request-note__title">NOTE: For Speakers Attire :</div>
-                    <div>At least polo shirt</div>
-                    <div>If T-Shirt w/ round neck, use blazer/coat</div>
+                  <div className="event-request-info">
+                    <div className="event-request-info__title">Speaker Attire Note</div>
+                    <p>At least polo shirt. If using a round-neck shirt, pair it with a blazer or coat.</p>
                   </div>
                 </section>
               </div>
 
               <div className="event-request-col event-request-right-col">
                 <section className="event-request-section">
-                  <h2>4. ADDITIONAL SERVICES (IF Applicable)</h2>
+                  <h2>4. Additional Services</h2>
 
-                  <div className="event-request-group">
-                    <div className="event-request-inline-line fieldGroupGap">
-                      <span>Catering Needed</span>
-                      <label className="event-request-check">
+                  <fieldset className="event-request-choice-group">
+                    <legend>Catering Needed?</legend>
+                    <div className="event-request-yesno-row">
+                      <label className="event-request-choice">
                         <input
                           type="radio"
                           name="catering-needed"
                           checked={formState.cateringNeeded === "yes"}
                           onChange={() => updateField("cateringNeeded", "yes")}
                         />
-                        <span>YES</span>
+                        <span>Yes</span>
                       </label>
-                      <label className="event-request-check">
+                      <label className="event-request-choice">
                         <input
                           type="radio"
                           name="catering-needed"
                           checked={formState.cateringNeeded === "no"}
                           onChange={() => updateField("cateringNeeded", "no")}
                         />
-                        <span>NO</span>
+                        <span>No</span>
                       </label>
                     </div>
-                    <label className="event-request-row fieldRow">
-                      <span>IF YES, specify</span>
+                    <label className="event-request-field">
+                      <span className="event-request-label">If yes, specify</span>
                       <input
                         value={formState.cateringSpecify}
                         onChange={(e) => updateField("cateringSpecify", e.target.value)}
                       />
                     </label>
-                  </div>
+                  </fieldset>
 
-                  <div className="event-request-inline-line fieldGroupGap">
-                    <span>Security</span>
-                    <label className="event-request-check">
-                      <input
-                        type="radio"
-                        name="security-needed"
-                        checked={formState.securityNeeded === "yes"}
-                        onChange={() => updateField("securityNeeded", "yes")}
-                      />
-                      <span>YES</span>
-                    </label>
-                    <label className="event-request-check">
-                      <input
-                        type="radio"
-                        name="security-needed"
-                        checked={formState.securityNeeded === "no"}
-                        onChange={() => updateField("securityNeeded", "no")}
-                      />
-                      <span>NO</span>
-                    </label>
-                  </div>
+                  <fieldset className="event-request-choice-group">
+                    <legend>Security Needed?</legend>
+                    <div className="event-request-yesno-row">
+                      <label className="event-request-choice">
+                        <input
+                          type="radio"
+                          name="security-needed"
+                          checked={formState.securityNeeded === "yes"}
+                          onChange={() => updateField("securityNeeded", "yes")}
+                        />
+                        <span>Yes</span>
+                      </label>
+                      <label className="event-request-choice">
+                        <input
+                          type="radio"
+                          name="security-needed"
+                          checked={formState.securityNeeded === "no"}
+                          onChange={() => updateField("securityNeeded", "no")}
+                        />
+                        <span>No</span>
+                      </label>
+                    </div>
+                  </fieldset>
                 </section>
 
                 <section className="event-request-section rightColSection">
-                  <h2>5. AUTHORIZATION &amp; SUBMISSION</h2>
-                  <label className="event-request-row fieldRow">
-                    <span>Requested By</span>
+                  <h2>5. Authorization &amp; Submission</h2>
+                  <label className="event-request-field">
+                    <span className="event-request-label">
+                      Requested By <span className="event-request-required">*</span>
+                    </span>
                     <input
                       value={formState.requestedBy}
                       onChange={(e) => updateField("requestedBy", e.target.value)}
                     />
+                    {validationErrors.requestedBy && (
+                      <span className="event-request-error">{validationErrors.requestedBy}</span>
+                    )}
                   </label>
-                  <label className="event-request-row fieldRow fieldGroupGap">
-                    <span>Date Of Request</span>
+                  <label className="event-request-field">
+                    <span className="event-request-label">Date of Request</span>
                     <input
                       placeholder="dd/mm/yyyy"
                       value={formState.dateOfRequest}
                       onChange={(e) => updateField("dateOfRequest", e.target.value)}
                     />
                   </label>
-                  <label className="event-request-row fieldRow">
-                    <span>Signature</span>
+                  <label className="event-request-field">
+                    <span className="event-request-label">Signature</span>
                     <input
                       value={formState.signature}
                       onChange={(e) => updateField("signature", e.target.value)}
                     />
                   </label>
-                  <label className="event-request-row fieldRow">
-                    <span>Organizer</span>
+                  <label className="event-request-field">
+                    <span className="event-request-label">Organizer</span>
                     <input
                       value={formState.organizer}
                       onChange={(e) => updateField("organizer", e.target.value)}
                     />
                   </label>
-                  <label className="event-request-row fieldRow">
-                    <span>Prayer/Technical</span>
+                  <label className="event-request-field">
+                    <span className="event-request-label">Prayer/Technical</span>
                     <input
                       value={formState.prayerTechnical}
                       onChange={(e) => updateField("prayerTechnical", e.target.value)}
                     />
                   </label>
-                  <label className="event-request-row fieldRow">
-                    <span>Host</span>
-                    <input value={formState.host} onChange={(e) => updateField("host", e.target.value)} />
+                  <label className="event-request-field">
+                    <span className="event-request-label">Host</span>
+                    <input
+                      value={formState.host}
+                      onChange={(e) => updateField("host", e.target.value)}
+                    />
                   </label>
-                  <label className="event-request-row fieldRow">
-                    <span>Speaker</span>
-                    <input value={formState.speaker} onChange={(e) => updateField("speaker", e.target.value)} />
+                  <label className="event-request-field">
+                    <span className="event-request-label">Speaker</span>
+                    <input
+                      value={formState.speaker}
+                      onChange={(e) => updateField("speaker", e.target.value)}
+                    />
                   </label>
 
-                  <div className="event-request-group testimonyBlock">
-                    <div className="event-request-group-title">Testimony:</div>
-                    <label className="event-request-row fieldRow fieldRowTight">
-                      <span>1.)</span>
+                  <div className="event-request-choice-group testimonyBlock">
+                    <div className="event-request-label">Testimony</div>
+                    <label className="event-request-field fieldRowTight">
+                      <span className="event-request-label">1.)</span>
                       <input
                         value={formState.testimony1}
                         onChange={(e) => updateField("testimony1", e.target.value)}
                       />
                     </label>
-                    <label className="event-request-row fieldRow fieldRowTight testimonyRow">
-                      <span>2.)</span>
+                    <label className="event-request-field fieldRowTight testimonyRow">
+                      <span className="event-request-label">2.)</span>
                       <input
                         value={formState.testimony2}
                         onChange={(e) => updateField("testimony2", e.target.value)}

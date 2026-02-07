@@ -11,6 +11,7 @@ type FormActions = {
   getState: () => unknown;
   setState: (state: unknown) => void;
   resetState: () => void;
+  validateBeforeSave?: () => boolean;
 };
 
 type TabItem = {
@@ -86,7 +87,7 @@ export function EventFormsHome() {
     });
   };
 
-  const runActive = (action: keyof FormActions) => {
+  const runActive = (action: "getState" | "setState" | "resetState") => {
     const actions = actionsRef.current[activeTab];
     if (!actions) return;
 
@@ -94,6 +95,7 @@ export function EventFormsHome() {
 
     switch (action) {
       case "getState":
+        if (actions.validateBeforeSave && !actions.validateBeforeSave()) return;
         localStorage.setItem(storageKey, JSON.stringify(actions.getState()));
         break;
       case "setState": {
