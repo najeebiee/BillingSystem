@@ -1,4 +1,4 @@
-/* Shared print system for all form tabs: Event Request, Special Company Events, Prospect Invitation. */
+/* Shared print rules: direct-on-page output, no inner paper card look. */
 @media print {
   @page {
     size: A4 portrait;
@@ -7,9 +7,9 @@
 
   html,
   body {
+    background: #fff !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: #fff !important;
     height: auto !important;
     overflow: visible !important;
   }
@@ -35,33 +35,46 @@
     max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
-    position: static !important;
-    transform: none !important;
   }
 
-  /* A4 printable content area: 210mm - 8mm - 8mm = 194mm */
-  .print-page {
-    width: 194mm !important;
-    min-height: 277mm !important;
-    margin: 0 auto !important;
-    display: block !important;
-    position: static !important;
-    transform: none !important;
-  }
-
-  .print-content {
+  .print-fullpage {
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
     position: static !important;
     transform: none !important;
     zoom: 1 !important;
+    font-size: 11.2px !important;
+    line-height: 1.18 !important;
   }
 
-  .print-only * {
+  /* Remove any inner "sheet/card" shell in print. */
+  .print-only .paper,
+  .print-only .card,
+  .print-only .form-paper,
+  .print-only .sheet,
+  .print-only .page-card,
+  .print-only .print-paper,
+  .print-only .sce-print-paper,
+  .print-only .prospect-print-paper {
+    width: 100% !important;
     max-width: none !important;
-    transform: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  .print-only .outer-box,
+  .print-only .paper-border,
+  .print-only .frame {
+    border: none !important;
   }
 
   .print-only table {
@@ -72,9 +85,9 @@
 
   .print-only th,
   .print-only td {
+    padding: 3px 4px !important;
     word-wrap: break-word;
     overflow-wrap: anywhere;
-    padding: 3px 4px !important;
   }
 
   .print-only .print-section,
@@ -86,39 +99,28 @@
     margin-bottom: 6px !important;
   }
 
-  /* Keep printed forms full width and clean. */
-  .print-only .print-paper,
-  .print-only .sce-print-paper,
-  .print-only .prospect-print-paper {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
+  /* Keep visible document lines and table borders, but no outer fake card frame. */
+  .print-only .print-line,
+  .print-only .sce-print-line {
+    border-bottom: 1px solid #111827 !important;
   }
 
-  .print-only .print-paper {
-    padding: 8px !important;
+  .print-only .prospect-print-table th,
+  .print-only .prospect-print-table td,
+  .print-only .sce-print-table th,
+  .print-only .sce-print-table td {
     border: 1px solid #111827 !important;
-    font-size: 11px !important;
-    line-height: 1.18 !important;
   }
 
-  .print-only .sce-print-paper {
-    padding: 8px !important;
-    border: 1px solid #111827 !important;
-    font-size: 10.5px !important;
-    line-height: 1.16 !important;
+  .print-only .prospect-print-head,
+  .print-only .print-header,
+  .print-only .sce-print-title {
+    border-top: 1px solid #111827 !important;
+    border-bottom: 1px solid #111827 !important;
+    padding: 3px 0 !important;
+    margin-bottom: 6px !important;
   }
 
-  .print-only .prospect-print-paper {
-    padding: 8px !important;
-    border: 1px solid #111827 !important;
-    font-size: 10.5px !important;
-    line-height: 1.16 !important;
-  }
-
-  /* Compact but readable one-page table density. */
   .print-only .prospect-print-table tbody tr,
   .print-only .sce-print-table tbody tr {
     height: 18px !important;

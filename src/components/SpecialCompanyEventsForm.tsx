@@ -316,9 +316,8 @@ export function SpecialCompanyEventsForm({
           </div>
 
           <div className="print-only">
-            <div className="print-page">
-              <div className="print-content print-root">
-                <div className="sce-print-paper">
+            <div className="print-root print-fullpage">
+              <div className="sce-print-paper">
               <div className="sce-print-title">
                 <div>SPECIAL COMPANY EVENTS</div>
                 <div>(with speaker)</div>
@@ -369,7 +368,6 @@ export function SpecialCompanyEventsForm({
                   <span className="sce-print-value">{printText(formState.checkedByName)}</span>
                 </div>
               </div>
-                </div>
               </div>
             </div>
           </div>

@@ -609,9 +609,8 @@ export function EventRequestForm({ showBackButton = true, embedded = false, onRe
           </div>
 
           <div className="print-only">
-            <div className="print-page">
-              <div className="print-content print-root">
-                <div className="print-paper">
+            <div className="print-root print-fullpage">
+              <div className="print-paper">
               <header className="print-header">
                 <h1 className="print-title">EVENT REQUEST FORM</h1>
                 <p className="print-note">
@@ -711,7 +710,6 @@ export function EventRequestForm({ showBackButton = true, embedded = false, onRe
                   </section>
                 </div>
               </div>
-                </div>
               </div>
             </div>
           </div>

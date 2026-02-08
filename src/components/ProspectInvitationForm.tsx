@@ -224,9 +224,8 @@ export function ProspectInvitationForm({
           </div>
 
           <div className="print-only prospect-print-only">
-            <div className="print-page">
-              <div className="print-content print-root">
-                <div className="prospect-print-paper">
+            <div className="print-root print-fullpage">
+              <div className="prospect-print-paper">
               <header className="prospect-print-head">
                 <h1>PROSPECT INVITATION GUIDE</h1>
               </header>
@@ -253,7 +252,6 @@ export function ProspectInvitationForm({
                   ))}
                 </tbody>
               </table>
-                </div>
               </div>
             </div>
           </div>
