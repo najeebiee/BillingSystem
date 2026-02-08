@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { AutoGrowTextarea } from "./AutoGrowTextarea";
 import { submitEventRequest } from "../services/eventRequests.service";
 import "./EventRequestForm.css";
 
@@ -173,7 +174,7 @@ function LinedTextarea({ label, className = "", ...props }: LinedTextareaProps) 
   return (
     <label className="erf-field">
       <span className="erf-label">{label}</span>
-      <textarea className={`erf-lined-textarea ${className}`.trim()} {...props} />
+      <AutoGrowTextarea className={`erf-lined-textarea ${className}`.trim()} {...props} />
     </label>
   );
 }
@@ -348,14 +349,9 @@ export function EventRequestForm({
                   />
                   <LinedTextarea
                     label="Event Description"
-                    rows={4}
+                    rows={3}
                     value={formState.eventDescription}
                     onChange={(e) => updateField("eventDescription", e.target.value)}
-                    onInput={(e) => {
-                      const target = e.currentTarget;
-                      target.style.height = "auto";
-                      target.style.height = `${Math.min(target.scrollHeight, 180)}px`;
-                    }}
                   />
 
                   <fieldset className="erf-choice-group">

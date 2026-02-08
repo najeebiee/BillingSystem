@@ -161,7 +161,15 @@
 
   .print-root .erf-lined-textarea {
     min-height: 32px !important;
-    max-height: 38px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .print-root .textarea-auto-grow {
+    max-height: none !important;
+    overflow: visible !important;
+    height: auto !important;
   }
 
   .print-root .erf-choice input[type="checkbox"],

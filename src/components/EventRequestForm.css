@@ -127,9 +127,17 @@
 }
 
 .erf-lined-textarea {
-  min-height: 76px;
-  max-height: 180px;
+  min-height: 54px;
+  max-height: 220px;
   resize: none;
+  overflow-y: hidden;
+}
+
+.textarea-auto-grow {
+  resize: none;
+  overflow-y: hidden;
+  min-height: 54px;
+  max-height: 220px;
 }
 
 .erf-lined-input:focus,
