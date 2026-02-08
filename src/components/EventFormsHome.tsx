@@ -127,9 +127,9 @@ export function EventFormsHome() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="event-forms-page min-h-screen bg-gray-50">
       <div className="pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="event-forms-shell max-w-[1440px] mx-auto px-6 py-8">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold text-gray-900">Event Forms</h1>
             <p className="text-gray-600 mt-1">Choose a form to get started with your event requests.</p>

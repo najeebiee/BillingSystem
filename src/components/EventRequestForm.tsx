@@ -271,7 +271,7 @@ export function EventRequestForm({
       <div className={embedded ? "" : "pt-16"}>
         <div className={embedded ? "" : "max-w-[1440px] mx-auto px-4 md:px-6 py-6 md:py-8"}>
           {showBackButton ? (
-            <div className="erf-header-actions print-hide">
+            <div className="erf-header-actions no-print print-hide">
               <button type="button" onClick={() => navigate("/event-forms")} className="erf-back-btn">
                 <ArrowLeft className="w-4 h-4" />
                 Back to Forms
@@ -279,47 +279,48 @@ export function EventRequestForm({
             </div>
           ) : null}
 
-          <form className="erf-paper mx-auto" onSubmit={handleSubmit}>
-            <header className="erf-top">
-              <h1>EVENT REQUEST FORM</h1>
-              <p>
-                IMPORTANT: ALL EVENT REQUEST SHOULD BE DONE 5 DAYS PRIOR AND ARE OPEN TO ALL GRINDERS GUILD
-                DISTRIBUTORS.
-              </p>
-            </header>
+          <div className="print-root">
+            <form className="erf-paper mx-auto" onSubmit={handleSubmit}>
+              <header className="erf-top">
+                <h1>EVENT REQUEST FORM</h1>
+                <p>
+                  IMPORTANT: ALL EVENT REQUEST SHOULD BE DONE 5 DAYS PRIOR AND ARE OPEN TO ALL GRINDERS GUILD
+                  DISTRIBUTORS.
+                </p>
+              </header>
 
-            <div className="erf-columns">
-              <div className="erf-column">
-                <FormSection title="1. CONTACT INFORMATION">
-                  <LinedInput
-                    label="Name"
-                    requiredMark
-                    value={formState.name}
-                    onChange={(e) => updateField("name", e.target.value)}
-                    error={validationErrors.name}
-                  />
-                  <LinedInput
-                    label="Organization/Department"
-                    value={formState.organizationDepartment}
-                    onChange={(e) => updateField("organizationDepartment", e.target.value)}
-                  />
-                  <LinedInput
-                    label="Phone No."
-                    requiredMark
-                    value={formState.phoneNo}
-                    onChange={(e) => updateField("phoneNo", e.target.value)}
-                    error={validationErrors.phoneNo}
-                  />
-                  <LinedInput
-                    label="Email Address"
-                    type="email"
-                    value={formState.emailAddress}
-                    onChange={(e) => updateField("emailAddress", e.target.value)}
-                    error={validationErrors.emailAddress}
-                  />
-                </FormSection>
+              <div className="erf-columns">
+                <div className="erf-column">
+                  <FormSection title="1. CONTACT INFORMATION">
+                    <LinedInput
+                      label="Name"
+                      requiredMark
+                      value={formState.name}
+                      onChange={(e) => updateField("name", e.target.value)}
+                      error={validationErrors.name}
+                    />
+                    <LinedInput
+                      label="Organization/Department"
+                      value={formState.organizationDepartment}
+                      onChange={(e) => updateField("organizationDepartment", e.target.value)}
+                    />
+                    <LinedInput
+                      label="Phone No."
+                      requiredMark
+                      value={formState.phoneNo}
+                      onChange={(e) => updateField("phoneNo", e.target.value)}
+                      error={validationErrors.phoneNo}
+                    />
+                    <LinedInput
+                      label="Email Address"
+                      type="email"
+                      value={formState.emailAddress}
+                      onChange={(e) => updateField("emailAddress", e.target.value)}
+                      error={validationErrors.emailAddress}
+                    />
+                  </FormSection>
 
-                <FormSection title="2. EVENT DETAILS">
+                  <FormSection title="2. EVENT DETAILS">
                   <LinedInput
                     label="Event Title"
                     requiredMark
@@ -418,9 +419,9 @@ export function EventRequestForm({
                     value={formState.recurrenceDetails}
                     onChange={(e) => updateField("recurrenceDetails", e.target.value)}
                   />
-                </FormSection>
+                  </FormSection>
 
-                <FormSection title="3. LOCATION & SET-UP NEEDS">
+                  <FormSection title="3. LOCATION & SET-UP NEEDS">
                   <LinedInput
                     label="Preferred Venue/Room"
                     value={formState.preferredVenueRoom}
@@ -512,11 +513,11 @@ export function EventRequestForm({
                       />
                     ) : null}
                   </fieldset>
-                </FormSection>
-              </div>
+                  </FormSection>
+                </div>
 
-              <div className="erf-column">
-                <FormSection title="4. ADDITIONAL SERVICES (IF Applicable)">
+                <div className="erf-column">
+                  <FormSection title="4. ADDITIONAL SERVICES (IF Applicable)">
                   <fieldset className="erf-choice-group">
                     <legend>Catering Needed?</legend>
                     <div className="erf-yes-no-row">
@@ -569,9 +570,9 @@ export function EventRequestForm({
                       </label>
                     </div>
                   </fieldset>
-                </FormSection>
+                  </FormSection>
 
-                <FormSection title="5. AUTHORIZATION & SUBMISSION">
+                  <FormSection title="5. AUTHORIZATION & SUBMISSION">
                   <LinedInput
                     label="Requested By"
                     requiredMark
@@ -634,19 +635,23 @@ export function EventRequestForm({
                       <li>If T-Shirt w/ round neck, use blazer/coat</li>
                     </ol>
                   </div>
-                </FormSection>
+                  </FormSection>
+                </div>
               </div>
-            </div>
 
-            <div className="erf-actions print-hide">
-              <button type="button" className="erf-button erf-button-secondary" onClick={handleReset}>
-                Reset
-              </button>
-              <button type="submit" className="erf-button erf-button-primary" disabled={isSubmitting}>
-                {isSubmitting ? "Submitting..." : "Submit"}
-              </button>
-            </div>
-          </form>
+              <div className="erf-actions no-print print-hide">
+                <button type="button" className="erf-button erf-button-secondary" onClick={() => window.print()}>
+                  Print
+                </button>
+                <button type="button" className="erf-button erf-button-secondary" onClick={handleReset}>
+                  Reset
+                </button>
+                <button type="submit" className="erf-button erf-button-primary" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
