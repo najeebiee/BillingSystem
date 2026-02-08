@@ -304,39 +304,3 @@
     gap: 8px;
   }
 }
-
-@media print {
-  .no-print,
-  .screen-form {
-    display: none !important;
-  }
-
-  .print-only {
-    display: block !important;
-  }
-
-  .print-root {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-  }
-
-  .print-paper,
-  .print-section,
-  .print-check-group,
-  .note-block {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .print-paper {
-    box-shadow: none !important;
-  }
-
-  .textarea-auto-grow,
-  .erf-textarea {
-    max-height: none !important;
-    overflow: visible !important;
-    height: auto !important;
-  }
-}

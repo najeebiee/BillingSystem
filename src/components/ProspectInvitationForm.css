@@ -108,35 +108,3 @@
   font-weight: 700;
   font-size: 10.5px;
 }
-
-@media print {
-  .no-print,
-  .screen-form,
-  .prospect-screen-form {
-    display: none !important;
-  }
-
-  .print-only,
-  .prospect-print-only {
-    display: block !important;
-  }
-
-  .prospect-print-only.print-root {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  .prospect-print-paper,
-  .prospect-print-table,
-  .prospect-print-table tr,
-  .form-section {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .prospect-print-table tbody tr {
-    height: 18px;
-  }
-}

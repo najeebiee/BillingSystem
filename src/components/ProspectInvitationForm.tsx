@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, Printer, Plus, Save, Trash2 } from "lucide-react";
 import { FormActionButton } from "./ui/FormActionButton";
-import { applyPrintFit } from "../utils/printFit";
 import "./ProspectInvitationForm.css";
 
 type ProspectRow = {
@@ -57,6 +57,7 @@ type ProspectInvitationFormProps = {
   showBackButton?: boolean;
   embedded?: boolean;
   showToolbar?: boolean;
+  showPrintRoot?: boolean;
   onRegisterActions?: (actions: {
     getState: () => unknown;
     setState: (state: unknown) => void;
@@ -68,6 +69,7 @@ export function ProspectInvitationForm({
   showBackButton = true,
   embedded = false,
   showToolbar = true,
+  showPrintRoot = true,
   onRegisterActions,
 }: ProspectInvitationFormProps) {
   const navigate = useNavigate();
@@ -116,8 +118,7 @@ export function ProspectInvitationForm({
   };
 
   const handlePrint = () => {
-    applyPrintFit();
-    requestAnimationFrame(() => window.print());
+    window.print();
   };
 
   useEffect(() => {
@@ -127,6 +128,41 @@ export function ProspectInvitationForm({
       resetState: () => setRows(createInitialRows()),
     });
   }, [onRegisterActions, rows]);
+
+  const printRoot =
+    showPrintRoot && typeof document !== "undefined"
+      ? createPortal(
+          <div id="print-root" className="print-only prospect-print-only">
+            <header className="prospect-print-head print-section">
+              <h1 className="print-title">PROSPECT INVITATION GUIDE</h1>
+            </header>
+
+            <table className="prospect-print-table print-table form-section">
+              <thead>
+                <tr>
+                  <th>Leader&apos;s Name</th>
+                  <th>Name of Guest</th>
+                  <th>Call/P2P: Date 1</th>
+                  <th>Call/P2P: Date 2 (Follow-Up)</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {printableRows.map((row, index) => (
+                  <tr key={index}>
+                    <td>{row.leaderName || "\u00A0"}</td>
+                    <td>{row.guestName || "\u00A0"}</td>
+                    <td>{row.date1 || "\u00A0"}</td>
+                    <td>{row.date2 || "\u00A0"}</td>
+                    <td>{row.remarks || "\u00A0"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div className={embedded ? "prospect-page" : "prospect-page min-h-screen bg-gray-50"}>
@@ -161,6 +197,9 @@ export function ProspectInvitationForm({
                   <Printer className="form-btn__icon" />
                   Print
                 </FormActionButton>
+                <span className="print-hint no-print">
+                  Disable Headers and Footers in the print dialog for best results.
+                </span>
               </div>
             </div>
           )}
@@ -227,40 +266,7 @@ export function ProspectInvitationForm({
             </div>
           </div>
 
-          <div className="print-only prospect-print-only">
-            <div className="print-fit-page">
-              <div className="print-root print-fullpage print-fit-content" data-print-fit>
-                <div className="prospect-print-paper">
-              <header className="prospect-print-head">
-                <h1>PROSPECT INVITATION GUIDE</h1>
-              </header>
-
-              <table className="prospect-print-table form-section">
-                <thead>
-                  <tr>
-                    <th>Leader&apos;s Name</th>
-                    <th>Name of Guest</th>
-                    <th>Call/P2P: Date 1</th>
-                    <th>Call/P2P: Date 2 (Follow-Up)</th>
-                    <th>Remarks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {printableRows.map((row, index) => (
-                    <tr key={index}>
-                      <td>{row.leaderName || "\u00A0"}</td>
-                      <td>{row.guestName || "\u00A0"}</td>
-                      <td>{row.date1 || "\u00A0"}</td>
-                      <td>{row.date2 || "\u00A0"}</td>
-                      <td>{row.remarks || "\u00A0"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-                </div>
-              </div>
-            </div>
-          </div>
+          {printRoot}
         </div>
       </div>
     </div>

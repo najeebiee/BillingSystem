@@ -213,22 +213,3 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
-
-@media print {
-  .no-print,
-  .screen-form {
-    display: none !important;
-  }
-
-  .print-only {
-    display: block !important;
-  }
-
-  .sce-print,
-  .sce-print-table,
-  .sce-print-table tr,
-  .sce-print-footer {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-}

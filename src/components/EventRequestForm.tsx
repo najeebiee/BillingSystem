@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, Printer, Save, Trash2 } from "lucide-react";
 import { AutoGrowTextarea } from "./AutoGrowTextarea";
 import { FormActionButton } from "./ui/FormActionButton";
-import { applyPrintFit } from "../utils/printFit";
 import "./EventRequestForm.css";
 
 type EventType = "" | "meeting" | "workshop";
@@ -139,6 +139,7 @@ type EventRequestFormProps = {
   showBackButton?: boolean;
   embedded?: boolean;
   showToolbar?: boolean;
+  showPrintRoot?: boolean;
   onRegisterActions?: (actions: {
     getState: () => unknown;
     setState: (state: unknown) => void;
@@ -194,7 +195,7 @@ function FormSection({ title, children }: FormSectionProps) {
 }
 
 function mark(checked: boolean) {
-  return checked ? "☑" : "☐";
+  return checked ? "\u2611" : "\u2610";
 }
 
 function printText(value: string) {
@@ -222,6 +223,7 @@ export function EventRequestForm({
   showBackButton = true,
   embedded = false,
   showToolbar = true,
+  showPrintRoot = true,
   onRegisterActions,
 }: EventRequestFormProps) {
   const navigate = useNavigate();
@@ -274,8 +276,7 @@ export function EventRequestForm({
   };
 
   const handlePrint = () => {
-    applyPrintFit();
-    requestAnimationFrame(() => window.print());
+    window.print();
   };
 
   useEffect(() => {
@@ -289,6 +290,114 @@ export function EventRequestForm({
       validateBeforeSave,
     });
   }, [onRegisterActions, formState]);
+
+  const printRoot =
+    showPrintRoot && typeof document !== "undefined"
+      ? createPortal(
+          <div id="print-root" className="print-only">
+            <header className="print-header print-section">
+              <h1 className="print-title">EVENT REQUEST FORM</h1>
+              <p className="print-note">
+                IMPORTANT: ALL EVENT REQUEST SHOULD BE DONE 5 DAYS PRIOR AND ARE OPEN TO ALL GRINDERS GUILD
+                DISTRIBUTORS.
+              </p>
+            </header>
+
+            <div className="print-grid">
+              <div className="print-col">
+                <section className="print-section form-section">
+                  <h2 className="print-section-title">1. CONTACT INFORMATION</h2>
+                  <PrintField label="Name" value={formState.name} />
+                  <PrintField label="Organization/Department" value={formState.organizationDepartment} />
+                  <PrintField label="Phone No." value={formState.phoneNo} />
+                  <PrintField label="Email Address" value={formState.emailAddress} />
+                </section>
+
+                <section className="print-section form-section">
+                  <h2 className="print-section-title">2. EVENT DETAILS</h2>
+                  <PrintField label="Event Title" value={formState.eventTitle} />
+                  <PrintField label="Event Description" value={formState.eventDescription} multiline />
+                  <div className="print-check-group checkbox-group">
+                    <div className="print-check-title">Event Type (check one)</div>
+                    <div>{mark(formState.eventType === "meeting")} Meeting - GBP Product Presentation</div>
+                    <div>{mark(formState.eventType === "workshop")} Workshop - Grinders Distributors Orientation</div>
+                  </div>
+                  <PrintField label="Date(s)" value={formState.eventDates} />
+                  <div className="print-inline-pair">
+                    <PrintField label="Time: From" value={formState.timeFrom} />
+                    <PrintField label="To" value={formState.timeTo} />
+                  </div>
+                  <div className="print-check-group radio-group">
+                    <div className="print-check-title">Is this a recurring event?</div>
+                    <div>{mark(formState.recurringEvent === "yes")} Yes</div>
+                    <div>{mark(formState.recurringEvent === "no")} No</div>
+                  </div>
+                  <PrintField label="If Yes, please specify recurrence" value={formState.recurrenceDetails} />
+                </section>
+
+                <section className="print-section form-section">
+                  <h2 className="print-section-title">3. LOCATION & SET-UP NEEDS</h2>
+                  <PrintField label="Preferred Venue/Room" value={formState.preferredVenueRoom} />
+                  <PrintField label="Expected attendance" value={formState.expectedAttendance} />
+                  <div className="print-check-group checkbox-group">
+                    <div className="print-check-title">Room Set-Up Required</div>
+                    <div>{mark(formState.roomSetupClassroomStyle)} Classroom Style</div>
+                  </div>
+                  <div className="print-check-group checkbox-group">
+                    <div className="print-check-title">Audio/Visual Requirements</div>
+                    <div>{mark(formState.avProjector)} Projector</div>
+                    <div>{mark(formState.avMicrophone)} Microphone</div>
+                    <div>{mark(formState.avSpeakers)} Speakers</div>
+                    <div>{mark(formState.avLaptopComputer)} Laptop/Computer</div>
+                    <div>{mark(formState.avZoomStreamingSupport)} Zoom/Streaming Support</div>
+                    <div>{mark(formState.avOthersChecked)} Others</div>
+                  </div>
+                  <PrintField label="Others (specify)" value={formState.avOthersText} multiline />
+                </section>
+              </div>
+
+              <div className="print-col">
+                <section className="print-section form-section">
+                  <h2 className="print-section-title">4. ADDITIONAL SERVICES (IF Applicable)</h2>
+                  <div className="print-check-group radio-group">
+                    <div className="print-check-title">Catering Needed?</div>
+                    <div>{mark(formState.cateringNeeded === "yes")} Yes</div>
+                    <div>{mark(formState.cateringNeeded === "no")} No</div>
+                  </div>
+                  <PrintField label="If Yes, specify" value={formState.cateringSpecify} />
+                  <div className="print-check-group radio-group">
+                    <div className="print-check-title">Security</div>
+                    <div>{mark(formState.securityNeeded === "yes")} Yes</div>
+                    <div>{mark(formState.securityNeeded === "no")} No</div>
+                  </div>
+                </section>
+
+                <section className="print-section form-section">
+                  <h2 className="print-section-title">5. AUTHORIZATION & SUBMISSION</h2>
+                  <PrintField label="Requested By" value={formState.requestedBy} />
+                  <PrintField label="Date Of Request" value={formState.dateOfRequest} />
+                  <PrintField label="Signature / Full Name" value={formState.signature} />
+                  <PrintField label="Organizer" value={formState.organizer} />
+                  <PrintField label="Prayer/Technical" value={formState.prayerTechnical} />
+                  <PrintField label="Host" value={formState.host} />
+                  <PrintField label="Speaker" value={formState.speaker} />
+                  <PrintField label="Testimony 1)" value={formState.testimony1} />
+                  <PrintField label="Testimony 2)" value={formState.testimony2} />
+                </section>
+
+                <section className="print-section note-block">
+                  <h2 className="print-section-title">NOTE: For Speakers Attire:</h2>
+                  <ol className="print-note-list">
+                    <li>At least polo shirt</li>
+                    <li>If T-Shirt w/ round neck, use blazer/coat</li>
+                  </ol>
+                </section>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div className={embedded ? "erf-page" : "erf-page erf-page-standalone"}>
@@ -323,6 +432,9 @@ export function EventRequestForm({
                   <Printer className="form-btn__icon" />
                   Print
                 </FormActionButton>
+                <span className="print-hint no-print">
+                  Disable Headers and Footers in the print dialog for best results.
+                </span>
               </div>
             </div>
           )}
@@ -664,115 +776,10 @@ export function EventRequestForm({
             </div>
           </div>
 
-          <div className="print-only">
-            <div className="print-fit-page">
-              <div className="print-root print-fullpage print-fit-content" data-print-fit>
-                <div className="print-paper">
-              <header className="print-header">
-                <h1 className="print-title">EVENT REQUEST FORM</h1>
-                <p className="print-note">
-                  IMPORTANT: ALL EVENT REQUEST SHOULD BE DONE 5 DAYS PRIOR AND ARE OPEN TO ALL GRINDERS GUILD
-                  DISTRIBUTORS.
-                </p>
-              </header>
-
-              <div className="print-grid">
-                <div className="print-col">
-                  <section className="print-section form-section">
-                    <h2 className="print-section-title">1. CONTACT INFORMATION</h2>
-                    <PrintField label="Name" value={formState.name} />
-                    <PrintField label="Organization/Department" value={formState.organizationDepartment} />
-                    <PrintField label="Phone No." value={formState.phoneNo} />
-                    <PrintField label="Email Address" value={formState.emailAddress} />
-                  </section>
-
-                  <section className="print-section form-section">
-                    <h2 className="print-section-title">2. EVENT DETAILS</h2>
-                    <PrintField label="Event Title" value={formState.eventTitle} />
-                    <PrintField label="Event Description" value={formState.eventDescription} multiline />
-                    <div className="print-check-group checkbox-group">
-                      <div className="print-check-title">Event Type (check one)</div>
-                      <div>{mark(formState.eventType === "meeting")} Meeting - GBP Product Presentation</div>
-                      <div>{mark(formState.eventType === "workshop")} Workshop - Grinders Distributors Orientation</div>
-                    </div>
-                    <PrintField label="Date(s)" value={formState.eventDates} />
-                    <div className="print-inline-pair">
-                      <PrintField label="Time: From" value={formState.timeFrom} />
-                      <PrintField label="To" value={formState.timeTo} />
-                    </div>
-                    <div className="print-check-group radio-group">
-                      <div className="print-check-title">Is this a recurring event?</div>
-                      <div>{mark(formState.recurringEvent === "yes")} Yes</div>
-                      <div>{mark(formState.recurringEvent === "no")} No</div>
-                    </div>
-                    <PrintField label="If Yes, please specify recurrence" value={formState.recurrenceDetails} />
-                  </section>
-
-                  <section className="print-section form-section">
-                    <h2 className="print-section-title">3. LOCATION & SET-UP NEEDS</h2>
-                    <PrintField label="Preferred Venue/Room" value={formState.preferredVenueRoom} />
-                    <PrintField label="Expected attendance" value={formState.expectedAttendance} />
-                    <div className="print-check-group checkbox-group">
-                      <div className="print-check-title">Room Set-Up Required</div>
-                      <div>{mark(formState.roomSetupClassroomStyle)} Classroom Style</div>
-                    </div>
-                    <div className="print-check-group checkbox-group">
-                      <div className="print-check-title">Audio/Visual Requirements</div>
-                      <div>{mark(formState.avProjector)} Projector</div>
-                      <div>{mark(formState.avMicrophone)} Microphone</div>
-                      <div>{mark(formState.avSpeakers)} Speakers</div>
-                      <div>{mark(formState.avLaptopComputer)} Laptop/Computer</div>
-                      <div>{mark(formState.avZoomStreamingSupport)} Zoom/Streaming Support</div>
-                      <div>{mark(formState.avOthersChecked)} Others</div>
-                    </div>
-                    <PrintField label="Others (specify)" value={formState.avOthersText} multiline />
-                  </section>
-                </div>
-
-                <div className="print-col">
-                  <section className="print-section form-section">
-                    <h2 className="print-section-title">4. ADDITIONAL SERVICES (IF Applicable)</h2>
-                    <div className="print-check-group radio-group">
-                      <div className="print-check-title">Catering Needed?</div>
-                      <div>{mark(formState.cateringNeeded === "yes")} Yes</div>
-                      <div>{mark(formState.cateringNeeded === "no")} No</div>
-                    </div>
-                    <PrintField label="If Yes, specify" value={formState.cateringSpecify} />
-                    <div className="print-check-group radio-group">
-                      <div className="print-check-title">Security</div>
-                      <div>{mark(formState.securityNeeded === "yes")} Yes</div>
-                      <div>{mark(formState.securityNeeded === "no")} No</div>
-                    </div>
-                  </section>
-
-                  <section className="print-section form-section">
-                    <h2 className="print-section-title">5. AUTHORIZATION & SUBMISSION</h2>
-                    <PrintField label="Requested By" value={formState.requestedBy} />
-                    <PrintField label="Date Of Request" value={formState.dateOfRequest} />
-                    <PrintField label="Signature / Full Name" value={formState.signature} />
-                    <PrintField label="Organizer" value={formState.organizer} />
-                    <PrintField label="Prayer/Technical" value={formState.prayerTechnical} />
-                    <PrintField label="Host" value={formState.host} />
-                    <PrintField label="Speaker" value={formState.speaker} />
-                    <PrintField label="Testimony 1)" value={formState.testimony1} />
-                    <PrintField label="Testimony 2)" value={formState.testimony2} />
-                  </section>
-
-                  <section className="print-section note-block">
-                    <h2 className="print-section-title">NOTE: For Speakers Attire:</h2>
-                    <ol className="print-note-list">
-                      <li>At least polo shirt</li>
-                      <li>If T-Shirt w/ round neck, use blazer/coat</li>
-                    </ol>
-                  </section>
-                </div>
-              </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {printRoot}
         </div>
       </div>
     </div>
   );
 }
+

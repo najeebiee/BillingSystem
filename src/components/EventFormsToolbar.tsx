@@ -28,6 +28,7 @@ export function EventFormsToolbar({ onSave, onLoad, onClear, onPrint }: EventFor
         <Printer className="w-4 h-4" />
         Print
       </FormActionButton>
+      <span className="print-hint no-print">Disable Headers and Footers in the print dialog for best results.</span>
     </div>
   );
 }

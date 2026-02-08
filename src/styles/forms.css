@@ -29,6 +29,13 @@
   flex-wrap: wrap;
 }
 
+.print-hint {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: #6b7280;
+  text-align: right;
+}
+
 .btn-pill:hover {
   background: rgba(0, 0, 0, 0.035);
   border-color: rgba(0, 0, 0, 0.3);
@@ -78,5 +85,9 @@
     font-size: 12px;
     padding: 6px 10px;
     min-height: 30px;
+  }
+
+  .print-hint {
+    text-align: left;
   }
 }

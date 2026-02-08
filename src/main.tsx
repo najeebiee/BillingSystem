@@ -7,9 +7,6 @@ import App from "./App.tsx";
 import "./index.css";
 import "./styles/print.css";
 import "./styles/forms.css";
-import { registerPrintFitListeners } from "./utils/printFit";
-
-registerPrintFitListeners();
 
 createRoot(document.getElementById("root")!).render(
   <AuthProvider>

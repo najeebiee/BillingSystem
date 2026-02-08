@@ -4,7 +4,6 @@ import { EventRequestForm } from "./EventRequestForm";
 import { EventFormsToolbar } from "./EventFormsToolbar";
 import { ProspectInvitationForm } from "./ProspectInvitationForm";
 import { SpecialCompanyEventsForm } from "./SpecialCompanyEventsForm";
-import { applyPrintFit } from "../utils/printFit";
 
 type EventFormTab = "special" | "request" | "prospect";
 
@@ -124,8 +123,7 @@ export function EventFormsHome() {
   };
 
   const handlePrint = () => {
-    applyPrintFit();
-    requestAnimationFrame(() => window.print());
+    window.print();
   };
 
   return (
@@ -154,6 +152,7 @@ export function EventFormsHome() {
                 embedded
                 showBackButton={false}
                 showToolbar={false}
+                showPrintRoot={activeTab === "special"}
                 onRegisterActions={(actions) => {
                   actionsRef.current.special = actions;
                 }}
@@ -164,6 +163,7 @@ export function EventFormsHome() {
                 embedded
                 showBackButton={false}
                 showToolbar={false}
+                showPrintRoot={activeTab === "request"}
                 onRegisterActions={(actions) => {
                   actionsRef.current.request = actions;
                 }}
@@ -174,6 +174,7 @@ export function EventFormsHome() {
                 embedded
                 showBackButton={false}
                 showToolbar={false}
+                showPrintRoot={activeTab === "prospect"}
                 onRegisterActions={(actions) => {
                   actionsRef.current.prospect = actions;
                 }}

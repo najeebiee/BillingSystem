@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, Printer, Save, Trash2 } from "lucide-react";
 import { FormActionButton } from "./ui/FormActionButton";
-import { applyPrintFit } from "../utils/printFit";
 import "./SpecialCompanyEventsForm.css";
 
 type StepDefinition = {
@@ -178,6 +178,7 @@ type SpecialCompanyEventsFormProps = {
   showBackButton?: boolean;
   embedded?: boolean;
   showToolbar?: boolean;
+  showPrintRoot?: boolean;
   onRegisterActions?: (actions: {
     getState: () => unknown;
     setState: (state: unknown) => void;
@@ -189,6 +190,7 @@ export function SpecialCompanyEventsForm({
   showBackButton = true,
   embedded = false,
   showToolbar = true,
+  showPrintRoot = true,
   onRegisterActions,
 }: SpecialCompanyEventsFormProps) {
   const navigate = useNavigate();
@@ -228,8 +230,7 @@ export function SpecialCompanyEventsForm({
   };
 
   const handlePrint = () => {
-    applyPrintFit();
-    requestAnimationFrame(() => window.print());
+    window.print();
   };
 
   useEffect(() => {
@@ -239,6 +240,71 @@ export function SpecialCompanyEventsForm({
       resetState: () => setFormState(initialState),
     });
   }, [onRegisterActions, formState]);
+
+  const printRoot =
+    showPrintRoot && typeof document !== "undefined"
+      ? createPortal(
+          <div id="print-root" className="print-only">
+            <div className="sce-print">
+              <div className="sce-print-title print-title">
+                <div>SPECIAL COMPANY EVENTS</div>
+                <div>(with speaker)</div>
+                <div>FLOW CHECKLIST:</div>
+              </div>
+
+              <div className="sce-print-fields">
+                <div className="sce-print-line print-line">
+                  <span className="sce-print-label print-label">Event Details:</span>
+                  <span className="sce-print-value print-value">{printText(formState.eventDetails)}</span>
+                </div>
+                <div className="sce-print-line print-line">
+                  <span className="sce-print-label print-label">Event Date:</span>
+                  <span className="sce-print-value print-value">{printText(formState.eventDate)}</span>
+                </div>
+                <div className="sce-print-line print-line">
+                  <span className="sce-print-label print-label">Location/Address:</span>
+                  <span className="sce-print-value print-value">{printText(formState.locationAddress)}</span>
+                </div>
+              </div>
+
+              <table className="sce-print-table print-table">
+                <thead>
+                  <tr>
+                    <th>Step</th>
+                    <th>Assigned Personal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {steps.map((step) => (
+                    <tr key={step.key}>
+                      <td>
+                        <span className="sce-print-check">[{mark(step.done)}]</span> {step.label}
+                      </td>
+                      <td>{printText(step.assigned)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="sce-print-footer">
+                <div className="sce-print-sign print-line">
+                  <span className="sce-print-label print-label">Prepared By:</span>
+                  <span className="sce-print-value print-value">
+                    {formatPerson(formState.preparedByName, formState.preparedByTitle)}
+                  </span>
+                </div>
+                <div className="sce-print-sign print-line">
+                  <span className="sce-print-label print-label">Checked By:</span>
+                  <span className="sce-print-value print-value">
+                    {formatPerson(formState.checkedByName, formState.checkedByTitle)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div className={embedded ? "sce-page" : "sce-page min-h-screen bg-gray-50"}>
@@ -273,6 +339,9 @@ export function SpecialCompanyEventsForm({
                   <Printer className="form-btn__icon" />
                   Print
                 </FormActionButton>
+                <span className="print-hint no-print">
+                  Disable Headers and Footers in the print dialog for best results.
+                </span>
               </div>
             </div>
           )}
@@ -376,68 +445,7 @@ export function SpecialCompanyEventsForm({
             </div>
           </div>
 
-          <div className="print-only">
-            <div className="print-fit-page">
-              <div className="print-root print-fullpage print-fit-content" data-print-fit>
-                <div className="sce-print">
-                  <div className="sce-print-title">
-                    <div>SPECIAL COMPANY EVENTS</div>
-                    <div>(with speaker)</div>
-                    <div>FLOW CHECKLIST:</div>
-                  </div>
-
-                  <div className="sce-print-fields">
-                    <div className="sce-print-line">
-                      <span className="sce-print-label">Event Details:</span>
-                      <span className="sce-print-value">{printText(formState.eventDetails)}</span>
-                    </div>
-                    <div className="sce-print-line">
-                      <span className="sce-print-label">Event Date:</span>
-                      <span className="sce-print-value">{printText(formState.eventDate)}</span>
-                    </div>
-                    <div className="sce-print-line">
-                      <span className="sce-print-label">Location/Address:</span>
-                      <span className="sce-print-value">{printText(formState.locationAddress)}</span>
-                    </div>
-                  </div>
-
-                  <table className="sce-print-table">
-                    <thead>
-                      <tr>
-                        <th>Step</th>
-                        <th>Assigned Personal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {steps.map((step) => (
-                        <tr key={step.key}>
-                          <td>
-                            <span className="sce-print-check">[{mark(step.done)}]</span> {step.label}
-                          </td>
-                          <td>{printText(step.assigned)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="sce-print-footer">
-                    <div className="sce-print-sign">
-                      <span className="sce-print-label">Prepared By:</span>
-                      <span className="sce-print-value">
-                        {formatPerson(formState.preparedByName, formState.preparedByTitle)}
-                      </span>
-                    </div>
-                    <div className="sce-print-sign">
-                      <span className="sce-print-label">Checked By:</span>
-                      <span className="sce-print-value">
-                        {formatPerson(formState.checkedByName, formState.checkedByTitle)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {printRoot}
         </div>
       </div>
     </div>
