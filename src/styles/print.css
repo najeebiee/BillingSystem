@@ -50,10 +50,15 @@
   .app-shell,
   .page,
   .content,
+  .container,
   .event-forms-page,
   .event-forms-shell,
   .erf-page,
   .erf-page-standalone {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: visible !important;
     height: auto !important;
     max-height: none !important;
@@ -66,8 +71,14 @@
   .py-8,
   .py-6,
   .px-6,
-  .px-4 {
+  .px-4,
+  .md\:px-6,
+  .md\:py-8,
+  .mx-auto,
+  .max-w-\[1440px\] {
     padding: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
   }
 
   .event-forms-shell {
@@ -76,22 +87,30 @@
   }
 
   .print-root {
-    font-size: 11.5px !important;
+    width: 194mm !important;
+    max-width: 194mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    position: static !important;
+    transform: none !important;
+    zoom: 1 !important;
+    font-size: 11.7px !important;
     line-height: 1.2 !important;
   }
 
   .print-root .erf-paper {
+    width: 100% !important;
     max-width: none !important;
     width: 100% !important;
     margin: 0 !important;
     border: 1px solid #9ca3af !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    padding: 14px !important;
+    padding: 12px !important;
   }
 
   .print-root .erf-top h1 {
-    font-size: 16px !important;
+    font-size: 15.5px !important;
     margin: 0 0 4px !important;
     letter-spacing: 0.4px !important;
     line-height: 1.1 !important;
@@ -110,7 +129,7 @@
 
   .print-root .erf-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 8px !important;
+    gap: 10px !important;
   }
 
   .print-root .erf-section {
@@ -118,7 +137,7 @@
   }
 
   .print-root .erf-section h2 {
-    font-size: 11.5px !important;
+    font-size: 11.2px !important;
     line-height: 1.15 !important;
     margin: 0 0 5px !important;
   }
@@ -131,7 +150,7 @@
   .print-root .erf-label,
   .print-root .erf-choice,
   .print-root .erf-choice-group legend {
-    font-size: 10px !important;
+    font-size: 9.8px !important;
     line-height: 1.15 !important;
   }
 
@@ -155,7 +174,7 @@
 
   .print-root .erf-lined-input,
   .print-root .erf-lined-textarea {
-    font-size: 10px !important;
+    font-size: 9.8px !important;
     line-height: 1.15 !important;
     padding: 2px 1px 4px !important;
     min-height: 18px !important;
@@ -197,5 +216,16 @@
   .print-root .erf-note-block li {
     font-size: 9.5px !important;
     margin-bottom: 2px !important;
+  }
+
+  .print-root .paper,
+  .print-root .form-paper,
+  .print-root .card {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 14px !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
   }
 }
