@@ -1,8 +1,8 @@
 /* Global print styles for all printable forms; primary target is Event Request (.print-root). */
 @media print {
   @page {
-    size: A4;
-    margin: 12mm;
+    size: A4 portrait;
+    margin: 10mm;
   }
 
   html,
@@ -10,6 +10,11 @@
     height: auto !important;
     overflow: visible !important;
     background: #ffffff !important;
+  }
+
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   body * {
@@ -22,9 +27,8 @@
   }
 
   .print-root {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+    position: static !important;
+    margin: 0 !important;
     width: 100% !important;
   }
 
@@ -40,6 +44,10 @@
   .overflow-hidden,
   .overflow-x-auto,
   .overflow-y-auto,
+  .layout,
+  .app-shell,
+  .page,
+  .content,
   .event-forms-page,
   .event-forms-shell,
   .erf-page,
@@ -52,6 +60,24 @@
     transform: none !important;
   }
 
+  .pt-16,
+  .py-8,
+  .py-6,
+  .px-6,
+  .px-4 {
+    padding: 0 !important;
+  }
+
+  .event-forms-shell {
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  .print-root {
+    font-size: 10.5px !important;
+    line-height: 1.15 !important;
+  }
+
   .print-root .erf-paper {
     max-width: none !important;
     width: 100% !important;
@@ -59,32 +85,107 @@
     border: 1px solid #9ca3af !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    padding: 16px 16px 12px !important;
+    padding: 10px !important;
   }
 
   .print-root .erf-top h1 {
-    font-size: 28px !important;
+    font-size: 14px !important;
+    margin: 0 0 2px !important;
+    letter-spacing: 0.4px !important;
+    line-height: 1.1 !important;
   }
 
   .print-root .erf-top p {
-    font-size: 9.5px !important;
+    font-size: 8px !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+  }
+
+  .print-root .erf-top {
+    padding: 4px 0 !important;
+    margin-bottom: 6px !important;
   }
 
   .print-root .erf-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 16px !important;
+    gap: 8px !important;
+  }
+
+  .print-root .erf-section {
+    margin-bottom: 6px !important;
+  }
+
+  .print-root .erf-section h2 {
+    font-size: 10.7px !important;
+    line-height: 1.15 !important;
+    margin: 0 0 4px !important;
+  }
+
+  .print-root .erf-field {
+    margin-bottom: 4px !important;
+    gap: 2px !important;
+  }
+
+  .print-root .erf-label,
+  .print-root .erf-choice,
+  .print-root .erf-choice-group legend {
+    font-size: 9px !important;
+    line-height: 1.12 !important;
+  }
+
+  .print-root .erf-choice-group {
+    margin: 0 0 4px !important;
+  }
+
+  .print-root .erf-yes-no-row,
+  .print-root .erf-av-list {
+    gap: 3px !important;
+    margin-bottom: 3px !important;
   }
 
   .print-root .erf-section,
-  .print-root .form-section {
+  .print-root .form-section,
+  .print-root .erf-choice-group,
+  .print-root .erf-note-block {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
 
   .print-root .erf-lined-input,
   .print-root .erf-lined-textarea {
-    font-size: 12px !important;
-    padding-top: 2px !important;
-    padding-bottom: 4px !important;
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+    padding: 2px 1px 3px !important;
+    min-height: 16px !important;
+  }
+
+  .print-root .erf-lined-textarea {
+    min-height: 32px !important;
+    max-height: 38px !important;
+  }
+
+  .print-root .erf-choice input[type="checkbox"],
+  .print-root .erf-choice input[type="radio"] {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  .print-root .erf-note-block {
+    margin-top: 6px !important;
+    padding-top: 4px !important;
+  }
+
+  .print-root .erf-note-block h3 {
+    font-size: 10px !important;
+    margin: 0 0 3px !important;
+  }
+
+  .print-root .erf-note-block ol {
+    padding-left: 14px !important;
+  }
+
+  .print-root .erf-note-block li {
+    font-size: 8.8px !important;
+    margin-bottom: 1px !important;
   }
 }
