@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Printer, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, Printer, Plus, Save, Trash2 } from "lucide-react";
 import { FormActionButton } from "./ui/FormActionButton";
+import "./ProspectInvitationForm.css";
 
 type ProspectRow = {
   leaderName: string;
@@ -12,7 +13,7 @@ type ProspectRow = {
 };
 
 const storageKey = "eventForms.prospectInvitation";
-const defaultRowCount = 30;
+const defaultRowCount = 20;
 
 const createEmptyRow = (): ProspectRow => ({
   leaderName: "",
@@ -47,11 +48,7 @@ const normalizeProspectRows = (value: unknown): ProspectRow[] => {
 };
 
 const hasRowContent = (row: ProspectRow) =>
-  row.leaderName.trim() ||
-  row.guestName.trim() ||
-  row.date1.trim() ||
-  row.date2.trim() ||
-  row.remarks.trim();
+  row.leaderName.trim() || row.guestName.trim() || row.date1.trim() || row.date2.trim() || row.remarks.trim();
 
 type ProspectInvitationFormProps = {
   showBackButton?: boolean;
@@ -73,17 +70,22 @@ export function ProspectInvitationForm({
   const navigate = useNavigate();
   const [rows, setRows] = useState<ProspectRow[]>(createInitialRows);
 
+  const printableRows = useMemo(() => {
+    const filled = rows.filter(hasRowContent);
+    if (filled.length > 0) return filled;
+    return Array.from({ length: 8 }, () => createEmptyRow());
+  }, [rows]);
+
   const updateRow = (index: number, key: keyof ProspectRow, value: string) => {
     setRows((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [key]: value };
-
-      if (index === next.length - 1 && hasRowContent(next[index])) {
-        next.push(createEmptyRow());
-      }
-
       return next;
     });
+  };
+
+  const handleAddRow = () => {
+    setRows((prev) => [...prev, createEmptyRow()]);
   };
 
   const handleSave = () => {
@@ -130,10 +132,7 @@ export function ProspectInvitationForm({
             <div className="form-toolbar no-print">
               {showBackButton ? (
                 <div className="form-toolbar__left">
-                  <FormActionButton
-                    onClick={() => navigate("/event-forms")}
-                    className="form-action-back"
-                  >
+                  <FormActionButton onClick={() => navigate("/event-forms")} className="form-action-back">
                     <ArrowLeft className="form-btn__icon" />
                     Back to Forms
                   </FormActionButton>
@@ -162,50 +161,97 @@ export function ProspectInvitationForm({
             </div>
           )}
 
-          <div className="prospect-paper prospect-print-area mx-auto">
-            <header className="prospect-header">PROSPECT INVITATION GUIDE</header>
+          <div className="screen-form no-print prospect-screen-form">
+            <header className="prospect-screen-head">
+              <h1>PROSPECT INVITATION GUIDE</h1>
+            </header>
 
-            <table className="prospect-table">
-              <thead>
-                <tr>
-                  <th>Leader&apos;s Name</th>
-                  <th>Name of Guest</th>
-                  <th>Call/P2P: Date 1</th>
-                  <th>Call/P2P: Date 2 (Follow-Up)</th>
-                  <th>Remarks</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, index) => (
-                  <tr key={index}>
-                    <td>
-                      <input
-                        value={row.leaderName}
-                        onChange={(e) => updateRow(index, "leaderName", e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        value={row.guestName}
-                        onChange={(e) => updateRow(index, "guestName", e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <input value={row.date1} onChange={(e) => updateRow(index, "date1", e.target.value)} />
-                    </td>
-                    <td>
-                      <input value={row.date2} onChange={(e) => updateRow(index, "date2", e.target.value)} />
-                    </td>
-                    <td>
-                      <input
-                        value={row.remarks}
-                        onChange={(e) => updateRow(index, "remarks", e.target.value)}
-                      />
-                    </td>
+            <div className="prospect-table-wrap">
+              <table className="prospect-screen-table">
+                <thead>
+                  <tr>
+                    <th>Leader&apos;s Name</th>
+                    <th>Name of Guest</th>
+                    <th>Call/P2P: Date 1</th>
+                    <th>Call/P2P: Date 2 (Follow-Up)</th>
+                    <th>Remarks</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row, index) => (
+                    <tr key={index}>
+                      <td>
+                        <input
+                          value={row.leaderName}
+                          onChange={(e) => updateRow(index, "leaderName", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          value={row.guestName}
+                          onChange={(e) => updateRow(index, "guestName", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="date"
+                          value={row.date1}
+                          onChange={(e) => updateRow(index, "date1", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="date"
+                          value={row.date2}
+                          onChange={(e) => updateRow(index, "date2", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input value={row.remarks} onChange={(e) => updateRow(index, "remarks", e.target.value)} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="prospect-row-actions">
+              <FormActionButton onClick={handleAddRow}>
+                <Plus className="form-btn__icon" />
+                Add Row
+              </FormActionButton>
+            </div>
+          </div>
+
+          <div className="print-only print-root prospect-print-only">
+            <div className="prospect-print-paper">
+              <header className="prospect-print-head">
+                <h1>PROSPECT INVITATION GUIDE</h1>
+              </header>
+
+              <table className="prospect-print-table form-section">
+                <thead>
+                  <tr>
+                    <th>Leader&apos;s Name</th>
+                    <th>Name of Guest</th>
+                    <th>Call/P2P: Date 1</th>
+                    <th>Call/P2P: Date 2 (Follow-Up)</th>
+                    <th>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {printableRows.map((row, index) => (
+                    <tr key={index}>
+                      <td>{row.leaderName || "\u00A0"}</td>
+                      <td>{row.guestName || "\u00A0"}</td>
+                      <td>{row.date1 || "\u00A0"}</td>
+                      <td>{row.date2 || "\u00A0"}</td>
+                      <td>{row.remarks || "\u00A0"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
