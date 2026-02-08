@@ -1,9 +1,64 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, Printer, Save, Trash2 } from "lucide-react";
 import { FormActionButton } from "./ui/FormActionButton";
 import { applyPrintFit } from "../utils/printFit";
 import "./SpecialCompanyEventsForm.css";
+
+type ChecklistRow = {
+  id: string;
+  step: string;
+  assigned: string;
+  isSpeaker?: boolean;
+};
+
+const checklistRows: ChecklistRow[] = [
+  { id: "event-request", step: "Event Request", assigned: "by (01)" },
+  { id: "review", step: "Review", assigned: "(Revs, Jake)" },
+  { id: "approval", step: "Approval", assigned: "(CEO)" },
+  { id: "assign-event-master", step: "Assign Event Master", assigned: "Point man for Event" },
+  {
+    id: "confirm-itinerary",
+    step: "Confirmation of itinerary of speakers/Hosts",
+    assigned: "(Jake, Event Master)",
+  },
+  { id: "adjustments", step: "Adjustments", assigned: "(if Any)(Jake)" },
+  { id: "draft-banner", step: "Draft Banner", assigned: "(Kyle, Jake)" },
+  {
+    id: "banner-approval",
+    step: "Banner approval and posting",
+    assigned: "(Revs). Feedback ug na post na",
+  },
+  {
+    id: "fund-allocation",
+    step: "Fund allocation request (Tickets, Hotel accommodation, Venue DP, PF, etc)",
+    assigned: "from 01 or (Revs)",
+  },
+  { id: "fund-approval", step: "Fund approval", assigned: "CEO, Release finance" },
+  {
+    id: "inform-feedback",
+    step: "Inform/Feedback final itinerary to speakers/ host, event master, 01, Pres",
+    assigned: "",
+  },
+  {
+    id: "assigned-point-person",
+    step: "Assigned Point Person (sundo, guide, check in, check out, until exit)",
+    assigned: "",
+  },
+  {
+    id: "monitor-arrival",
+    step: "Monitor arrival of speaker",
+    assigned: "(Revs, event master)",
+  },
+  {
+    id: "after-event-report",
+    step: "Submit After Event Report",
+    assigned: "(Event master, Jake/Revs)",
+  },
+  { id: "collect-photos", step: "Collect event photos", assigned: "(Jake)" },
+  { id: "post-event", step: "Post event in FB Page", assigned: "(CSA)" },
+  { id: "speaker", step: "Speaker", assigned: "", isSpeaker: true },
+];
 
 const storageKey = "eventForms.specialCompanyEvents";
 
@@ -11,29 +66,50 @@ type FormState = {
   eventDetails: string;
   eventDate: string;
   location: string;
+  speaker: string;
   preparedByName: string;
   checkedByName: string;
+  checks: Record<string, boolean>;
 };
+
+const createInitialChecks = () =>
+  checklistRows.reduce<Record<string, boolean>>((acc, row) => {
+    acc[row.id] = false;
+    return acc;
+  }, {});
 
 const initialState: FormState = {
   eventDetails: "",
   eventDate: "",
   location: "",
+  speaker: "",
   preparedByName: "",
   checkedByName: "",
+  checks: createInitialChecks(),
 };
 
 const normalizeSpecialCompanyEventsState = (value: unknown): FormState => {
   if (!value || typeof value !== "object") return initialState;
 
   const parsed = value as Partial<FormState>;
+  const parsedChecks =
+    parsed.checks && typeof parsed.checks === "object"
+      ? (parsed.checks as Record<string, unknown>)
+      : {};
+
+  const normalizedChecks = createInitialChecks();
+  for (const row of checklistRows) {
+    normalizedChecks[row.id] = Boolean(parsedChecks[row.id]);
+  }
 
   return {
     eventDetails: typeof parsed.eventDetails === "string" ? parsed.eventDetails : "",
     eventDate: typeof parsed.eventDate === "string" ? parsed.eventDate : "",
     location: typeof parsed.location === "string" ? parsed.location : "",
+    speaker: typeof parsed.speaker === "string" ? parsed.speaker : "",
     preparedByName: typeof parsed.preparedByName === "string" ? parsed.preparedByName : "",
     checkedByName: typeof parsed.checkedByName === "string" ? parsed.checkedByName : "",
+    checks: normalizedChecks,
   };
 };
 
@@ -49,6 +125,10 @@ type SpecialCompanyEventsFormProps = {
 };
 
 
+function mark(checked: boolean) {
+  return checked ? "\u2611" : "\u2610";
+}
+
 function printText(value: string) {
   return value.trim() || "\u00A0";
 }
@@ -61,6 +141,18 @@ export function SpecialCompanyEventsForm({
 }: SpecialCompanyEventsFormProps) {
   const navigate = useNavigate();
   const [formState, setFormState] = useState<FormState>(initialState);
+
+  const rows = useMemo(() => checklistRows, []);
+
+  const updateCheck = (id: string, value: boolean) => {
+    setFormState((prev) => ({
+      ...prev,
+      checks: {
+        ...prev.checks,
+        [id]: value,
+      },
+    }));
+  };
 
   const handleSave = () => {
     localStorage.setItem(storageKey, JSON.stringify(formState));
@@ -137,7 +229,7 @@ export function SpecialCompanyEventsForm({
 
           <div className="screen-form no-print">
             <div className="sce-screen-head">
-              <h1>SPECIAL COMPANY EVENTS</h1>
+              <h1>SPECIAL COMPANY EVENTS (with speaker) FLOW CHECKLIST</h1>
             </div>
 
             <div className="sce-top-grid">
@@ -167,6 +259,45 @@ export function SpecialCompanyEventsForm({
               </label>
             </div>
 
+            <div className="sce-table-wrap">
+              <table className="sce-table">
+                <thead>
+                  <tr>
+                    <th>Step</th>
+                    <th>Assigned Personal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.id}>
+                      <td>
+                        <label className="sce-step">
+                          <input
+                            type="checkbox"
+                            checked={formState.checks[row.id] || false}
+                            onChange={(event) => updateCheck(row.id, event.target.checked)}
+                          />
+                          <span>{row.step}</span>
+                        </label>
+                      </td>
+                      <td>
+                        {row.isSpeaker ? (
+                          <input
+                            type="text"
+                            value={formState.speaker}
+                            onChange={(event) => setFormState((prev) => ({ ...prev, speaker: event.target.value }))}
+                            className="sce-inline-input"
+                          />
+                        ) : (
+                          <span>{row.assigned}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
             <div className="sce-foot-grid">
               <label className="sce-field">
                 <span>Prepared by (Name)</span>
@@ -193,6 +324,8 @@ export function SpecialCompanyEventsForm({
                 <div className="sce-print-paper">
               <div className="sce-print-title">
                 <div>SPECIAL COMPANY EVENTS</div>
+                <div>(with speaker)</div>
+                <div>FLOW CHECKLIST</div>
               </div>
 
               <div className="sce-print-top">
@@ -209,6 +342,25 @@ export function SpecialCompanyEventsForm({
                   <span className="sce-print-value">{printText(formState.location)}</span>
                 </div>
               </div>
+
+              <table className="sce-print-table form-section">
+                <thead>
+                  <tr>
+                    <th>Step</th>
+                    <th>Assigned Personal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.id}>
+                      <td>
+                        <span className="sce-print-check">{mark(Boolean(formState.checks[row.id]))}</span> {row.step}
+                      </td>
+                      <td>{row.isSpeaker ? printText(formState.speaker) : printText(row.assigned)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
               <div className="sce-print-footer">
                 <div className="sce-print-line">
