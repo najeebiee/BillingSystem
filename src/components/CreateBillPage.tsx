@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Plus, X, Upload } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
+import { getUserDisplayName } from "../auth/userDisplayName";
 import { createBill, type ServiceError } from "../services/bills.service";
 import { createVendor, listVendors } from "../services/vendors.service";
 import type { PaymentMethod, PriorityLevel, Vendor } from "../types/billing";
@@ -29,6 +30,7 @@ export function CreateBillPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
+  const requesterName = getUserDisplayName(user);
   const navigate = useNavigate();
   const [breakdowns, setBreakdowns] = useState<PaymentBreakdown[]>([
     {
@@ -223,7 +225,7 @@ export function CreateBillPage() {
         status,
         remarks: reasonForPayment || null,
         total_amount: totalAmount,
-        created_by: user.id
+        created_by: requesterName
       },
       breakdowns: breakdowns.map((b) => ({
         payment_method: b.payment_method,

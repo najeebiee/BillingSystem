@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Plus, FileText } from "lucide-react";
+import { useAuth } from "../auth/AuthContext";
+import { getUserDisplayName } from "../auth/userDisplayName";
 import { listBills } from "../services/bills.service";
 import type { BillStatus } from "../types/billing";
 
@@ -29,6 +31,8 @@ export function BillsPage() {
   const [bills, setBills] = useState<BillRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { user } = useAuth();
+  const currentUserDisplayName = getUserDisplayName(user);
   const navigate = useNavigate();
 
   const tabs = ["All", "Draft", "Awaiting Approval", "Approved", "Paid", "Void"];
@@ -403,7 +407,7 @@ export function BillsPage() {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-900">
-                          {bill.created_by}
+                          {bill.created_by === user?.id ? currentUserDisplayName : bill.created_by}
                         </td>
                         <td className="px-4 py-4">
                           <button

@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { VoidBillModal } from "./VoidBillModal";
 import { ApproveRejectModal } from "./ApproveRejectModal";
 import { ChevronRight, Printer, Download, Edit2 } from "lucide-react";
+import { useAuth } from "../auth/AuthContext";
+import { getUserDisplayName } from "../auth/userDisplayName";
 import { getBillById, updateBillStatus } from "../services/bills.service";
 import type { BillDetails } from "../types/billing";
 import { buildReceiptHtml } from "../print/receiptTemplate";
@@ -11,6 +13,7 @@ import { printReceipt } from "../print/printReceipt";
 export function ViewBillPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [billDetails, setBillDetails] = useState<BillDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -223,6 +226,9 @@ export function ViewBillPage() {
 
   const totalAmount = breakdowns.reduce((sum, b) => sum + Number(b.amount || 0), 0);
   const resolvedTotalAmount = Number(bill?.total_amount ?? 0) > 0 ? Number(bill?.total_amount ?? 0) : totalAmount;
+  const currentUserDisplayName = getUserDisplayName(user);
+  const requestedByDisplay =
+    bill?.created_by === user?.id ? currentUserDisplayName : bill?.created_by || "-";
 
   const handlePrint = () => {
     if (!bill || !vendor) return;
@@ -232,7 +238,7 @@ export function ViewBillPage() {
       request_date: bill.request_date,
       status: bill.status,
       vendor_name: vendor.name,
-      requester_name: bill.created_by,
+      requester_name: requestedByDisplay,
       breakdowns: breakdowns.map((breakdown) => ({
         description: breakdown.description,
         amount: breakdown.amount,
@@ -486,7 +492,7 @@ export function ViewBillPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <div className="text-sm font-medium text-gray-500 mb-1">Requested By</div>
-                  <div className="text-base text-gray-900">{bill.created_by}</div>
+                  <div className="text-base text-gray-900">{requestedByDisplay}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium text-gray-500 mb-1">Submitted Date</div>

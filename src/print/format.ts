@@ -1,7 +1,7 @@
 export function formatMoneyPHP(value: number | string | null | undefined): string {
   const amount = Number(value ?? 0);
 
-  return `? ${Number.isFinite(amount) ? amount.toLocaleString("en-PH", {
+  return `PHP ${Number.isFinite(amount) ? amount.toLocaleString("en-PH", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }) : "0.00"}`;
