@@ -34,34 +34,45 @@ const PRESET_CONFIG: Record<PdfPagePreset, PresetConfig> = {
   }
 };
 
-function createSandbox(html: string, renderWidth: number): { container: HTMLDivElement; root: HTMLDivElement } {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
+async function createSandboxFrame(
+  html: string,
+  renderWidth: number
+): Promise<{ iframe: HTMLIFrameElement; root: HTMLElement }> {
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.position = "fixed";
+  iframe.style.left = "-100000px";
+  iframe.style.top = "0";
+  iframe.style.width = `${renderWidth}px`;
+  iframe.style.height = "1200px";
+  iframe.style.border = "0";
+  iframe.style.visibility = "hidden";
+  iframe.style.pointerEvents = "none";
+  document.body.appendChild(iframe);
 
-  const container = document.createElement("div");
-  container.style.position = "fixed";
-  container.style.left = "-100000px";
-  container.style.top = "0";
-  container.style.width = `${renderWidth}px`;
-  container.style.zIndex = "-1";
-  container.style.pointerEvents = "none";
-  container.style.background = "#fff";
+  await new Promise<void>((resolve) => {
+    iframe.onload = () => resolve();
+    const frameDoc = iframe.contentWindow?.document;
+    if (!frameDoc) {
+      resolve();
+      return;
+    }
+    frameDoc.open();
+    frameDoc.write(html);
+    frameDoc.close();
+  });
 
-  const root = document.createElement("div");
+  const frameDoc = iframe.contentWindow?.document;
+  const root = frameDoc?.body;
+  if (!frameDoc || !root) {
+    throw new Error("Failed to initialize PDF rendering frame.");
+  }
+
+  frameDoc.documentElement.style.width = `${renderWidth}px`;
   root.style.width = `${renderWidth}px`;
   root.style.background = "#fff";
 
-  const styleTag = document.createElement("style");
-  styleTag.textContent = Array.from(doc.querySelectorAll("style"))
-    .map((styleEl) => styleEl.textContent || "")
-    .join("\n");
-
-  root.innerHTML = doc.body.innerHTML;
-  container.appendChild(styleTag);
-  container.appendChild(root);
-  document.body.appendChild(container);
-
-  return { container, root };
+  return { iframe, root };
 }
 
 export async function exportHtmlToPdf({
@@ -70,7 +81,7 @@ export async function exportHtmlToPdf({
   preset: pagePreset
 }: ExportHtmlToPdfParams): Promise<void> {
   const config = PRESET_CONFIG[pagePreset];
-  const { container, root } = createSandbox(html, config.renderWidth);
+  const { iframe, root } = await createSandboxFrame(html, config.renderWidth);
 
   try {
     await new Promise((resolve) => setTimeout(resolve, 80));
@@ -124,8 +135,10 @@ export async function exportHtmlToPdf({
     pdf.addImage(imageData, "PNG", config.marginMm, config.marginMm, usableWidth, imageHeightMm);
     pdf.save(filename);
   } finally {
-    if (container.parentNode) {
-      container.parentNode.removeChild(container);
+    if (iframe.parentNode) {
+      iframe.parentNode.removeChild(iframe);
     }
+
+    document.querySelectorAll(".html2canvas-container").forEach((node) => node.remove());
   }
 }
