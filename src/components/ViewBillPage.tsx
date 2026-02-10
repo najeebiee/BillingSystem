@@ -7,9 +7,13 @@ import { useAuth } from "../auth/AuthContext";
 import { getUserDisplayName } from "../auth/userDisplayName";
 import { getBillById, updateBillStatus } from "../services/bills.service";
 import type { BillDetails } from "../types/billing";
-import { buildReceiptHtml } from "../print/receiptTemplate";
+import { buildReceiptHtml as buildPrintReceiptHtml } from "../print/receiptTemplate";
 import { printReceipt } from "../print/printReceipt";
-import { buildA4Html } from "../pdf/pdfTemplates";
+import {
+  buildA4Html,
+  buildReceiptHtml as buildReceiptPdfHtml,
+  type PdfTemplateData
+} from "../pdf/pdfTemplates";
 import { exportHtmlToPdf } from "../pdf/exportPdf";
 
 export function ViewBillPage() {
@@ -232,37 +236,10 @@ export function ViewBillPage() {
   const requestedByDisplay =
     bill?.created_by === user?.id ? currentUserDisplayName : bill?.created_by || "-";
 
-  const handlePrint = () => {
+  const buildPdfTemplateData = (): PdfTemplateData | null => {
     if (!bill || !vendor) return;
 
-    const receiptHtml = buildReceiptHtml(
-      {
-        reference_no: bill.reference_no,
-        request_date: bill.request_date,
-        status: bill.status,
-        vendor_name: vendor.name,
-        requester_name: requestedByDisplay,
-        breakdowns: breakdowns.map((breakdown) => ({
-          description: breakdown.description,
-          amount: breakdown.amount,
-          payment_method: breakdown.payment_method,
-          bank_name: breakdown.bank_name,
-          bank_account_name: breakdown.bank_account_name,
-          bank_account_no: breakdown.bank_account_no
-        })),
-        total_amount: resolvedTotalAmount,
-        remarks: bill.remarks
-      },
-      { paper: "80mm" }
-    );
-
-    printReceipt(receiptHtml);
-  };
-
-  const handleDownloadPdf = async () => {
-    if (!bill || !vendor) return;
-
-    const a4Html = buildA4Html({
+    return {
       reference_no: bill.reference_no,
       request_date: bill.request_date,
       status: bill.status,
@@ -282,9 +259,53 @@ export function ViewBillPage() {
       remarks: bill.remarks || "",
       attachments: [],
       company_name: "AccuCount"
-    });
+    };
+  };
 
-    await exportHtmlToPdf(a4Html, `PRF-${bill.reference_no}.pdf`, "A4");
+  const handlePrintReceipt = () => {
+    const templateData = buildPdfTemplateData();
+    if (!templateData) return;
+
+    const receiptHtml = buildPrintReceiptHtml(
+      {
+        reference_no: templateData.reference_no,
+        request_date: templateData.request_date,
+        status: templateData.status,
+        vendor_name: templateData.vendor_name,
+        requester_name: templateData.requester_name,
+        breakdowns: templateData.breakdowns,
+        total_amount: templateData.total_amount,
+        remarks: templateData.remarks,
+        company_name: templateData.company_name
+      },
+      { paper: "80mm" }
+    );
+
+    printReceipt(receiptHtml);
+  };
+
+  const handleDownloadA4Pdf = async () => {
+    const templateData = buildPdfTemplateData();
+    if (!templateData) return;
+
+    const a4Html = buildA4Html(templateData);
+    await exportHtmlToPdf({
+      html: a4Html,
+      filename: `PRF-${templateData.reference_no}-A4.pdf`,
+      preset: "A4"
+    });
+  };
+
+  const handleDownloadReceiptPdf = async () => {
+    const templateData = buildPdfTemplateData();
+    if (!templateData) return;
+
+    const receiptHtml = buildReceiptPdfHtml(templateData, { paper: "80mm" });
+    await exportHtmlToPdf({
+      html: receiptHtml,
+      filename: `PRF-${templateData.reference_no}-RECEIPT-80mm.pdf`,
+      preset: "RECEIPT_80"
+    });
   };
 
   if (isLoading) {
@@ -347,22 +368,33 @@ export function ViewBillPage() {
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
               <button
-                onClick={handlePrint}
+                onClick={handlePrintReceipt}
                 disabled={!billDetails}
                 className="p-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-                title="Print"
+                title="Print Receipt"
               >
                 <Printer className="w-5 h-5" />
               </button>
               <button
-                onClick={handleDownloadPdf}
+                onClick={handleDownloadA4Pdf}
                 disabled={!billDetails}
                 className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
-                title="Download PDF"
+                title="Download A4 PDF"
               >
                 <span className="inline-flex items-center gap-2">
                   <Download className="w-4 h-4" />
-                  Download PDF
+                  Download A4 PDF
+                </span>
+              </button>
+              <button
+                onClick={handleDownloadReceiptPdf}
+                disabled={!billDetails}
+                className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+                title="Download Receipt PDF"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Download Receipt PDF
                 </span>
               </button>
               {bill.status !== "paid" && bill.status !== "void" && (

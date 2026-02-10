@@ -2,6 +2,11 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 
 export type PdfPagePreset = "A4" | "RECEIPT_80" | "RECEIPT_58";
+export interface ExportHtmlToPdfParams {
+  html: string;
+  filename: string;
+  preset: PdfPagePreset;
+}
 
 interface PresetConfig {
   renderWidth: number;
@@ -59,11 +64,11 @@ function createSandbox(html: string, renderWidth: number): { container: HTMLDivE
   return { container, root };
 }
 
-export async function exportHtmlToPdf(
-  html: string,
-  filename: string,
-  pagePreset: PdfPagePreset
-): Promise<void> {
+export async function exportHtmlToPdf({
+  html,
+  filename,
+  preset: pagePreset
+}: ExportHtmlToPdfParams): Promise<void> {
   const config = PRESET_CONFIG[pagePreset];
   const { container, root } = createSandbox(html, config.renderWidth);
 
