@@ -1,0 +1,153 @@
+.btn-pill {
+  appearance: none;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.22);
+  color: #111827;
+  border-radius: 9999px;
+  padding: 5px 11px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  white-space: nowrap;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.form-actions-bottom {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.print-hint {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: #6b7280;
+  text-align: right;
+}
+
+.recent-prints {
+  margin-top: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.recent-prints__header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.recent-prints__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.recent-prints__table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+
+.recent-prints__table th,
+.recent-prints__table td {
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: #1f2937;
+  vertical-align: middle;
+}
+
+.recent-prints__table th {
+  font-weight: 700;
+  background: #f8fafc;
+}
+
+.recent-prints__empty {
+  text-align: center;
+  color: #6b7280;
+  padding: 12px 10px;
+}
+
+.btn-pill:hover {
+  background: rgba(0, 0, 0, 0.035);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.btn-pill:active {
+  transform: translateY(0.5px);
+}
+
+.btn-pill:focus {
+  outline: none;
+}
+
+.btn-pill:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.25);
+  outline-offset: 2px;
+}
+
+.btn-pill:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-pill {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #f3f4f6;
+  }
+
+  .btn-pill:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+
+  .btn-pill:focus-visible {
+    outline-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+@media (max-width: 520px) {
+  .form-actions {
+    justify-content: flex-start;
+  }
+
+  .form-actions-bottom {
+    justify-content: flex-start;
+  }
+
+  .btn-pill {
+    font-size: 12px;
+    padding: 6px 10px;
+    min-height: 30px;
+  }
+
+  .print-hint {
+    text-align: left;
+  }
+}

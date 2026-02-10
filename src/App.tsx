@@ -8,6 +8,10 @@ import { BillsPage } from './components/BillsPage';
 import { CreateBillPage } from './components/CreateBillPage';
 import { ViewBillPage } from './components/ViewBillPage';
 import { EditBillPage } from './components/EditBillPage';
+import { EventFormsHome } from './components/EventFormsHome';
+import { EventRequestForm } from './components/EventRequestForm';
+import { ProspectInvitationForm } from './components/ProspectInvitationForm';
+import { SpecialCompanyEventsForm } from './components/SpecialCompanyEventsForm';
 
 export default function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -47,6 +51,10 @@ export default function App() {
         <Route path="/bills/new" element={<CreateBillPage />} />
         <Route path="/bills/:id" element={<ViewBillPage />} />
         <Route path="/bills/:id/edit" element={<EditBillPage />} />
+        <Route path="/event-forms" element={<EventFormsHome />} />
+        <Route path="/forms/event-request" element={<EventRequestForm />} />
+        <Route path="/forms/prospect-invitation" element={<ProspectInvitationForm />} />
+        <Route path="/forms/special-company-events" element={<SpecialCompanyEventsForm />} />
         </Route>
       </Route>
 

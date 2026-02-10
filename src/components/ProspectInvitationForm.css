@@ -1,0 +1,110 @@
+.prospect-page {
+  width: 100%;
+}
+
+.prospect-screen-form {
+  display: block;
+}
+
+.prospect-print-only {
+  display: none;
+}
+
+.prospect-screen-head {
+  margin-bottom: 12px;
+}
+
+.prospect-screen-head h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+  color: #111827;
+}
+
+.prospect-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.prospect-screen-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+}
+
+.prospect-screen-table th,
+.prospect-screen-table td {
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: middle;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  color: #1f2937;
+}
+
+.prospect-screen-table thead th {
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+.prospect-screen-table td input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  line-height: 1.2;
+  color: #111827;
+  background: #ffffff;
+}
+
+.prospect-row-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.prospect-print-paper {
+  width: 100%;
+  border: 1px solid #111827;
+  background: #ffffff;
+  padding: 8px;
+}
+
+.prospect-print-head {
+  text-align: center;
+  border-top: 1px solid #111827;
+  border-bottom: 1px solid #111827;
+  margin-bottom: 6px;
+  padding: 4px 0;
+}
+
+.prospect-print-head h1 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.1;
+  letter-spacing: 0.4px;
+}
+
+.prospect-print-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.prospect-print-table th,
+.prospect-print-table td {
+  border: 1px solid #111827;
+  text-align: left;
+  vertical-align: top;
+  padding: 3px 4px;
+  font-size: 10px;
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+.prospect-print-table th {
+  font-weight: 700;
+  font-size: 10.5px;
+}

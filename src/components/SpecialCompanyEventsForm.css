@@ -1,0 +1,216 @@
+.sce-page {
+  width: 100%;
+}
+
+.sce-shell {
+  width: 100%;
+}
+
+.screen-form {
+  display: block;
+}
+
+.print-only {
+  display: none;
+}
+
+.sce-screen-head {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.sce-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #111827;
+}
+
+.sce-title-sub {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-top: 2px;
+}
+
+.sce-top-fields {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sce-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sce-field span {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.sce-field input,
+.sce-assigned-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  padding: 8px 10px;
+  font-size: 14px;
+  line-height: 1.35;
+  outline: 0;
+}
+
+.sce-checklist {
+  display: grid;
+  gap: 6px;
+}
+
+.sce-checklist-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 6px;
+}
+
+.sce-checklist-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sce-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #111827;
+}
+
+.sce-step input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  flex: 0 0 auto;
+}
+
+.sce-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.sce-footer-block {
+  display: grid;
+  gap: 10px;
+}
+
+
+.sce-print {
+  width: 100%;
+}
+
+.sce-print-title {
+  text-align: center;
+  margin-bottom: 6px;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.sce-print-fields {
+  margin-bottom: 8px;
+}
+
+.sce-print-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border-bottom: 1px solid #111827;
+  min-height: 14px;
+  margin-bottom: 3px;
+  padding-bottom: 1px;
+}
+
+.sce-print-label {
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sce-print-value {
+  font-size: 10px;
+  line-height: 1.15;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sce-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+.sce-print-table th,
+.sce-print-table td {
+  border: 1px solid #111827;
+  padding: 3px 4px;
+  text-align: left;
+  vertical-align: top;
+  font-size: 10.5px;
+  line-height: 1.2;
+}
+
+.sce-print-table th {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sce-print-check {
+  font-family: "Courier New", monospace;
+  margin-right: 4px;
+}
+
+.sce-print-footer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.sce-print-sign {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border-bottom: 1px solid #111827;
+  min-height: 14px;
+  padding-bottom: 1px;
+}
+
+@media (max-width: 720px) {
+  .sce-checklist-header {
+    display: none;
+  }
+
+  .sce-checklist-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sce-assigned-input {
+    margin-left: 24px;
+  }
+
+  .sce-footer-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

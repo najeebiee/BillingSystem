@@ -1,0 +1,137 @@
+/* Global print rules for all event forms. */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  body * {
+    display: none !important;
+  }
+
+  #print-root,
+  #print-root * {
+    display: block !important;
+  }
+
+  #print-root {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #print-root table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    display: table !important;
+  }
+
+  #print-root thead {
+    display: table-header-group !important;
+  }
+
+  #print-root tbody {
+    display: table-row-group !important;
+  }
+
+  #print-root tr {
+    display: table-row !important;
+  }
+
+  #print-root th,
+  #print-root td {
+    display: table-cell !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  #print-root .paper,
+  #print-root .card,
+  #print-root .sheet,
+  #print-root .outer-box,
+  #print-root .page-card,
+  #print-root .form-paper,
+  #print-root .print-paper {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  #print-root .print-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    margin: 0 0 6px;
+  }
+
+  #print-root .print-note {
+    font-size: 10px;
+    color: #4b5563;
+    text-align: center;
+    margin: 0 0 6px;
+  }
+
+  #print-root .print-section {
+    margin-bottom: 6px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #print-root .print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #print-root .print-line {
+    display: flex !important;
+    align-items: baseline;
+    gap: 6px;
+    border-bottom: 1px solid #111;
+    min-height: 14px;
+    padding-bottom: 1px;
+  }
+
+  #print-root .print-label {
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  #print-root .print-value {
+    font-size: 10.5px;
+    line-height: 1.2;
+  }
+
+  #print-root .print-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #print-root .print-table th,
+  #print-root .print-table td {
+    border: 1px solid #111;
+    padding: 3px 4px;
+    font-size: 10.5px;
+    line-height: 1.2;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

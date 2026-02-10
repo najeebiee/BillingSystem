@@ -9,14 +9,17 @@ export function Navigation() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const isBillsRoute = location.pathname.startsWith('/bills');
+  const isEventFormsRoute =
+    location.pathname.startsWith('/event-forms') ||
+    location.pathname.startsWith('/forms');
 
   return (
-    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
+    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50 print:hidden">
       <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
         {/* Left: App Name & Navigation */}
         <div className="flex items-center gap-8">
           <div className="text-xl font-semibold text-gray-900">AccuCount</div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <Link
               to="/bills"
               className={`px-4 py-2 rounded-md transition-colors ${
@@ -26,6 +29,16 @@ export function Navigation() {
               }`}
             >
               Bills
+            </Link>
+            <Link
+              to="/event-forms"
+              className={`px-4 py-2 rounded-md transition-colors ${
+                isEventFormsRoute
+                  ? 'bg-blue-50 text-blue-600 font-medium'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              Event Forms
             </Link>
           </div>
         </div>

@@ -1,0 +1,306 @@
+.erf-page {
+  width: 100%;
+}
+
+.erf-page-standalone {
+  min-height: 100vh;
+  background: #f5f6f7;
+}
+
+.erf-shell {
+  width: 100%;
+}
+
+.erf-header-actions {
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.screen-form {
+  display: block;
+}
+
+.print-only {
+  display: none;
+}
+
+.erf-screen-top {
+  margin-bottom: 14px;
+}
+
+.erf-screen-top h1 {
+  margin: 0;
+  font-size: 26px;
+  color: #111827;
+}
+
+.erf-screen-top p {
+  margin: 4px 0 0;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.erf-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.erf-column {
+  min-width: 0;
+}
+
+.erf-section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.erf-section h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.erf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.erf-label {
+  font-size: 13px;
+  line-height: 1.3;
+  color: #374151;
+  font-weight: 500;
+}
+
+.erf-required {
+  margin-left: 4px;
+  color: #b91c1c;
+}
+
+.erf-input,
+.erf-textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  padding: 8px 10px;
+  font-size: 14px;
+  line-height: 1.35;
+  outline: 0;
+}
+
+.erf-textarea,
+.textarea-auto-grow {
+  resize: none;
+  overflow-y: hidden;
+  min-height: 54px;
+  max-height: 220px;
+}
+
+.erf-input:focus,
+.erf-textarea:focus {
+  border-color: #9ca3af;
+}
+
+.erf-inline-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.erf-choice-group {
+  border: 0;
+  margin: 0 0 10px;
+  padding: 0;
+}
+
+.erf-choice-group legend {
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.3;
+  color: #374151;
+  font-weight: 500;
+}
+
+.erf-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #1f2937;
+  margin-bottom: 5px;
+}
+
+.erf-choice input[type="checkbox"],
+.erf-choice input[type="radio"] {
+  margin: 0;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
+.erf-yes-no-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.erf-av-list {
+  margin-bottom: 6px;
+}
+
+.erf-note-block {
+  margin-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 8px;
+}
+
+.erf-note-block h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.erf-note-block ol {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.erf-note-block li {
+  margin-bottom: 3px;
+  color: #374151;
+  font-size: 13px;
+}
+
+.erf-error {
+  color: #b91c1c;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.print-paper {
+  width: 100%;
+  border: 1px solid #111827;
+  padding: 8px;
+  background: #ffffff;
+}
+
+.print-header {
+  text-align: center;
+  border-top: 1px solid #111827;
+  border-bottom: 1px solid #111827;
+  padding: 4px 0;
+  margin-bottom: 6px;
+}
+
+.print-title {
+  margin: 0 0 3px;
+  font-size: 14px;
+  line-height: 1.1;
+  letter-spacing: 0.5px;
+}
+
+.print-note {
+  margin: 0;
+  font-size: 10.8px;
+  line-height: 1.2;
+}
+
+.print-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.print-col {
+  min-width: 0;
+}
+
+.print-section {
+  margin-bottom: 7px;
+}
+
+.print-section-title {
+  margin: 0 0 3px;
+  font-size: 11.4px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.print-field {
+  margin-bottom: 2px;
+}
+
+.print-label {
+  font-size: 11px;
+  line-height: 1.15;
+  margin-bottom: 1px;
+}
+
+.print-line {
+  border-bottom: 1px solid #111827;
+  min-height: 14px;
+  padding-bottom: 1px;
+}
+
+.print-line-multiline {
+  min-height: 20px;
+  white-space: pre-wrap;
+}
+
+.print-value {
+  font-size: 11px;
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+.print-inline-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.print-check-group {
+  margin-bottom: 4px;
+  font-size: 11px;
+  line-height: 1.15;
+}
+
+.print-check-title {
+  font-weight: 600;
+  margin-bottom: 1px;
+}
+
+.print-note-list {
+  margin: 0;
+  padding-left: 15px;
+  font-size: 10.6px;
+  line-height: 1.15;
+}
+
+@media (max-width: 767px) {
+  .erf-columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .erf-inline-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+}
