@@ -9,6 +9,8 @@ import { getBillById, updateBillStatus } from "../services/bills.service";
 import type { BillDetails } from "../types/billing";
 import { buildReceiptHtml } from "../print/receiptTemplate";
 import { printReceipt } from "../print/printReceipt";
+import { buildA4Html } from "../pdf/pdfTemplates";
+import { exportHtmlToPdf } from "../pdf/exportPdf";
 
 export function ViewBillPage() {
   const { id } = useParams();
@@ -233,12 +235,41 @@ export function ViewBillPage() {
   const handlePrint = () => {
     if (!bill || !vendor) return;
 
-    const receiptHtml = buildReceiptHtml({
+    const receiptHtml = buildReceiptHtml(
+      {
+        reference_no: bill.reference_no,
+        request_date: bill.request_date,
+        status: bill.status,
+        vendor_name: vendor.name,
+        requester_name: requestedByDisplay,
+        breakdowns: breakdowns.map((breakdown) => ({
+          description: breakdown.description,
+          amount: breakdown.amount,
+          payment_method: breakdown.payment_method,
+          bank_name: breakdown.bank_name,
+          bank_account_name: breakdown.bank_account_name,
+          bank_account_no: breakdown.bank_account_no
+        })),
+        total_amount: resolvedTotalAmount,
+        remarks: bill.remarks
+      },
+      { paper: "80mm" }
+    );
+
+    printReceipt(receiptHtml);
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!bill || !vendor) return;
+
+    const a4Html = buildA4Html({
       reference_no: bill.reference_no,
       request_date: bill.request_date,
       status: bill.status,
       vendor_name: vendor.name,
       requester_name: requestedByDisplay,
+      checked_by: "-",
+      approved_by: "-",
       breakdowns: breakdowns.map((breakdown) => ({
         description: breakdown.description,
         amount: breakdown.amount,
@@ -248,10 +279,12 @@ export function ViewBillPage() {
         bank_account_no: breakdown.bank_account_no
       })),
       total_amount: resolvedTotalAmount,
-      remarks: bill.remarks
+      remarks: bill.remarks || "",
+      attachments: [],
+      company_name: "AccuCount"
     });
 
-    printReceipt(receiptHtml);
+    await exportHtmlToPdf(a4Html, `PRF-${bill.reference_no}.pdf`, "A4");
   };
 
   if (isLoading) {
@@ -322,11 +355,15 @@ export function ViewBillPage() {
                 <Printer className="w-5 h-5" />
               </button>
               <button
-                onClick={handlePrint}
-                className="p-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                onClick={handleDownloadPdf}
+                disabled={!billDetails}
+                className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
                 title="Download PDF"
               >
-                <Download className="w-5 h-5" />
+                <span className="inline-flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </span>
               </button>
               {bill.status !== "paid" && bill.status !== "void" && (
                 <button

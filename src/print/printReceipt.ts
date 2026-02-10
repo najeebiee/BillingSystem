@@ -2,13 +2,14 @@ export function printReceipt(html: string): void {
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
   iframe.style.position = "fixed";
-  iframe.style.right = "0";
-  iframe.style.bottom = "0";
+  iframe.style.left = "-9999px";
+  iframe.style.top = "0";
   iframe.style.width = "0";
   iframe.style.height = "0";
   iframe.style.border = "0";
 
   document.body.appendChild(iframe);
+  let didPrint = false;
 
   const cleanup = () => {
     if (iframe.parentNode) {
@@ -17,11 +18,18 @@ export function printReceipt(html: string): void {
   };
 
   const runPrint = () => {
+    if (didPrint) return;
+    didPrint = true;
+
     const printWindow = iframe.contentWindow;
     if (!printWindow) {
       cleanup();
       return;
     }
+
+    printWindow.onafterprint = () => {
+      setTimeout(cleanup, 150);
+    };
 
     printWindow.focus();
     printWindow.print();
@@ -40,8 +48,8 @@ export function printReceipt(html: string): void {
   printDocument.close();
 
   iframe.onload = () => {
-    setTimeout(runPrint, 0);
+    setTimeout(runPrint, 20);
   };
 
-  setTimeout(runPrint, 100);
+  setTimeout(runPrint, 300);
 }

@@ -1,5 +1,7 @@
 import { formatDate, formatMoneyPHP, labelPaymentMethod } from "./format";
 
+export type ReceiptPaperWidth = "80mm" | "58mm";
+
 interface ReceiptBreakdown {
   description?: string | null;
   amount: number | string;
@@ -20,6 +22,39 @@ interface BuildReceiptHtmlParams {
   remarks?: string | null;
   company_name?: string;
 }
+
+interface BuildReceiptHtmlOptions {
+  paper?: ReceiptPaperWidth;
+  showSubtotal?: boolean;
+}
+
+interface PaperConfig {
+  pageSize: ReceiptPaperWidth;
+  pageMargin: string;
+  bodyWidth: string;
+  labelWidth: string;
+  amountMinWidth: string;
+  baseFont: string;
+}
+
+const PAPER_CONFIG: Record<ReceiptPaperWidth, PaperConfig> = {
+  "80mm": {
+    pageSize: "80mm",
+    pageMargin: "4mm",
+    bodyWidth: "72mm",
+    labelWidth: "24mm",
+    amountMinWidth: "26mm",
+    baseFont: "11px"
+  },
+  "58mm": {
+    pageSize: "58mm",
+    pageMargin: "3mm",
+    bodyWidth: "50mm",
+    labelWidth: "17mm",
+    amountMinWidth: "19mm",
+    baseFont: "10px"
+  }
+};
 
 function escapeHtml(value: string): string {
   return value
@@ -47,7 +82,15 @@ function labelStatus(status?: string | null): string {
   }
 }
 
-export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
+function toAmount(value: number | string | null | undefined): number {
+  const amount = Number(value ?? 0);
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+export function buildReceiptHtml(
+  params: BuildReceiptHtmlParams,
+  options: BuildReceiptHtmlOptions = {}
+): string {
   const {
     reference_no,
     request_date,
@@ -60,6 +103,9 @@ export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
     company_name = "AccuCount"
   } = params;
 
+  const paper = options.paper ?? "80mm";
+  const paperConfig = PAPER_CONFIG[paper];
+
   const printedAt = new Intl.DateTimeFormat("en-PH", {
     month: "short",
     day: "2-digit",
@@ -68,35 +114,48 @@ export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
     minute: "2-digit"
   }).format(new Date());
 
+  const subtotalAmount = breakdowns.reduce((sum, item) => sum + toAmount(item.amount), 0);
+  const totalAmount = toAmount(total_amount);
+  const shouldShowSubtotal =
+    options.showSubtotal === undefined
+      ? Math.abs(subtotalAmount - totalAmount) > 0.009
+      : options.showSubtotal;
+
   const itemsHtml = breakdowns
     .map((item) => {
       const paymentMethod = labelPaymentMethod(item.payment_method);
       const bankInfo =
         item.payment_method === "bank_transfer"
           ? `<div class="bank-info">
-              <div><span class="label">Bank:</span> ${escapeHtml(item.bank_name || "-")}</div>
-              <div><span class="label">Account:</span> ${escapeHtml(item.bank_account_name || "-")}</div>
-              <div><span class="label">No:</span> ${escapeHtml(item.bank_account_no || "-")}</div>
+              <div><span class="bank-label">Bank:</span> ${escapeHtml(item.bank_name || "-")}</div>
+              <div><span class="bank-label">Account:</span> ${escapeHtml(item.bank_account_name || "-")}</div>
+              <div><span class="bank-label">No:</span> ${escapeHtml(item.bank_account_no || "-")}</div>
             </div>`
           : "";
 
       return `<div class="item">
-          <div class="item-row">
-            <div class="item-meta">
-              <div class="description">${escapeHtml(item.description || "-")}</div>
-              <div class="method">${escapeHtml(paymentMethod)}</div>
-            </div>
-            <div class="amount">${escapeHtml(formatMoneyPHP(item.amount))}</div>
+        <div class="item-main">
+          <div class="item-left">
+            <div class="description">${escapeHtml(item.description || "-")}</div>
+            <div class="method">${escapeHtml(paymentMethod)}</div>
           </div>
-          ${bankInfo}
-        </div>`;
+          <div class="amount">${escapeHtml(formatMoneyPHP(item.amount))}</div>
+        </div>
+        ${bankInfo}
+      </div>`;
     })
     .join("");
 
   const remarksHtml = remarks
     ? `<div class="divider"></div>
-      <div class="section-title">Remarks</div>
+      <div class="section-title">REMARKS</div>
       <div class="remarks">${escapeHtml(remarks)}</div>`
+    : "";
+
+  const subtotalHtml = shouldShowSubtotal
+    ? `<div class="total-row"><span>SUBTOTAL</span><span class="num">${escapeHtml(
+        formatMoneyPHP(subtotalAmount)
+      )}</span></div>`
     : "";
 
   return `<!doctype html>
@@ -111,22 +170,28 @@ export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
     }
 
     @page {
-      size: 80mm auto;
-      margin: 6mm;
+      size: ${paperConfig.pageSize} auto;
+      margin: ${paperConfig.pageMargin};
     }
 
     * {
       box-sizing: border-box;
     }
 
+    html,
     body {
       margin: 0;
-      width: 68mm;
-      font-family: ui-sans-serif, system-ui, Arial, sans-serif;
-      font-size: 11px;
-      line-height: 1.35;
-      color: #000;
+      padding: 0;
       background: #fff;
+      color: #000;
+    }
+
+    body {
+      width: ${paperConfig.bodyWidth};
+      font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      font-size: ${paperConfig.baseFont};
+      line-height: 1.35;
+      font-variant-numeric: tabular-nums;
     }
 
     .receipt {
@@ -138,52 +203,56 @@ export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
     }
 
     .company {
-      font-size: 14px;
+      font-size: 1.22em;
       font-weight: 700;
-      letter-spacing: 0.2px;
       margin-bottom: 2px;
+      letter-spacing: 0.2px;
     }
 
     .title {
-      font-size: 12px;
+      font-size: 1.02em;
       font-weight: 700;
-      margin-bottom: 8px;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+      letter-spacing: 0.35px;
     }
 
     .divider {
       border-top: 1px dashed #000;
-      margin: 8px 0;
+      margin: 7px 0;
     }
 
     .kv {
       display: grid;
-      grid-template-columns: 1fr;
       row-gap: 2px;
     }
 
-    .line {
+    .kv-row {
       display: flex;
       justify-content: space-between;
-      gap: 8px;
       align-items: flex-start;
+      gap: 6px;
     }
 
-    .line .label {
-      font-weight: 600;
-      min-width: 80px;
+    .kv-label {
+      width: ${paperConfig.labelWidth};
       flex-shrink: 0;
+      font-weight: 600;
     }
 
-    .line .value {
+    .kv-value {
       text-align: right;
       word-break: break-word;
       overflow-wrap: anywhere;
+      min-width: 0;
+      flex: 1;
     }
 
     .section-title {
       font-weight: 700;
-      margin-bottom: 6px;
-      letter-spacing: 0.2px;
+      margin-bottom: 5px;
+      letter-spacing: 0.25px;
+      text-transform: uppercase;
     }
 
     .item {
@@ -192,14 +261,14 @@ export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
       margin-bottom: 8px;
     }
 
-    .item-row {
+    .item-main {
       display: flex;
       justify-content: space-between;
-      gap: 8px;
       align-items: flex-start;
+      gap: 8px;
     }
 
-    .item-meta {
+    .item-left {
       min-width: 0;
       flex: 1;
     }
@@ -211,39 +280,57 @@ export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
     }
 
     .method {
-      font-size: 10px;
       margin-top: 1px;
-      color: #111;
+      font-size: 0.88em;
     }
 
     .amount {
-      min-width: 80px;
+      min-width: ${paperConfig.amountMinWidth};
       text-align: right;
-      font-weight: 600;
       white-space: nowrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
     }
 
     .bank-info {
       margin-top: 4px;
+      margin-left: 6px;
       padding-left: 6px;
       border-left: 1px dashed #000;
-      font-size: 10px;
-      display: grid;
-      row-gap: 1px;
+      font-size: 0.9em;
       word-break: break-word;
       overflow-wrap: anywhere;
+      display: grid;
+      row-gap: 1px;
+    }
+
+    .bank-label {
+      font-weight: 600;
     }
 
     .totals {
-      margin-top: 2px;
+      display: grid;
+      row-gap: 3px;
     }
 
     .total-row {
       display: flex;
       justify-content: space-between;
       gap: 8px;
+      align-items: baseline;
+    }
+
+    .total-row .num {
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .total-row.total {
+      font-size: 1.16em;
       font-weight: 700;
-      font-size: 12px;
     }
 
     .remarks {
@@ -253,17 +340,9 @@ export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
     }
 
     .footer {
-      margin-top: 10px;
-      font-size: 10px;
+      margin-top: 9px;
       text-align: center;
-    }
-
-    @media print {
-      html,
-      body {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
+      font-size: 0.9em;
     }
 
     @media print and (min-width: 210mm) {
@@ -276,14 +355,24 @@ export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
 <body>
   <div class="receipt">
     <div class="center company">${escapeHtml(company_name)}</div>
-    <div class="center title">PAYMENT REQUEST</div>
+    <div class="center title">Payment Request</div>
 
     <div class="kv">
-      <div class="line"><span class="label">PRF No</span><span class="value">${escapeHtml(reference_no || "-")}</span></div>
-      <div class="line"><span class="label">Date</span><span class="value">${escapeHtml(formatDate(request_date))}</span></div>
-      <div class="line"><span class="label">Status</span><span class="value">${escapeHtml(labelStatus(status))}</span></div>
-      <div class="line"><span class="label">Vendor/Payee</span><span class="value">${escapeHtml(vendor_name || "-")}</span></div>
-      <div class="line"><span class="label">Requestor</span><span class="value">${escapeHtml(requester_name || "-")}</span></div>
+      <div class="kv-row"><span class="kv-label">PRF No</span><span class="kv-value">${escapeHtml(
+        reference_no || "-"
+      )}</span></div>
+      <div class="kv-row"><span class="kv-label">Date</span><span class="kv-value">${escapeHtml(
+        formatDate(request_date)
+      )}</span></div>
+      <div class="kv-row"><span class="kv-label">Status</span><span class="kv-value">${escapeHtml(
+        labelStatus(status)
+      )}</span></div>
+      <div class="kv-row"><span class="kv-label">Vendor</span><span class="kv-value">${escapeHtml(
+        vendor_name || "-"
+      )}</span></div>
+      <div class="kv-row"><span class="kv-label">Requested By</span><span class="kv-value">${escapeHtml(
+        requester_name || "-"
+      )}</span></div>
     </div>
 
     <div class="divider"></div>
@@ -292,7 +381,10 @@ export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
 
     <div class="divider"></div>
     <div class="totals">
-      <div class="total-row"><span>TOTAL AMOUNT</span><span>${escapeHtml(formatMoneyPHP(total_amount))}</span></div>
+      ${subtotalHtml}
+      <div class="total-row total"><span>TOTAL</span><span class="num">${escapeHtml(
+        formatMoneyPHP(totalAmount)
+      )}</span></div>
     </div>
 
     ${remarksHtml}
@@ -300,7 +392,6 @@ export function buildReceiptHtml(params: BuildReceiptHtmlParams): string {
     <div class="divider"></div>
     <div class="footer">
       <div>Printed: ${escapeHtml(printedAt)}</div>
-      <div>Thank you!</div>
     </div>
   </div>
 </body>
