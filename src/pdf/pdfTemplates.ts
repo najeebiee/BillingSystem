@@ -277,7 +277,7 @@ export function buildReceiptHtml(data: PdfTemplateData, options: ReceiptOptions 
 </head>
 <body>
   <div class="receipt">
-    <div class="center company">${escapeHtml(data.company_name || "AccuCount")}</div>
+    <div class="center company">${escapeHtml(data.company_name || "GuildLedger")}</div>
     <div class="center title">Payment Request</div>
 
     <div class="kv">
@@ -510,7 +510,7 @@ export function buildA4Html(data: PdfTemplateData): string {
 <body>
   <div class="page">
     <div class="title">Payment Request Form</div>
-    <div class="subtitle">${escapeHtml(data.company_name || "AccuCount")}</div>
+    <div class="subtitle">${escapeHtml(data.company_name || "GuildLedger")}</div>
 
     <table class="meta">
       <tr>

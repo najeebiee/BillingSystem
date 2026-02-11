@@ -100,7 +100,7 @@ export function buildReceiptHtml(
     breakdowns,
     total_amount,
     remarks,
-    company_name = "AccuCount"
+    company_name = "GuildLedger"
   } = params;
 
   const paper = options.paper ?? "80mm";

@@ -50,6 +50,9 @@ export function CreateBillPage() {
     }),
     []
   );
+  useEffect(() => {
+    document.title = "Create New Bill | GuildLedger";
+  }, []);
   const formatPaymentMethod = (method: PaymentMethod) => {
     switch (method) {
       case "bank_transfer":
@@ -259,7 +262,7 @@ export function CreateBillPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
             <button onClick={() => navigate("/bills")} className="hover:text-blue-600">
@@ -270,14 +273,9 @@ export function CreateBillPage() {
           </div>
           {/* Page Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">New Payment Request</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Create New Bill</h1>
             <p className="text-gray-600 mt-1">Create a new payment request for approval</p>
           </div>
-          {errorMessage && (
-            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {errorMessage}
-            </div>
-          )}
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               {/* SECTION 1 — Payee & Reference */}
@@ -631,6 +629,11 @@ export function CreateBillPage() {
               </div>
             </div>
             {/* Footer Actions */}
+            {errorMessage && (
+              <div className="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {errorMessage}
+              </div>
+            )}
             <div className="mt-8 flex items-center justify-end gap-3 pb-8">
               <button
                 type="button"

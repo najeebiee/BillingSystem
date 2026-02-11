@@ -236,6 +236,14 @@ export function ViewBillPage() {
   const requestedByDisplay =
     bill?.created_by === user?.id ? currentUserDisplayName : bill?.created_by || "-";
 
+  useEffect(() => {
+    if (bill?.reference_no) {
+      document.title = `${bill.reference_no} | GuildLedger`;
+      return;
+    }
+    document.title = "Bill Details | GuildLedger";
+  }, [bill?.reference_no]);
+
   const buildPdfTemplateData = (): PdfTemplateData | null => {
     if (!bill || !vendor) return;
 
@@ -258,7 +266,7 @@ export function ViewBillPage() {
       total_amount: resolvedTotalAmount,
       remarks: bill.remarks || "",
       attachments: [],
-      company_name: "AccuCount"
+      company_name: "GuildLedger"
     };
   };
 
@@ -311,7 +319,7 @@ export function ViewBillPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6 text-gray-600">
             Loading bill...
           </div>
@@ -323,7 +331,7 @@ export function ViewBillPage() {
   if (errorMessage || !bill || !vendor) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h1 className="text-xl font-semibold text-gray-900 mb-2">Bill not found</h1>
             <p className="text-gray-600 mb-4">{errorMessage || "The bill you are looking for does not exist."}</p>
@@ -339,7 +347,7 @@ export function ViewBillPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
             <button onClick={() => navigate("/bills")} className="hover:text-blue-600">
@@ -352,7 +360,7 @@ export function ViewBillPage() {
           {/* Page Header */}
           <div className="flex items-start justify-between mb-6">
             <div>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
                 <h1 className="text-2xl font-semibold text-gray-900">Payment Request</h1>
                 <span
                   className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
@@ -361,8 +369,8 @@ export function ViewBillPage() {
                 >
                   {formatStatus(bill.status)}
                 </span>
+                <span className="text-lg text-gray-600 font-medium">{bill.reference_no}</span>
               </div>
-              <p className="text-lg text-gray-600">{bill.reference_no}</p>
             </div>
 
             {/* Action Buttons */}
@@ -383,7 +391,7 @@ export function ViewBillPage() {
               >
                 <span className="inline-flex items-center gap-2">
                   <Download className="w-4 h-4" />
-                  Download A4 PDF
+                  Download PDF
                 </span>
               </button>
               <button

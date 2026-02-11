@@ -160,6 +160,10 @@ export function BillsPage() {
   };
 
   useEffect(() => {
+    document.title = "Bills | GuildLedger";
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
     setErrorMessage(null);
@@ -204,7 +208,7 @@ export function BillsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           {/* Page Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -265,6 +269,9 @@ export function BillsPage() {
 
               {/* Date Range */}
               <div>
+                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                  From
+                </label>
                 <input
                   type="date"
                   value={dateFrom}
@@ -277,6 +284,9 @@ export function BillsPage() {
                 />
               </div>
               <div>
+                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                  To
+                </label>
                 <input
                   type="date"
                   value={dateTo}

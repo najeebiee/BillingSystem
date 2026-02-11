@@ -358,7 +358,7 @@ export function EditBillPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6 text-gray-600">
             Loading bill...
           </div>
@@ -369,7 +369,7 @@ export function EditBillPage() {
   if (errorMessage && !billStatus) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h1 className="text-xl font-semibold text-gray-900 mb-2">Bill not found</h1>
             <p className="text-gray-600 mb-4">{errorMessage}</p>
@@ -384,7 +384,7 @@ export function EditBillPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           {/* Edit Mode Banner */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-blue-600" />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
@@ -10,6 +10,10 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { signIn } = useAuth();
+
+  useEffect(() => {
+    document.title = 'Login | GuildLedger';
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +40,7 @@ export function LoginPage() {
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                 <Lock className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-semibold text-gray-900">AccuCount</span>
+              <span className="text-xl font-semibold text-gray-900">GuildLedger</span>
             </div>
           </div>
 
