@@ -269,9 +269,6 @@ export function BillsPage() {
 
               {/* Date Range */}
               <div>
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                  From
-                </label>
                 <input
                   type="date"
                   value={dateFrom}
@@ -284,9 +281,6 @@ export function BillsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                  To
-                </label>
                 <input
                   type="date"
                   value={dateTo}
