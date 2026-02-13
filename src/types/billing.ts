@@ -44,8 +44,20 @@ export interface BillBreakdown {
   bank_account_no?: string | null;
 }
 
+export interface BillAttachment {
+  id: string;
+  bill_id: string;
+  file_path: string;
+  file_name: string;
+  mime_type?: string | null;
+  file_size?: number | null;
+  uploaded_by?: string | null;
+  created_at?: string;
+}
+
 export interface BillDetails {
   bill: Bill;
   vendor: Vendor;
   breakdowns: BillBreakdown[];
+  attachments: BillAttachment[];
 }

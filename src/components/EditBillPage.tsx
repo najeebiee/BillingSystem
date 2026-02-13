@@ -3,9 +3,14 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { VoidBillModal } from "./VoidBillModal";
 import { ChevronRight, AlertCircle, Plus, X, Upload } from "lucide-react";
 import { getBillById, updateBill, updateBillStatus, type ServiceError } from "../services/bills.service";
+import {
+  deleteBillAttachments,
+  uploadBillAttachments
+} from "../services/billAttachments.service";
 import { createVendor, listVendors } from "../services/vendors.service";
 import { confirmDiscardChanges } from "../lib/alerts";
-import type { PaymentMethod, PriorityLevel, Vendor } from "../types/billing";
+import { useAuth } from "../auth/AuthContext";
+import type { BillAttachment, PaymentMethod, PriorityLevel, Vendor } from "../types/billing";
 interface PaymentBreakdown {
   id: string;
   payment_method: PaymentMethod;
@@ -32,10 +37,12 @@ export function EditBillPage() {
   const [requestDate, setRequestDate] = useState("");
   const [priority, setPriority] = useState("Standard");
   const [reasonForPayment, setReasonForPayment] = useState("");
-  const [attachments, setAttachments] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<BillAttachment[]>([]);
+  const [attachmentsToDelete, setAttachmentsToDelete] = useState<BillAttachment[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [breakdowns, setBreakdowns] = useState<PaymentBreakdown[]>([]);
+  const { user } = useAuth();
   const priorityMap: Record<string, PriorityLevel> = useMemo(
     () => ({
       Urgent: "urgent",
@@ -75,7 +82,7 @@ export function EditBillPage() {
           setErrorMessage(result.error || "Bill not found.");
           return;
         }
-        const { bill, vendor, breakdowns: lineItems } = result.data;
+        const { bill, vendor, breakdowns: lineItems, attachments: existingAttachments } = result.data;
         setBillStatus(bill.status);
         setVendorInput(vendor.name);
         setSelectedVendor(vendor);
@@ -91,7 +98,9 @@ export function EditBillPage() {
             : "Standard"
         );
         setReasonForPayment(bill.remarks || "");
-        setAttachments([]);
+        setAttachments(existingAttachments);
+        setAttachmentsToDelete([]);
+        setNewFiles([]);
         setBreakdowns(
           lineItems.map((b, idx) => ({
             id: b.id || idx.toString(),
@@ -241,6 +250,10 @@ export function EditBillPage() {
     addFiles(e.dataTransfer.files);
   };
   const removeAttachment = (index: number) => {
+    const removed = attachments[index];
+    if (removed) {
+      setAttachmentsToDelete((prev) => [...prev, removed]);
+    }
     setAttachments(attachments.filter((_, i) => i !== index));
   };
   const removeNewFile = (index: number) => {
@@ -324,8 +337,8 @@ export function EditBillPage() {
       }))
     };
     const result = await updateBill(id, payload);
-    setIsSaving(false);
     if (result.error) {
+      setIsSaving(false);
       if (isDuplicatePrfError(result.error)) {
         setReferenceError(
           "Warning: PRF already existing. Please choose another PRF or leave blank to auto-generate."
@@ -336,6 +349,26 @@ export function EditBillPage() {
       setErrorMessage(message || "Failed to update bill.");
       return;
     }
+
+    if (attachmentsToDelete.length > 0) {
+      const deleteResult = await deleteBillAttachments(attachmentsToDelete);
+      if (deleteResult.error) {
+        setIsSaving(false);
+        setErrorMessage(`Bill updated, but failed to delete attachments: ${deleteResult.error}`);
+        return;
+      }
+    }
+
+    if (newFiles.length > 0) {
+      const uploadResult = await uploadBillAttachments(id, newFiles, user?.id);
+      if (uploadResult.error) {
+        setIsSaving(false);
+        setErrorMessage(`Bill updated, but attachment upload failed: ${uploadResult.error}`);
+        return;
+      }
+    }
+
+    setIsSaving(false);
     navigate(`/bills/${id}`);
   };
   const handleCancel = async () => {
@@ -727,7 +760,7 @@ export function EditBillPage() {
                           key={index}
                           className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200"
                         >
-                          <span className="text-sm text-gray-900">{attachment}</span>
+                          <span className="text-sm text-gray-900">{attachment.file_name}</span>
                           <button
                             type="button"
                             onClick={() => removeAttachment(index)}

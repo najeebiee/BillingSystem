@@ -15,6 +15,7 @@ import {
   type PdfTemplateData
 } from "../pdf/pdfTemplates";
 import { exportHtmlToPdf } from "../pdf/exportPdf";
+import { downloadBillAttachment } from "../services/billAttachments.service";
 
 export function ViewBillPage() {
   const { id } = useParams();
@@ -69,6 +70,7 @@ export function ViewBillPage() {
   const bill = billDetails?.bill;
   const vendor = billDetails?.vendor;
   const breakdowns = billDetails?.breakdowns ?? [];
+  const attachments = billDetails?.attachments ?? [];
 
   const getStatusColor = (status?: string) => {
     switch (status) {
@@ -267,7 +269,7 @@ export function ViewBillPage() {
       })),
       total_amount: resolvedTotalAmount,
       remarks: bill.remarks || "",
-      attachments: [],
+      attachments: attachments.map((attachment) => attachment.file_name),
       company_name: "GuildLedger"
     };
   };
@@ -562,7 +564,35 @@ export function ViewBillPage() {
             {/* SECTION 4 -- Attachments */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h2>
-              <p className="text-sm text-gray-500">No attachments</p>
+              {attachments.length === 0 ? (
+                <p className="text-sm text-gray-500">No attachments</p>
+              ) : (
+                <div className="space-y-2">
+                  {attachments.map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200"
+                    >
+                      <span className="text-sm text-gray-900">{attachment.file_name}</span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const result = await downloadBillAttachment(
+                            attachment.file_path,
+                            attachment.file_name
+                          );
+                          if (result.error) {
+                            setActionError(result.error);
+                          }
+                        }}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* SECTION 5 -- Request & Approval Info */}

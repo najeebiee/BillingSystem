@@ -70,9 +70,27 @@ export async function listBills(params: ListBillsParams) {
     const q = params.search.trim();
     const escaped = q.replace(/[%(),]/g, "").trim();
     if (escaped) {
-    request = request.or(
-        `reference_no.ilike.%${escaped}%,vendors.name.ilike.%${escaped}%`
-    );
+      const { data: matchingVendors, error: vendorSearchError } = await supabase
+        .from("vendors")
+        .select("id")
+        .ilike("name", `%${escaped}%`)
+        .limit(100);
+
+      if (vendorSearchError) {
+        return { data: [], count: 0, error: vendorSearchError.message };
+      }
+
+      const vendorIds = (matchingVendors ?? [])
+        .map((vendor) => vendor.id)
+        .filter(Boolean);
+
+      if (vendorIds.length > 0) {
+        request = request.or(
+          `reference_no.ilike.%${escaped}%,vendor_id.in.(${vendorIds.join(",")})`
+        );
+      } else {
+        request = request.ilike("reference_no", `%${escaped}%`);
+      }
     }
   }
 
@@ -215,6 +233,16 @@ export async function getBillById(id: string) {
     return { data: null as BillDetails | null, error: error.message };
   }
 
+  const { data: attachments, error: attachmentError } = await supabase
+    .from("bill_attachments")
+    .select("id,bill_id,file_path,file_name,mime_type,file_size,uploaded_by,created_at")
+    .eq("bill_id", id)
+    .order("created_at", { ascending: true });
+
+  if (attachmentError) {
+    return { data: null as BillDetails | null, error: attachmentError.message };
+  }
+
   return {
     data: {
       bill: {
@@ -238,7 +266,8 @@ export async function getBillById(id: string) {
       breakdowns: (data.breakdowns ?? []).map((breakdown) => ({
         ...breakdown,
         amount: roundMoney(breakdown.amount)
-      }))
+      })),
+      attachments: attachments ?? []
     } as BillDetails,
     error: null as string | null
   };

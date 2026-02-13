@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRight, Plus, X, Upload } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { createBill, type ServiceError } from "../services/bills.service";
+import { uploadBillAttachments } from "../services/billAttachments.service";
 import { createVendor, listVendors } from "../services/vendors.service";
 import type { PaymentMethod, PriorityLevel, Vendor } from "../types/billing";
 interface PaymentBreakdown {
@@ -240,8 +241,8 @@ export function CreateBillPage() {
       }))
     };
     const result = await createBill(payload);
-    setIsSaving(false);
     if (result.error || !result.data) {
+      setIsSaving(false);
       if (isDuplicatePrfError(result.error)) {
         setReferenceError(
           "Warning: PRF already existing. Please choose another PRF or leave blank to auto-generate."
@@ -252,6 +253,20 @@ export function CreateBillPage() {
       setErrorMessage(message || "Failed to create bill.");
       return;
     }
+
+    if (attachments.length > 0) {
+      const attachmentResult = await uploadBillAttachments(result.data.id, attachments, user.id);
+      if (attachmentResult.error) {
+        setIsSaving(false);
+        setErrorMessage(
+          `Bill created, but attachment upload failed: ${attachmentResult.error}`
+        );
+        navigate(`/bills/${result.data.id}`);
+        return;
+      }
+    }
+
+    setIsSaving(false);
     navigate(`/bills/${result.data.id}`);
   };
   const handleSubmit = async (e: React.FormEvent) => {
