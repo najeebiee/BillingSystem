@@ -230,8 +230,10 @@ export function ViewBillPage() {
     navigate(`/bills/${bill.id}/edit`);
   };
 
-  const totalAmount = breakdowns.reduce((sum, b) => sum + Number(b.amount || 0), 0);
-  const resolvedTotalAmount = Number(bill?.total_amount ?? 0) > 0 ? Number(bill?.total_amount ?? 0) : totalAmount;
+  const totalAmount = roundMoney(
+    breakdowns.reduce((sum, b) => sum + roundMoney(b.amount), 0)
+  );
+  const resolvedTotalAmount = roundMoney(bill?.total_amount) > 0 ? roundMoney(bill?.total_amount) : totalAmount;
   const currentUserDisplayName = getUserDisplayName(user);
   const requestedByDisplay =
     bill?.created_by === user?.id ? currentUserDisplayName : bill?.created_by || "-";
@@ -538,7 +540,7 @@ export function ViewBillPage() {
                 <div className="text-right">
                   <div className="text-sm text-gray-600 mb-1">Total Amount</div>
                   <div className="text-2xl font-semibold text-gray-900">
-                    ₱{totalAmount.toLocaleString("en-PH", {
+                    ₱{resolvedTotalAmount.toLocaleString("en-PH", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
                     })}
@@ -635,7 +637,7 @@ export function ViewBillPage() {
         onConfirm={handleConfirmVoid}
         billReference={bill.reference_no}
         billVendor={vendor.name}
-        billAmount={totalAmount}
+        billAmount={resolvedTotalAmount}
       />
 
       {/* Approve/Reject Modal */}
@@ -646,9 +648,15 @@ export function ViewBillPage() {
         action={approveRejectModal.action}
         billReference={bill.reference_no}
         billVendor={vendor.name}
-        billAmount={totalAmount}
+        billAmount={resolvedTotalAmount}
         billPriority={formatPriority(bill.priority_level) as "Urgent" | "High" | "Standard" | "Low"}
       />
     </div>
   );
+}
+
+function roundMoney(value: unknown) {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) return 0;
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
 }

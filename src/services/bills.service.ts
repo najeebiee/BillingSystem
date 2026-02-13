@@ -68,9 +68,12 @@ export async function listBills(params: ListBillsParams) {
 
   if (params.search && params.search.trim()) {
     const q = params.search.trim();
+    const escaped = q.replace(/[%(),]/g, "").trim();
+    if (escaped) {
     request = request.or(
-      `reference_no.ilike.%${q}%,vendor.name.ilike.%${q}%`
+        `reference_no.ilike.%${escaped}%,vendors.name.ilike.%${escaped}%`
     );
+    }
   }
 
   const { data, error, count } = await request;
@@ -232,10 +235,19 @@ export async function getBillById(id: string) {
         updated_at: data.updated_at
       },
       vendor: Array.isArray(data.vendor) ? data.vendor[0] : data.vendor,
-      breakdowns: data.breakdowns ?? []
+      breakdowns: (data.breakdowns ?? []).map((breakdown) => ({
+        ...breakdown,
+        amount: roundMoney(breakdown.amount)
+      }))
     } as BillDetails,
     error: null as string | null
   };
+}
+
+function roundMoney(value: unknown) {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) return 0;
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
 }
 
 export interface CreateBillPayload {
@@ -244,9 +256,14 @@ export interface CreateBillPayload {
 }
 
 export async function createBill(payload: CreateBillPayload) {
+  const normalizedBill = {
+    ...payload.bill,
+    total_amount: roundMoney(payload.bill.total_amount)
+  };
+
   const { data: bill, error: billError } = await supabase
     .from("bills")
-    .insert(payload.bill)
+    .insert(normalizedBill)
     .select(
       `
       id,
@@ -279,7 +296,7 @@ export async function createBill(payload: CreateBillPayload) {
     bill_id: bill.id,
     payment_method: b.payment_method,
     description: b.description ?? "",
-    amount: Number.isFinite(b.amount) ? b.amount : 0,
+    amount: roundMoney(b.amount),
     bank_name: b.payment_method === "bank_transfer" ? b.bank_name ?? null : null,
     bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name ?? null : null,
     bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no ?? null : null
@@ -307,9 +324,14 @@ export interface UpdateBillPayload {
 }
 
 export async function updateBill(id: string, payload: UpdateBillPayload) {
+  const normalizedBill = {
+    ...payload.bill,
+    total_amount: roundMoney(payload.bill.total_amount)
+  };
+
   const { data: updated, error: updateError } = await supabase
     .from("bills")
-    .update(payload.bill)
+    .update(normalizedBill)
     .eq("id", id)
     .select(
       `
@@ -352,7 +374,7 @@ export async function updateBill(id: string, payload: UpdateBillPayload) {
     bill_id: id,
     payment_method: b.payment_method,
     description: b.description ?? "",
-    amount: Number.isFinite(b.amount) ? b.amount : 0,
+    amount: roundMoney(b.amount),
     bank_name: b.payment_method === "bank_transfer" ? b.bank_name ?? null : null,
     bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name ?? null : null,
     bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no ?? null : null

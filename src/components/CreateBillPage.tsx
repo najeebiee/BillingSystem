@@ -128,10 +128,12 @@ export function CreateBillPage() {
     );
   };
   const calculateTotal = () => {
-    return breakdowns.reduce((sum, b) => {
-      const amount = parseFloat(b.amount) || 0;
-      return sum + amount;
-    }, 0);
+    return roundMoney(
+      breakdowns.reduce((sum, b) => {
+        const amount = roundMoney(b.amount);
+        return sum + amount;
+      }, 0)
+    );
   };
   const addFiles = (files: FileList | File[]) => {
     const nextFiles = Array.from(files);
@@ -231,7 +233,7 @@ export function CreateBillPage() {
       breakdowns: breakdowns.map((b) => ({
         payment_method: b.payment_method,
         description: b.description ? b.description : "",
-        amount: parseFloat(b.amount) || 0,
+        amount: roundMoney(b.amount),
         bank_name: b.payment_method === "bank_transfer" ? b.bank_name || null : null,
         bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name || null : null,
         bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no || null : null
@@ -663,4 +665,10 @@ export function CreateBillPage() {
       </div>
     </div>
   );
+}
+
+function roundMoney(value: unknown) {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) return 0;
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
 }
