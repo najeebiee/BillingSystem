@@ -76,12 +76,12 @@ export function EventFormsHome() {
   };
 
   return (
-    <div className="event-forms-page bg-gray-50 pt-16">
+    <div className="event-forms-page w-full bg-gray-50 pt-16">
       <div className="w-full max-w-6xl mx-auto px-6 py-8">
-        <header>
-          <h1 className="text-3xl font-semibold text-gray-900">Event Forms</h1>
+        <div>
+          <h1 className="text-3xl font-semibold">Event Forms</h1>
           <p className="mt-2 text-gray-500">Choose a form to get started with your event requests.</p>
-        </header>
+        </div>
 
         <div className="mt-6 border-b">
           <div className="flex flex-wrap gap-6">
@@ -102,7 +102,7 @@ export function EventFormsHome() {
           </div>
         </div>
 
-        <main className="mt-8">
+        <div className="mt-8">
           {activeTab === "special" ? (
             <SpecialCompanyEventsForm
               embedded
@@ -133,9 +133,9 @@ export function EventFormsHome() {
               onRegisterActions={registerProspectActions}
             />
           ) : null}
-        </main>
+        </div>
 
-        <footer className="mt-8 border-t pt-4">
+        <div className="mt-8 border-t pt-4 no-print">
           <div className="flex flex-wrap gap-2 justify-end">
             <FormActionButton onClick={() => runAction("save")} ariaLabel="Save active form">
               <Save className="form-btn__icon" />
@@ -157,7 +157,7 @@ export function EventFormsHome() {
           <p className="mt-2 text-xs text-gray-500 text-center">
             Disable Headers and Footers in the print dialog for best results.
           </p>
-        </footer>
+        </div>
       </div>
     </div>
   );
