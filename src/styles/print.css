@@ -107,6 +107,10 @@
     padding-bottom: 1px;
   }
 
+  #print-root .print-line-multiline {
+    min-height: 20px;
+  }
+
   #print-root .print-label {
     font-size: 10px;
     font-weight: 600;
@@ -116,6 +120,7 @@
   #print-root .print-value {
     font-size: 10.5px;
     line-height: 1.2;
+    white-space: pre-wrap;
   }
 
   #print-root .print-table {

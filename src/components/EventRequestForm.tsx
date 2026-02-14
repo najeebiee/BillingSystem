@@ -484,9 +484,19 @@ export function EventRequestForm({
       : null;
 
   return (
-    <div className={embedded ? "erf-page" : "erf-page erf-page-standalone"}>
-      <div className={embedded ? "" : "pt-16"}>
-        <div className={embedded ? "" : "erf-shell max-w-[1440px] mx-auto px-4 md:px-6 py-6 md:py-8"}>
+    <div
+      className={
+        embedded
+          ? "erf-page form-page form-page--embedded"
+          : "erf-page erf-page-standalone form-page form-page--standalone"
+      }
+    >
+      <div className={embedded ? "form-page-body" : "pt-16 form-page-body"}>
+        <div
+          className={
+            embedded ? "erf-shell form-shell" : "erf-shell form-shell max-w-[1440px] mx-auto px-4 md:px-6 py-6 md:py-8"
+          }
+        >
           {showToolbar && (
             <div className="erf-header-actions no-print">
               {showBackButton ? (
@@ -502,14 +512,15 @@ export function EventRequestForm({
             </div>
           )}
 
-          <div className="screen-form no-print">
-            <header className="erf-screen-top">
+          <div className="screen-form no-print form-screen">
+            <div className="form-screen__body">
+              <header className="erf-screen-top">
               <h1>Event Request Form</h1>
               <p>
                 Complete the details below. This is the interactive entry form. Print preview will generate the formal
                 filled document.
               </p>
-            </header>
+              </header>
 
             <div className="erf-columns">
               <div className="erf-column">
@@ -838,7 +849,8 @@ export function EventRequestForm({
               </div>
             </div>
 
-            <RecentPrintsTable formType="ER" rows={recentPrints} onLoad={handleLoadSubmission} />
+              <RecentPrintsTable formType="ER" rows={recentPrints} onLoad={handleLoadSubmission} />
+            </div>
 
             {showActions ? (
               <div className="form-actions-bottom no-print">

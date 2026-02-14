@@ -73,9 +73,9 @@ export function EventFormsHome() {
   };
 
   return (
-    <div className="event-forms-page min-h-screen bg-gray-50">
-      <div className="pt-16">
-        <div className="event-forms-shell max-w-[1440px] mx-auto px-6 py-8">
+    <div className="event-forms-page min-h-screen bg-gray-50 flex flex-col">
+      <div className="pt-16 flex-1 min-h-0 flex flex-col">
+        <div className="event-forms-shell max-w-[1440px] mx-auto px-6 py-8 flex flex-col min-h-0">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold text-gray-900">Event Forms</h1>
             <p className="text-gray-600 mt-1">Choose a form to get started with your event requests.</p>
@@ -83,8 +83,8 @@ export function EventFormsHome() {
 
           <EventFormsTabs activeTab={activeTab} onChange={setTab} />
 
-          <div className="space-y-5">
-            <div className={activeTab === "special" ? "block" : "hidden"}>
+          <div className="space-y-5 flex-1 min-h-0">
+            <div className={`${activeTab === "special" ? "block" : "hidden"} flex-1 min-h-0`}>
               <SpecialCompanyEventsForm
                 embedded
                 showBackButton={false}
@@ -92,7 +92,7 @@ export function EventFormsHome() {
                 showPrintRoot={activeTab === "special"}
               />
             </div>
-            <div className={activeTab === "request" ? "block" : "hidden"}>
+            <div className={`${activeTab === "request" ? "block" : "hidden"} flex-1 min-h-0`}>
               <EventRequestForm
                 embedded
                 showBackButton={false}
@@ -100,7 +100,7 @@ export function EventFormsHome() {
                 showPrintRoot={activeTab === "request"}
               />
             </div>
-            <div className={activeTab === "prospect" ? "block" : "hidden"}>
+            <div className={`${activeTab === "prospect" ? "block" : "hidden"} flex-1 min-h-0`}>
               <ProspectInvitationForm
                 embedded
                 showBackButton={false}
