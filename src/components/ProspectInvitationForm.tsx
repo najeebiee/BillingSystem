@@ -23,9 +23,10 @@ type ProspectRow = {
 };
 
 const storageKey = "eventForms.prospectInvitation";
-const defaultRowCount = 20;
+const defaultRowCount = 5;
 const PRINT_EMPTY_ROWS = 14;
 const MAX_ROWS_FOR_ONE_PAGE = 15;
+const DEFAULT_APPROVED_BY = [""];
 
 const createEmptyRow = (): ProspectRow => ({
   leaderName: "",
@@ -59,6 +60,29 @@ const normalizeProspectRows = (value: unknown): ProspectRow[] => {
   return loadedRows;
 };
 
+const normalizeApprovedBy = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [...DEFAULT_APPROVED_BY];
+  const sanitized = value.map((entry) => (typeof entry === "string" ? entry : ""));
+  return sanitized.length > 0 ? sanitized : [...DEFAULT_APPROVED_BY];
+};
+
+const normalizeProspectPayload = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return { rows: normalizeProspectRows(value), checkedBy: "", approvedBy: [...DEFAULT_APPROVED_BY] };
+  }
+
+  if (!value || typeof value !== "object") {
+    return { rows: createInitialRows(), checkedBy: "", approvedBy: [...DEFAULT_APPROVED_BY] };
+  }
+
+  const parsed = value as Record<string, unknown>;
+  return {
+    rows: normalizeProspectRows(parsed.rows),
+    checkedBy: typeof parsed.checkedBy === "string" ? parsed.checkedBy : "",
+    approvedBy: normalizeApprovedBy(parsed.approvedBy),
+  };
+};
+
 const hasRowContent = (row: ProspectRow) =>
   row.leaderName.trim() || row.guestName.trim() || row.date1.trim() || row.date2.trim() || row.remarks.trim();
 
@@ -85,6 +109,8 @@ export function ProspectInvitationForm({
 }: ProspectInvitationFormProps) {
   const navigate = useNavigate();
   const [rows, setRows] = useState<ProspectRow[]>(createInitialRows);
+  const [checkedBy, setCheckedBy] = useState("");
+  const [approvedBy, setApprovedBy] = useState<string[]>(DEFAULT_APPROVED_BY);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [referenceNo, setReferenceNo] = useState<string | null>(null);
   const [printedAt, setPrintedAt] = useState<string | null>(null);
@@ -109,8 +135,30 @@ export function ProspectInvitationForm({
     setRows((prev) => [...prev, createEmptyRow()]);
   };
 
+  const updateApprovedBy = (index: number, value: string) => {
+    setApprovedBy((prev) => prev.map((entry, idx) => (idx === index ? value : entry)));
+  };
+
+  const addApprovedByRow = () => {
+    setApprovedBy((prev) => [...prev, ""]);
+  };
+
+  const removeApprovedByRow = (index: number) => {
+    setApprovedBy((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, idx) => idx !== index);
+    });
+  };
+
   const handleSave = () => {
-    localStorage.setItem(storageKey, JSON.stringify(rows));
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        rows,
+        checkedBy,
+        approvedBy,
+      }),
+    );
   };
 
   const handleLoad = () => {
@@ -121,7 +169,10 @@ export function ProspectInvitationForm({
     }
 
     try {
-      setRows(normalizeProspectRows(JSON.parse(saved)));
+      const normalized = normalizeProspectPayload(JSON.parse(saved));
+      setRows(normalized.rows);
+      setCheckedBy(normalized.checkedBy);
+      setApprovedBy(normalized.approvedBy);
     } catch {
       window.alert("No saved data yet.");
     }
@@ -130,6 +181,8 @@ export function ProspectInvitationForm({
   const handleClear = () => {
     if (!window.confirm("Clear this form?")) return;
     setRows(createInitialRows());
+    setCheckedBy("");
+    setApprovedBy([...DEFAULT_APPROVED_BY]);
     localStorage.removeItem(storageKey);
   };
 
@@ -148,7 +201,7 @@ export function ProspectInvitationForm({
       const upsert = await upsertSubmissionForPrint({
         submissionId,
         formType: "PI",
-        payload: { rows } as Record<string, unknown>,
+        payload: { rows, checkedBy, approvedBy } as Record<string, unknown>,
       });
 
       if (upsert.error || !upsert.data) {
@@ -179,11 +232,20 @@ export function ProspectInvitationForm({
 
   useEffect(() => {
     onRegisterActions?.({
-      getState: () => rows,
-      setState: (nextRows) => setRows(normalizeProspectRows(nextRows)),
-      resetState: () => setRows(createInitialRows()),
+      getState: () => ({ rows, checkedBy, approvedBy }),
+      setState: (nextState) => {
+        const normalized = normalizeProspectPayload(nextState);
+        setRows(normalized.rows);
+        setCheckedBy(normalized.checkedBy);
+        setApprovedBy(normalized.approvedBy);
+      },
+      resetState: () => {
+        setRows(createInitialRows());
+        setCheckedBy("");
+        setApprovedBy([...DEFAULT_APPROVED_BY]);
+      },
     });
-  }, [onRegisterActions, rows]);
+  }, [onRegisterActions, rows, checkedBy, approvedBy]);
 
   useEffect(() => {
     loadRecentPrints();
@@ -196,9 +258,10 @@ export function ProspectInvitationForm({
       return;
     }
 
-    const payload = result.data.payload as Record<string, unknown>;
-    const payloadRows = Array.isArray(payload) ? payload : (payload.rows as ProspectRow[]) ?? [];
-    setRows(normalizeProspectRows(payloadRows));
+    const normalized = normalizeProspectPayload(result.data.payload);
+    setRows(normalized.rows);
+    setCheckedBy(normalized.checkedBy);
+    setApprovedBy(normalized.approvedBy);
     setSubmissionId(result.data.id);
     setReferenceNo(result.data.reference_no);
     toast.success(`Loaded ${result.data.reference_no}`);
@@ -244,15 +307,32 @@ export function ProspectInvitationForm({
                 ))}
               </tbody>
             </table>
+
+            <div className="print-section">
+              <div className="print-line">
+                <span className="print-label">Checked By:</span>
+                <span className="print-value">{checkedBy.trim() || "\u00A0"}</span>
+              </div>
+              {(approvedBy.length > 0 ? approvedBy : DEFAULT_APPROVED_BY).map((name, index) => (
+                <div className="print-line" key={`approved-by-${index}`}>
+                  <span className="print-label">{index === 0 ? "Approved By:" : "\u00A0"}</span>
+                  <span className="print-value">{name.trim() || "\u00A0"}</span>
+                </div>
+              ))}
+            </div>
           </div>,
           document.body,
         )
       : null;
 
   return (
-    <div className={embedded ? "prospect-page" : "prospect-page min-h-screen bg-gray-50"}>
-      <div className={embedded ? "" : "pt-16"}>
-        <div className={embedded ? "" : "max-w-[1440px] mx-auto px-6 py-8"}>
+    <div
+      className={
+        embedded ? "prospect-page form-page form-page--embedded" : "prospect-page min-h-screen bg-gray-50 form-page form-page--standalone"
+      }
+    >
+      <div className={embedded ? "form-page-body" : "pt-16 form-page-body"}>
+        <div className={embedded ? "form-shell" : "form-shell max-w-[1440px] mx-auto px-6 py-8"}>
           {showToolbar && (
             <div className="form-toolbar no-print">
               {showBackButton ? (
@@ -268,68 +348,110 @@ export function ProspectInvitationForm({
             </div>
           )}
 
-          <div className="screen-form no-print prospect-screen-form">
-            <header className="prospect-screen-head">
-              <h1>PROSPECT INVITATION GUIDE</h1>
-            </header>
+          <div className="screen-form no-print prospect-screen-form form-screen">
+            <div className="form-screen__body">
+              <header className="prospect-screen-head">
+                <h1>PROSPECT INVITATION GUIDE</h1>
+              </header>
 
-            <div className="prospect-table-wrap">
-              <table className="prospect-screen-table">
-                <thead>
-                  <tr>
-                    <th>Leader&apos;s Name</th>
-                    <th>Name of Guest</th>
-                    <th>Call/P2P: Date 1</th>
-                    <th>Call/P2P: Date 2 (Follow-Up)</th>
-                    <th>Remarks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, index) => (
-                    <tr key={index}>
-                      <td>
-                        <input
-                          value={row.leaderName}
-                          onChange={(e) => updateRow(index, "leaderName", e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          value={row.guestName}
-                          onChange={(e) => updateRow(index, "guestName", e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={row.date1}
-                          onChange={(e) => updateRow(index, "date1", e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={row.date2}
-                          onChange={(e) => updateRow(index, "date2", e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input value={row.remarks} onChange={(e) => updateRow(index, "remarks", e.target.value)} />
-                      </td>
+              <div className="prospect-table-wrap">
+                <table className="prospect-screen-table">
+                  <thead>
+                    <tr>
+                      <th>Leader&apos;s Name</th>
+                      <th>Name of Guest</th>
+                      <th>Call/P2P: Date 1</th>
+                      <th>Call/P2P: Date 2 (Follow-Up)</th>
+                      <th>Remarks</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {rows.map((row, index) => (
+                      <tr key={index}>
+                        <td>
+                          <input
+                            value={row.leaderName}
+                            onChange={(e) => updateRow(index, "leaderName", e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            value={row.guestName}
+                            onChange={(e) => updateRow(index, "guestName", e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="date"
+                            value={row.date1}
+                            onChange={(e) => updateRow(index, "date1", e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="date"
+                            value={row.date2}
+                            onChange={(e) => updateRow(index, "date2", e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <input value={row.remarks} onChange={(e) => updateRow(index, "remarks", e.target.value)} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-            <div className="prospect-row-actions">
-              <FormActionButton onClick={handleAddRow}>
-                <Plus className="form-btn__icon" />
-                Add Row
-              </FormActionButton>
-            </div>
+              <div className="prospect-row-actions">
+                <FormActionButton onClick={handleAddRow}>
+                  <Plus className="form-btn__icon" />
+                  Add Row
+                </FormActionButton>
+              </div>
 
-            <RecentPrintsTable formType="PI" rows={recentPrints} onLoad={handleLoadSubmission} />
+              <div className="prospect-approval-block">
+                <label className="prospect-approval-row">
+                  <span>Checked by</span>
+                  <input
+                    type="text"
+                    value={checkedBy}
+                    onChange={(event) => setCheckedBy(event.target.value)}
+                  />
+                </label>
+
+                <div className="prospect-approval-group">
+                  <span className="prospect-approval-label">Approved by</span>
+                  <div className="prospect-approval-list">
+                    {approvedBy.map((name, index) => (
+                      <div className="prospect-approval-item" key={`approved-${index}`}>
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(event) => updateApprovedBy(index, event.target.value)}
+                        />
+                        <FormActionButton
+                          onClick={() => removeApprovedByRow(index)}
+                          disabled={approvedBy.length <= 1}
+                          ariaLabel="Remove approved by"
+                        >
+                          <Trash2 className="form-btn__icon" />
+                          Remove
+                        </FormActionButton>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="prospect-approval-actions">
+                    <FormActionButton onClick={addApprovedByRow}>
+                      <Plus className="form-btn__icon" />
+                      Add approved by
+                    </FormActionButton>
+                  </div>
+                </div>
+              </div>
+
+              <RecentPrintsTable formType="PI" rows={recentPrints} onLoad={handleLoadSubmission} />
+            </div>
 
             {showActions ? (
               <div className="form-actions-bottom no-print">

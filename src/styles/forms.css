@@ -79,6 +79,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  flex-shrink: 0;
   margin-top: 0;
   position: sticky;
   bottom: 0;
