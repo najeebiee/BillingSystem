@@ -238,518 +238,452 @@ export function EncoderForm() {
 
   return (
     <div className="w-full">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 lg:p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 grid-flow-row auto-rows-min">
-          <div className="flex flex-col gap-6 h-full col-span-1 min-w-0">
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <div className="pb-2 border-b border-gray-200">
-                <h2 className="text-base font-semibold text-blue-600">
-                  Transaction Details
-                </h2>
-              </div>
-              <div className="mt-4 grid grid-cols-12 gap-x-6 gap-y-4">
-                <div className="col-span-12">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Event
-                  </label>
-                  <select
-                    name="event"
-                    value={form.event}
-                    onChange={updateField}
-                    className={selectClass}
-                  >
-                    <option value="" disabled>
-                      Select event
-                    </option>
-                    <option value="expo">Expo</option>
-                    <option value="onsite">Onsite</option>
-                    <option value="online">Online</option>
-                  </select>
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={form.date}
-                    onChange={updateField}
-                    className={inputClass}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    PO Number
-                  </label>
-                  <input
-                    type="text"
-                    name="poNumber"
-                    placeholder="Enter PO number"
-                    value={form.poNumber}
-                    onChange={updateField}
-                    className={inputClass}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Member Name
-                  </label>
-                  <input
-                    type="text"
-                    name="memberName"
-                    placeholder="Enter member name"
-                    value={form.memberName}
-                    onChange={updateField}
-                    className={inputClass}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    name="username"
-                    placeholder="Enter username"
-                    value={form.username}
-                    onChange={updateField}
-                    className={inputClass}
-                  />
-                </div>
-                <div className="col-span-12 flex items-center justify-between gap-4">
-                  <span className="text-sm font-medium text-gray-700">
-                    New Member?
-                  </span>
-                  <div className="inline-flex border border-gray-300 rounded-md overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => setNewMember("yes")}
-                      className={`px-4 py-2 text-sm font-medium transition-colors ${
-                        form.newMember === "yes"
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      Yes
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNewMember("no")}
-                      className={`px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 ${
-                        form.newMember === "no"
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      No
-                    </button>
-                  </div>
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Member Type
-                  </label>
-                  <select
-                    name="memberType"
-                    value={form.memberType}
-                    onChange={updateField}
-                    className={selectClass}
-                  >
-                    <option value="" disabled>
-                      Select type
-                    </option>
-                    <option value="regular">Regular</option>
-                    <option value="vip">VIP</option>
-                    <option value="guest">Guest</option>
-                  </select>
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Package Type
-                  </label>
-                  <select
-                    name="packageType"
-                    value={form.packageType}
-                    onChange={updateField}
-                    className={selectClass}
-                  >
-                    <option value="" disabled>
-                      Select package
-                    </option>
-                    <option value="basic">Basic</option>
-                    <option value="standard">Standard</option>
-                    <option value="premium">Premium</option>
-                  </select>
-                </div>
-                <div className="col-span-12">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    To Blister?
-                  </label>
-                  <select
-                    name="toBlister"
-                    value={form.toBlister}
-                    onChange={updateField}
-                    className={selectClass}
-                  >
-                    <option value="" disabled>
-                      Select option
-                    </option>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h1 className="text-2xl font-semibold text-[#2E3A8C] mb-6">New Sale Entry</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Event</label>
+            <select
+              name="event"
+              value={form.event}
+              onChange={updateField}
+              className={selectClass}
+            >
+              <option value="" disabled>
+                Select event
+              </option>
+              <option value="expo">Expo</option>
+              <option value="onsite">Onsite</option>
+              <option value="online">Online</option>
+            </select>
+          </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <div className="pb-2 border-b border-gray-200">
-                <h2 className="text-base font-semibold text-blue-600">
-                  Pricing &amp; Quantity
-                </h2>
-              </div>
-              <div className="mt-4 grid grid-cols-12 gap-x-6 gap-y-4">
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    value={form.quantity}
-                    onChange={updateField}
-                    className={inputClass}
-                    min={0}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Blister Count
-                  </label>
-                  <input
-                    type="number"
-                    name="blisterCount"
-                    value={form.blisterCount}
-                    onChange={updateField}
-                    className={inputClass}
-                    min={0}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Original Price
-                  </label>
-                  <input
-                    type="number"
-                    name="originalPrice"
-                    value={form.originalPrice}
-                    readOnly
-                    className={readOnlyClass}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Discount
-                  </label>
-                  <select
-                    name="discountRate"
-                    value={form.discountRate}
-                    onChange={updateField}
-                    className={selectClass}
-                  >
-                    <option value="0">No discount</option>
-                    <option value="0.1">10% discount</option>
-                    <option value="0.2">20% discount</option>
-                  </select>
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Price After Discount
-                  </label>
-                  <input
-                    type="number"
-                    name="priceAfterDiscount"
-                    value={totals.priceAfterDiscount.toFixed(2)}
-                    readOnly
-                    className={readOnlyClass}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    One-Time Discount
-                  </label>
-                  <input
-                    type="number"
-                    name="oneTimeDiscount"
-                    value={form.oneTimeDiscount}
-                    onChange={updateField}
-                    className={inputClass}
-                    min={0}
-                    step="0.01"
-                  />
-                </div>
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
+            <input
+              type="date"
+              name="date"
+              value={form.date}
+              onChange={updateField}
+              className={inputClass}
+            />
+          </div>
 
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-5">
-              <div className="text-sm font-medium text-blue-700">Total Sales</div>
-              <div className="mt-2 text-3xl font-semibold text-blue-900">
-                {formatCurrency(totals.totalSales)}
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">POF Number</label>
+            <input
+              type="text"
+              name="poNumber"
+              placeholder="Enter PO number"
+              value={form.poNumber}
+              onChange={updateField}
+              className={inputClass}
+            />
+          </div>
 
-            <div className="mt-auto hidden md:block bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md text-sm font-medium transition-colors"
-                >
-                  Save Entry
-                </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-5 py-2.5 rounded-md border border-red-300 text-red-600 bg-white hover:bg-red-50 text-sm font-medium transition-colors"
-                >
-                  Clear Form
-                </button>
-              </div>
+          <div className="hidden lg:block" />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Member Name</label>
+            <input
+              type="text"
+              name="memberName"
+              placeholder="Enter member name"
+              value={form.memberName}
+              onChange={updateField}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Enter username"
+              value={form.username}
+              onChange={updateField}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">New Member?</label>
+            <div className="inline-flex border border-gray-300 rounded-md overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setNewMember("yes")}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  form.newMember === "yes"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => setNewMember("no")}
+                className={`px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 ${
+                  form.newMember === "no"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                No
+              </button>
             </div>
           </div>
 
-          <div className="flex flex-col gap-6 col-span-1 min-w-0">
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <div className="pb-2 border-b border-gray-200">
-                <h2 className="text-base font-semibold text-blue-600">
-                  Payment &amp; Inventory
-                </h2>
-              </div>
-              <div className="mt-4 grid grid-cols-12 gap-x-6 gap-y-4">
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Mode of Payment
-                  </label>
-                  <select
-                    name="paymentMode"
-                    value={form.paymentMode}
-                    onChange={updateField}
-                    className={selectClass}
-                  >
-                    <option value="" disabled>
-                      Select mode
-                    </option>
-                    <option value="cash">Cash</option>
-                    <option value="bank">Bank Transfer</option>
-                    <option value="card">Card</option>
-                    <option value="gcash">GCash</option>
-                  </select>
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Payment Mode Type
-                  </label>
-                  <select
-                    name="paymentModeType"
-                    value={form.paymentModeType}
-                    onChange={updateField}
-                    className={selectClass}
-                  >
-                    <option value="" disabled>
-                      Select type
-                    </option>
-                    <option value="full">Full Payment</option>
-                    <option value="partial">Partial</option>
-                    <option value="installment">Installment</option>
-                  </select>
-                </div>
-                <div className="col-span-12">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Reference Number
-                  </label>
-                  <input
-                    type="text"
-                    name="referenceNumber"
-                    placeholder="Enter reference number"
-                    value={form.referenceNumber}
-                    onChange={updateField}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
+          <div className="hidden lg:block" />
 
-              <div className="mt-6 border-t border-gray-200 pt-4">
-                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Additional Payment
-                </div>
-                <div className="mt-3 grid grid-cols-12 gap-x-6 gap-y-4">
-                  <div className="col-span-12 md:col-span-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Mode of Payment
-                    </label>
-                    <select
-                      name="paymentMode2"
-                      value={form.paymentMode2}
-                      onChange={updateField}
-                      className={selectClass}
-                    >
-                      <option value="" disabled>
-                        Select mode
-                      </option>
-                      <option value="cash">Cash</option>
-                      <option value="bank">Bank Transfer</option>
-                      <option value="card">Card</option>
-                      <option value="gcash">GCash</option>
-                    </select>
-                  </div>
-                  <div className="col-span-12 md:col-span-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Payment Mode Type
-                    </label>
-                    <select
-                      name="paymentModeType2"
-                      value={form.paymentModeType2}
-                      onChange={updateField}
-                      className={selectClass}
-                    >
-                      <option value="" disabled>
-                        Select type
-                      </option>
-                      <option value="full">Full Payment</option>
-                      <option value="partial">Partial</option>
-                      <option value="installment">Installment</option>
-                    </select>
-                  </div>
-                  <div className="col-span-12 md:col-span-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Reference Number
-                    </label>
-                    <input
-                      type="text"
-                      name="referenceNumber2"
-                      placeholder="Enter reference number"
-                      value={form.referenceNumber2}
-                      onChange={updateField}
-                      className={inputClass}
-                    />
-                  </div>
-                  <div className="col-span-12 md:col-span-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Amount
-                    </label>
-                    <input
-                      type="number"
-                      name="paymentAmount2"
-                      value={form.paymentAmount2}
-                      onChange={updateField}
-                      className={inputClass}
-                      min={0}
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Member Type</label>
+            <select
+              name="memberType"
+              value={form.memberType}
+              onChange={updateField}
+              className={selectClass}
+            >
+              <option value="" disabled>
+                Select type
+              </option>
+              <option value="regular">Regular</option>
+              <option value="vip">VIP</option>
+              <option value="guest">Guest</option>
+            </select>
+          </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <div className="pb-2 border-b border-gray-200">
-                <h2 className="text-base font-semibold text-blue-600">
-                  Inventory Movement
-                </h2>
-              </div>
-              <div className="mt-4 grid grid-cols-12 gap-x-6 gap-y-4">
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Released (Bottle)
-                  </label>
-                  <input
-                    type="number"
-                    name="releasedBottle"
-                    value={form.releasedBottle}
-                    onChange={updateField}
-                    className={inputClass}
-                    min={0}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Released (Blister)
-                  </label>
-                  <input
-                    type="number"
-                    name="releasedBlister"
-                    value={form.releasedBlister}
-                    onChange={updateField}
-                    className={inputClass}
-                    min={0}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    To Follow (Bottle)
-                  </label>
-                  <input
-                    type="number"
-                    name="toFollowBottle"
-                    value={form.toFollowBottle}
-                    onChange={updateField}
-                    className={inputClass}
-                    min={0}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    To Follow (Blister)
-                  </label>
-                  <input
-                    type="number"
-                    name="toFollowBlister"
-                    value={form.toFollowBlister}
-                    onChange={updateField}
-                    className={inputClass}
-                    min={0}
-                  />
-                </div>
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Package Type</label>
+            <select
+              name="packageType"
+              value={form.packageType}
+              onChange={updateField}
+              className={selectClass}
+            >
+              <option value="" disabled>
+                Select package
+              </option>
+              <option value="basic">Basic</option>
+              <option value="standard">Standard</option>
+              <option value="premium">Premium</option>
+            </select>
+          </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <div className="pb-2 border-b border-gray-200">
-                <h2 className="text-base font-semibold text-blue-600">Remarks</h2>
-              </div>
-              <div className="mt-4">
-                <textarea
-                  name="remarks"
-                  placeholder="Enter any additional remarks or notes..."
-                  value={form.remarks}
-                  onChange={updateField}
-                  rows={4}
-                  className={`${inputClass} resize-none`}
-                />
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">To Blister?</label>
+            <select
+              name="toBlister"
+              value={form.toBlister}
+              onChange={updateField}
+              className={selectClass}
+            >
+              <option value="" disabled>
+                Select option
+              </option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Original Price</label>
+            <input
+              type="number"
+              name="originalPrice"
+              value={form.originalPrice}
+              readOnly
+              className={readOnlyClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Quantity</label>
+            <input
+              type="number"
+              name="quantity"
+              value={form.quantity}
+              onChange={updateField}
+              className={inputClass}
+              min={0}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Blister Count</label>
+            <input
+              type="number"
+              name="blisterCount"
+              value={form.blisterCount}
+              onChange={updateField}
+              className={inputClass}
+              min={0}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Discount</label>
+            <select
+              name="discountRate"
+              value={form.discountRate}
+              onChange={updateField}
+              className={selectClass}
+            >
+              <option value="0">No discount</option>
+              <option value="0.1">10% discount</option>
+              <option value="0.2">20% discount</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Price After Discount</label>
+            <input
+              type="number"
+              name="priceAfterDiscount"
+              value={totals.priceAfterDiscount.toFixed(2)}
+              readOnly
+              className={readOnlyClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">One-Time Discount</label>
+            <input
+              type="number"
+              name="oneTimeDiscount"
+              value={form.oneTimeDiscount}
+              onChange={updateField}
+              className={inputClass}
+              min={0}
+              step="0.01"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Total Sales</label>
+            <input
+              type="number"
+              name="totalSales"
+              value={totals.totalSales.toFixed(2)}
+              readOnly
+              className={readOnlyClass}
+            />
+          </div>
+
+          <div className="hidden lg:block" />
+          <div className="hidden lg:block" />
+
+          <div className="lg:col-span-4 md:col-span-2 col-span-1 pt-2 mt-2 border-t border-[#E5E7EB]" />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Mode of Payment</label>
+            <select
+              name="paymentMode"
+              value={form.paymentMode}
+              onChange={updateField}
+              className={selectClass}
+            >
+              <option value="" disabled>
+                Select mode
+              </option>
+              <option value="cash">Cash</option>
+              <option value="bank">Bank Transfer</option>
+              <option value="card">Card</option>
+              <option value="gcash">GCash</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Mode Type</label>
+            <select
+              name="paymentModeType"
+              value={form.paymentModeType}
+              onChange={updateField}
+              className={selectClass}
+            >
+              <option value="" disabled>
+                Select type
+              </option>
+              <option value="full">Full Payment</option>
+              <option value="partial">Partial</option>
+              <option value="installment">Installment</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Reference Number</label>
+            <input
+              type="text"
+              name="referenceNumber"
+              placeholder="Enter reference number"
+              value={form.referenceNumber}
+              onChange={updateField}
+              className={inputClass}
+            />
+          </div>
+
+          <div className="hidden lg:block" />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Mode of Payment (2)</label>
+            <select
+              name="paymentMode2"
+              value={form.paymentMode2}
+              onChange={updateField}
+              className={selectClass}
+            >
+              <option value="" disabled>
+                Select mode
+              </option>
+              <option value="cash">Cash</option>
+              <option value="bank">Bank Transfer</option>
+              <option value="card">Card</option>
+              <option value="gcash">GCash</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Mode Type (2)</label>
+            <select
+              name="paymentModeType2"
+              value={form.paymentModeType2}
+              onChange={updateField}
+              className={selectClass}
+            >
+              <option value="" disabled>
+                Select type
+              </option>
+              <option value="full">Full Payment</option>
+              <option value="partial">Partial</option>
+              <option value="installment">Installment</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Reference Number (2)</label>
+            <input
+              type="text"
+              name="referenceNumber2"
+              placeholder="Enter reference number"
+              value={form.referenceNumber2}
+              onChange={updateField}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount (2)</label>
+            <input
+              type="number"
+              name="paymentAmount2"
+              value={form.paymentAmount2}
+              onChange={updateField}
+              className={inputClass}
+              min={0}
+              step="0.01"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Released (Bottle)</label>
+            <input
+              type="number"
+              name="releasedBottle"
+              value={form.releasedBottle}
+              onChange={updateField}
+              className={inputClass}
+              min={0}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Released (Blister)</label>
+            <input
+              type="number"
+              name="releasedBlister"
+              value={form.releasedBlister}
+              onChange={updateField}
+              className={inputClass}
+              min={0}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">To Follow (Bottle)</label>
+            <input
+              type="number"
+              name="toFollowBottle"
+              value={form.toFollowBottle}
+              onChange={updateField}
+              className={inputClass}
+              min={0}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">To Follow (Blister)</label>
+            <input
+              type="number"
+              name="toFollowBlister"
+              value={form.toFollowBlister}
+              onChange={updateField}
+              className={inputClass}
+              min={0}
+            />
+          </div>
+
+          <div className="lg:col-span-4 md:col-span-2 col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Remarks</label>
+            <textarea
+              name="remarks"
+              placeholder="Enter any additional remarks or notes..."
+              value={form.remarks}
+              onChange={updateField}
+              rows={3}
+              className={`${inputClass} resize-none`}
+            />
+          </div>
+
+          <div className="lg:col-span-2 md:col-span-1 col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Received By</label>
+            <input
+              type="text"
+              name="receivedBy"
+              placeholder="Enter name"
+              className={inputClass}
+            />
+          </div>
+
+          <div className="lg:col-span-2 md:col-span-1 col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Collected By</label>
+            <input
+              type="text"
+              name="collectedBy"
+              placeholder="Enter name"
+              className={inputClass}
+            />
           </div>
         </div>
 
-        <div className="mt-8 md:hidden bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleSave}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md text-sm font-medium transition-colors"
-            >
-              Save Entry
-            </button>
-            <button
-              type="button"
-              onClick={resetForm}
-              className="px-5 py-2.5 rounded-md border border-red-300 text-red-600 bg-white hover:bg-red-50 text-sm font-medium transition-colors"
-            >
-              Clear Form
-            </button>
-          </div>
+        <div className="mt-6 flex gap-3">
+          <button
+            type="button"
+            onClick={handleSave}
+            className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded"
+          >
+            Save Entry
+          </button>
+          <button
+            type="button"
+            onClick={resetForm}
+            className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded"
+          >
+            Clear Form
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
