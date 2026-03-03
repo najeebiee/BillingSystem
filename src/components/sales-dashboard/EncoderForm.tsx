@@ -62,6 +62,11 @@ const initialFormState: FormState = {
 
 const formatCurrency = (value: number) => `â‚± ${value.toFixed(2)}`;
 
+const toNumber = (value: unknown) => {
+  const numberValue = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numberValue) ? numberValue : 0;
+};
+
 const inputClass =
   "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm";
 const selectClass = inputClass;
@@ -86,30 +91,24 @@ export function EncoderForm() {
     setForm(initialFormState);
   };
 
-  const parsed = (value: string) => {
-    const numberValue = parseFloat(value);
-    return Number.isFinite(numberValue) ? numberValue : 0;
-  };
 
   const totals = useMemo(() => {
-    const quantity = parsed(form.quantity);
-    const originalPrice = parsed(form.originalPrice);
-    const discountRate = parsed(form.discountRate);
-    const oneTimeDiscount = parsed(form.oneTimeDiscount);
-    const discountAmount = quantity * originalPrice * discountRate;
+    const quantity = toNumber(form.quantity);
+    const originalPrice = toNumber(form.originalPrice);
+    const discountRate = toNumber(form.discountRate);
+    const oneTimeDiscount = toNumber(form.oneTimeDiscount);
+    const gross = quantity * originalPrice;
+    const discountAmount = gross * discountRate;
     const priceAfterDiscount = Math.max(0, originalPrice - originalPrice * discountRate);
 
-    if (originalPrice === 0) {
+    if (gross === 0) {
       return {
         priceAfterDiscount: 0,
         totalSales: 0
       };
     }
 
-    const totalSales = Math.max(
-      0,
-      quantity * originalPrice - discountAmount - oneTimeDiscount
-    );
+    const totalSales = Math.max(0, gross - discountAmount - oneTimeDiscount);
 
     return {
       priceAfterDiscount,
@@ -126,6 +125,7 @@ export function EncoderForm() {
       return;
     }
 
+<<<<<<< HEAD
     const quantity = parsed(form.quantity);
     const unitPrice = parsed(form.originalPrice);
     const gross = quantity * unitPrice;
@@ -135,6 +135,17 @@ export function EncoderForm() {
     const totalSales = Math.max(0, gross - discountAmount - oneTimeDiscount);
 
     const paymentAmount2 = parsed(form.paymentAmount2);
+=======
+    const quantity = toNumber(form.quantity);
+    const unitPrice = toNumber(form.originalPrice);
+    const gross = quantity * unitPrice;
+    const discountRate = toNumber(form.discountRate);
+    const discountAmount = gross * discountRate;
+    const oneTimeDiscount = toNumber(form.oneTimeDiscount);
+    const totalSales = Math.max(0, gross - discountAmount - oneTimeDiscount);
+
+    const paymentAmount2 = toNumber(form.paymentAmount2);
+>>>>>>> bf63c1330010b5cd34f210c6a49824ca72a78bf4
     if (paymentAmount2 > totalSales) {
       toast.error("Secondary payment exceeds total sales.");
       return;
@@ -163,15 +174,26 @@ export function EncoderForm() {
       package_type: form.packageType || null,
       to_blister: form.toBlister ? form.toBlister === "yes" : null,
       quantity,
+<<<<<<< HEAD
       blister_count: parsed(form.blisterCount),
+=======
+      blister_count: toNumber(form.blisterCount),
+>>>>>>> bf63c1330010b5cd34f210c6a49824ca72a78bf4
       original_price: gross,
       discount_amount: discountAmount,
       one_time_discount: oneTimeDiscount,
       total_sales: totalSales,
+<<<<<<< HEAD
       released_bottle: parsed(form.releasedBottle),
       released_blister: parsed(form.releasedBlister),
       to_follow_bottle: parsed(form.toFollowBottle),
       to_follow_blister: parsed(form.toFollowBlister),
+=======
+      released_bottle: toNumber(form.releasedBottle),
+      released_blister: toNumber(form.releasedBlister),
+      to_follow_bottle: toNumber(form.toFollowBottle),
+      to_follow_blister: toNumber(form.toFollowBlister),
+>>>>>>> bf63c1330010b5cd34f210c6a49824ca72a78bf4
       remarks: form.remarks || null
     };
 
@@ -236,10 +258,18 @@ export function EncoderForm() {
       savingRef.current = false;
     }
   };
+<<<<<<< HEAD
   return (
     <div className="w-full">
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">New Sale Entry</h1>
+=======
+
+  return (
+    <div className="w-full">
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h1 className="text-2xl font-semibold text-[#2E3A8C] mb-6">New Sale Entry</h1>
+>>>>>>> bf63c1330010b5cd34f210c6a49824ca72a78bf4
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Event</label>
@@ -270,7 +300,11 @@ export function EncoderForm() {
           </div>
 
           <div>
+<<<<<<< HEAD
             <label className="block text-sm font-medium text-gray-700 mb-1.5">PO Number</label>
+=======
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">POF Number</label>
+>>>>>>> bf63c1330010b5cd34f210c6a49824ca72a78bf4
             <input
               type="text"
               name="poNumber"
@@ -474,7 +508,11 @@ export function EncoderForm() {
           <div className="hidden lg:block" />
           <div className="hidden lg:block" />
 
+<<<<<<< HEAD
           <div className="col-span-1 md:col-span-2 lg:col-span-4 pt-2 mt-2 border-t border-[#E5E7EB]" />
+=======
+          <div className="lg:col-span-4 md:col-span-2 col-span-1 pt-2 mt-2 border-t border-[#E5E7EB]" />
+>>>>>>> bf63c1330010b5cd34f210c6a49824ca72a78bf4
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Mode of Payment</label>
@@ -633,7 +671,11 @@ export function EncoderForm() {
             />
           </div>
 
+<<<<<<< HEAD
           <div className="col-span-1 md:col-span-2 lg:col-span-4">
+=======
+          <div className="lg:col-span-4 md:col-span-2 col-span-1">
+>>>>>>> bf63c1330010b5cd34f210c6a49824ca72a78bf4
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Remarks</label>
             <textarea
               name="remarks"
@@ -645,7 +687,11 @@ export function EncoderForm() {
             />
           </div>
 
+<<<<<<< HEAD
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
+=======
+          <div className="lg:col-span-2 md:col-span-1 col-span-1">
+>>>>>>> bf63c1330010b5cd34f210c6a49824ca72a78bf4
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Received By</label>
             <input
               type="text"
@@ -655,7 +701,11 @@ export function EncoderForm() {
             />
           </div>
 
+<<<<<<< HEAD
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
+=======
+          <div className="lg:col-span-2 md:col-span-1 col-span-1">
+>>>>>>> bf63c1330010b5cd34f210c6a49824ca72a78bf4
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Collected By</label>
             <input
               type="text"
@@ -685,4 +735,8 @@ export function EncoderForm() {
       </div>
     </div>
   );
+<<<<<<< HEAD
+=======
+}
+>>>>>>> bf63c1330010b5cd34f210c6a49824ca72a78bf4
 

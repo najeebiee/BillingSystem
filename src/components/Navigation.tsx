@@ -49,7 +49,7 @@ export function Navigation() {
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
-              Sales Dashboard &amp; Encoder
+              Sales Dashboard
             </Link>
           </div>
         </div>
