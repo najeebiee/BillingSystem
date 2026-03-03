@@ -2,13 +2,9 @@ import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
 const tabs = [
-  { label: "Dashboard", to: "/sales-dashboard", end: true },
   { label: "Encoder", to: "/sales-dashboard/encoder" },
-  { label: "Sales Report", to: "/sales-dashboard/sales-report" },
   { label: "Inventory Report", to: "/sales-dashboard/inventory-report" },
-  { label: "Reports", to: "/sales-dashboard/reports" },
-  { label: "Users", to: "/sales-dashboard/users" },
-  { label: "Sales Metrics", to: "/sales-dashboard/sales-metrics" }
+  { label: "Sales Report", to: "/sales-dashboard/sales-report" }
 ];
 
 export function SalesDashboardLayout() {

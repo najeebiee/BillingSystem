@@ -13,7 +13,6 @@ import { EventRequestForm } from './components/EventRequestForm';
 import { ProspectInvitationForm } from './components/ProspectInvitationForm';
 import { SpecialCompanyEventsForm } from './components/SpecialCompanyEventsForm';
 import { SalesDashboardLayout } from './components/SalesDashboardLayout';
-import { SalesDashboardHome } from './components/SalesDashboardHome';
 import { SalesDashboardEncoderPage } from './components/SalesDashboardEncoderPage';
 import { SalesDashboardSalesReportPage } from './components/SalesDashboardSalesReportPage';
 import { SalesDashboardInventoryReportPage } from './components/SalesDashboardInventoryReportPage';
@@ -64,7 +63,7 @@ export default function App() {
           <Route path="/forms/prospect-invitation" element={<ProspectInvitationForm />} />
           <Route path="/forms/special-company-events" element={<SpecialCompanyEventsForm />} />
           <Route path="/sales-dashboard" element={<SalesDashboardLayout />}>
-            <Route index element={<SalesDashboardHome />} />
+            <Route index element={<Navigate to="encoder" replace />} />
             <Route path="encoder" element={<SalesDashboardEncoderPage />} />
             <Route path="sales-report" element={<SalesDashboardSalesReportPage />} />
             <Route path="inventory-report" element={<SalesDashboardInventoryReportPage />} />
