@@ -1,4 +1,6 @@
-﻿import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "../../lib/supabaseClient";
 
 type FormState = {
   event: string;
@@ -60,6 +62,11 @@ const initialFormState: FormState = {
 
 const formatCurrency = (value: number) => `â‚± ${value.toFixed(2)}`;
 
+const toNumber = (value: unknown) => {
+  const numberValue = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numberValue) ? numberValue : 0;
+};
+
 const inputClass =
   "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm";
 const selectClass = inputClass;
@@ -67,6 +74,7 @@ const readOnlyClass = `${inputClass} bg-gray-50 text-gray-500`;
 
 export function EncoderForm() {
   const [form, setForm] = useState<FormState>(initialFormState);
+  const savingRef = useRef(false);
 
   const updateField = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -83,36 +91,150 @@ export function EncoderForm() {
     setForm(initialFormState);
   };
 
-  const parsed = (value: string) => {
-    const numberValue = parseFloat(value);
-    return Number.isFinite(numberValue) ? numberValue : 0;
-  };
 
   const totals = useMemo(() => {
-    const quantity = parsed(form.quantity);
-    const originalPrice = parsed(form.originalPrice);
-    const discountRate = parsed(form.discountRate);
-    const oneTimeDiscount = parsed(form.oneTimeDiscount);
-    const discountAmount = quantity * originalPrice * discountRate;
+    const quantity = toNumber(form.quantity);
+    const originalPrice = toNumber(form.originalPrice);
+    const discountRate = toNumber(form.discountRate);
+    const oneTimeDiscount = toNumber(form.oneTimeDiscount);
+    const gross = quantity * originalPrice;
+    const discountAmount = gross * discountRate;
     const priceAfterDiscount = Math.max(0, originalPrice - originalPrice * discountRate);
 
-    if (originalPrice === 0) {
+    if (gross === 0) {
       return {
         priceAfterDiscount: 0,
         totalSales: 0
       };
     }
 
-    const totalSales = Math.max(
-      0,
-      quantity * originalPrice - discountAmount - oneTimeDiscount
-    );
+    const totalSales = Math.max(0, gross - discountAmount - oneTimeDiscount);
 
     return {
       priceAfterDiscount,
       totalSales
     };
   }, [form.quantity, form.originalPrice, form.discountRate, form.oneTimeDiscount]);
+
+
+  const handleSave = async () => {
+    if (savingRef.current) return;
+    const saleDate = form.date?.trim();
+    if (!saleDate) {
+      toast.error("Sale date is required.");
+      return;
+    }
+
+    const quantity = toNumber(form.quantity);
+    const unitPrice = toNumber(form.originalPrice);
+    const gross = quantity * unitPrice;
+    const discountRate = toNumber(form.discountRate);
+    const discountAmount = gross * discountRate;
+    const oneTimeDiscount = toNumber(form.oneTimeDiscount);
+    const totalSales = Math.max(0, gross - discountAmount - oneTimeDiscount);
+
+    const paymentAmount2 = toNumber(form.paymentAmount2);
+    if (paymentAmount2 > totalSales) {
+      toast.error("Secondary payment exceeds total sales.");
+      return;
+    }
+
+    const primaryAmount = Math.max(0, totalSales - paymentAmount2);
+
+    if (!form.paymentMode && primaryAmount > 0) {
+      toast.error("Primary payment mode is required.");
+      return;
+    }
+
+    if (paymentAmount2 > 0 && !form.paymentMode2) {
+      toast.error("Secondary payment mode is required.");
+      return;
+    }
+
+    const entryPayload = {
+      sale_date: saleDate,
+      event: form.event || null,
+      po_number: form.poNumber || null,
+      member_name: form.memberName || null,
+      username: form.username || null,
+      new_member: form.newMember === "yes",
+      member_type: form.memberType || null,
+      package_type: form.packageType || null,
+      to_blister: form.toBlister ? form.toBlister === "yes" : null,
+      quantity,
+      blister_count: toNumber(form.blisterCount),
+      original_price: gross,
+      discount_amount: discountAmount,
+      one_time_discount: oneTimeDiscount,
+      total_sales: totalSales,
+      released_bottle: toNumber(form.releasedBottle),
+      released_blister: toNumber(form.releasedBlister),
+      to_follow_bottle: toNumber(form.toFollowBottle),
+      to_follow_blister: toNumber(form.toFollowBlister),
+      remarks: form.remarks || null
+    };
+
+    savingRef.current = true;
+    try {
+      const { data, error } = await supabase
+        .from("sales_entries")
+        .insert(entryPayload)
+        .select("id")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      const saleEntryId = data?.id;
+      if (!saleEntryId) {
+        throw new Error("Failed to create sales entry.");
+      }
+
+      const payments: Array<{
+        sale_entry_id: string;
+        mode: string;
+        mode_type: string | null;
+        reference_no: string | null;
+        amount: number;
+      }> = [];
+
+      if (form.paymentMode) {
+        payments.push({
+          sale_entry_id: saleEntryId,
+          mode: form.paymentMode,
+          mode_type: form.paymentModeType || null,
+          reference_no: form.referenceNumber || null,
+          amount: primaryAmount
+        });
+      }
+
+      if (form.paymentMode2 && paymentAmount2 > 0) {
+        payments.push({
+          sale_entry_id: saleEntryId,
+          mode: form.paymentMode2,
+          mode_type: form.paymentModeType2 || null,
+          reference_no: form.referenceNumber2 || null,
+          amount: paymentAmount2
+        });
+      }
+
+      if (payments.length > 0) {
+        const { error: paymentError } = await supabase
+          .from("sales_entry_payments")
+          .insert(payments);
+        if (paymentError) {
+          throw paymentError;
+        }
+      }
+
+      toast.success("Sale entry saved.");
+    } catch (error) {
+      toast.error((error as Error)?.message || "Failed to save entry.");
+    } finally {
+      savingRef.current = false;
+    }
+  };
 
   return (
     <div className="w-full">
@@ -380,6 +502,7 @@ export function EncoderForm() {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
+                  onClick={handleSave}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md text-sm font-medium transition-colors"
                 >
                   Save Entry
@@ -612,6 +735,7 @@ export function EncoderForm() {
           <div className="flex items-center gap-3">
             <button
               type="button"
+              onClick={handleSave}
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md text-sm font-medium transition-colors"
             >
               Save Entry
