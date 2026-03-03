@@ -474,7 +474,7 @@ export function EncoderForm() {
           <div className="hidden lg:block" />
           <div className="hidden lg:block" />
 
-          <div className="lg:col-span-4 md:col-span-2 col-span-1 pt-2 mt-2 border-t border-[#E5E7EB]" />
+          <div className="col-span-1 md:col-span-2 lg:col-span-4 pt-2 mt-2 border-t border-[#E5E7EB]" />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Mode of Payment</label>
@@ -633,7 +633,7 @@ export function EncoderForm() {
             />
           </div>
 
-          <div className="lg:col-span-4 md:col-span-2 col-span-1">
+          <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Remarks</label>
             <textarea
               name="remarks"
@@ -645,7 +645,7 @@ export function EncoderForm() {
             />
           </div>
 
-          <div className="lg:col-span-2 md:col-span-1 col-span-1">
+          <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Received By</label>
             <input
               type="text"
@@ -655,7 +655,7 @@ export function EncoderForm() {
             />
           </div>
 
-          <div className="lg:col-span-2 md:col-span-1 col-span-1">
+          <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Collected By</label>
             <input
               type="text"
