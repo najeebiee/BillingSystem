@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabaseClient";
 
@@ -12,22 +12,27 @@ type FormState = {
   memberType: string;
   packageType: string;
   toBlister: string;
+
   quantity: string;
   blisterCount: string;
   originalPrice: string;
   discountRate: string;
   oneTimeDiscount: string;
+
   paymentMode: string;
   paymentModeType: string;
   referenceNumber: string;
+
   paymentMode2: string;
   paymentModeType2: string;
   referenceNumber2: string;
   paymentAmount2: string;
+
   releasedBottle: string;
   releasedBlister: string;
   toFollowBottle: string;
   toFollowBlister: string;
+
   remarks: string;
 };
 
@@ -41,26 +46,29 @@ const initialFormState: FormState = {
   memberType: "",
   packageType: "",
   toBlister: "",
+
   quantity: "0",
   blisterCount: "0",
   originalPrice: "0.00",
   discountRate: "0",
   oneTimeDiscount: "0.00",
+
   paymentMode: "",
   paymentModeType: "",
   referenceNumber: "",
+
   paymentMode2: "",
   paymentModeType2: "",
   referenceNumber2: "",
   paymentAmount2: "0.00",
+
   releasedBottle: "0",
   releasedBlister: "0",
   toFollowBottle: "0",
   toFollowBlister: "0",
-  remarks: ""
-};
 
-const formatCurrency = (value: number) => `â‚± ${value.toFixed(2)}`;
+  remarks: "",
+};
 
 const toNumber = (value: unknown) => {
   const numberValue = typeof value === "number" ? value : Number(value);
@@ -87,38 +95,28 @@ export function EncoderForm() {
     setForm((prev) => ({ ...prev, newMember: value }));
   };
 
-  const resetForm = () => {
-    setForm(initialFormState);
-  };
-
+  const resetForm = () => setForm(initialFormState);
 
   const totals = useMemo(() => {
     const quantity = toNumber(form.quantity);
     const originalPrice = toNumber(form.originalPrice);
     const discountRate = toNumber(form.discountRate);
     const oneTimeDiscount = toNumber(form.oneTimeDiscount);
+
     const gross = quantity * originalPrice;
     const discountAmount = gross * discountRate;
     const priceAfterDiscount = Math.max(0, originalPrice - originalPrice * discountRate);
-
-    if (gross === 0) {
-      return {
-        priceAfterDiscount: 0,
-        totalSales: 0
-      };
-    }
-
     const totalSales = Math.max(0, gross - discountAmount - oneTimeDiscount);
 
     return {
       priceAfterDiscount,
-      totalSales
+      totalSales,
     };
   }, [form.quantity, form.originalPrice, form.discountRate, form.oneTimeDiscount]);
 
-
   const handleSave = async () => {
     if (savingRef.current) return;
+
     const saleDate = form.date?.trim();
     if (!saleDate) {
       toast.error("Sale date is required.");
@@ -128,8 +126,10 @@ export function EncoderForm() {
     const quantity = toNumber(form.quantity);
     const unitPrice = toNumber(form.originalPrice);
     const gross = quantity * unitPrice;
+
     const discountRate = toNumber(form.discountRate);
     const discountAmount = gross * discountRate;
+
     const oneTimeDiscount = toNumber(form.oneTimeDiscount);
     const totalSales = Math.max(0, gross - discountAmount - oneTimeDiscount);
 
@@ -161,17 +161,21 @@ export function EncoderForm() {
       member_type: form.memberType || null,
       package_type: form.packageType || null,
       to_blister: form.toBlister ? form.toBlister === "yes" : null,
+
       quantity,
       blister_count: toNumber(form.blisterCount),
+
       original_price: gross,
       discount_amount: discountAmount,
       one_time_discount: oneTimeDiscount,
       total_sales: totalSales,
+
       released_bottle: toNumber(form.releasedBottle),
       released_blister: toNumber(form.releasedBlister),
       to_follow_bottle: toNumber(form.toFollowBottle),
       to_follow_blister: toNumber(form.toFollowBlister),
-      remarks: form.remarks || null
+
+      remarks: form.remarks || null,
     };
 
     savingRef.current = true;
@@ -182,14 +186,10 @@ export function EncoderForm() {
         .select("id")
         .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       const saleEntryId = data?.id;
-      if (!saleEntryId) {
-        throw new Error("Failed to create sales entry.");
-      }
+      if (!saleEntryId) throw new Error("Failed to create sales entry.");
 
       const payments: Array<{
         sale_entry_id: string;
@@ -199,13 +199,13 @@ export function EncoderForm() {
         amount: number;
       }> = [];
 
-      if (form.paymentMode) {
+      if (form.paymentMode && primaryAmount > 0) {
         payments.push({
           sale_entry_id: saleEntryId,
           mode: form.paymentMode,
           mode_type: form.paymentModeType || null,
           reference_no: form.referenceNumber || null,
-          amount: primaryAmount
+          amount: primaryAmount,
         });
       }
 
@@ -215,7 +215,7 @@ export function EncoderForm() {
           mode: form.paymentMode2,
           mode_type: form.paymentModeType2 || null,
           reference_no: form.referenceNumber2 || null,
-          amount: paymentAmount2
+          amount: paymentAmount2,
         });
       }
 
@@ -223,14 +223,13 @@ export function EncoderForm() {
         const { error: paymentError } = await supabase
           .from("sales_entry_payments")
           .insert(payments);
-        if (paymentError) {
-          throw paymentError;
-        }
+        if (paymentError) throw paymentError;
       }
 
       toast.success("Sale entry saved.");
-    } catch (error) {
-      toast.error((error as Error)?.message || "Failed to save entry.");
+      resetForm();
+    } catch (err) {
+      toast.error((err as Error)?.message || "Failed to save entry.");
     } finally {
       savingRef.current = false;
     }
@@ -239,16 +238,13 @@ export function EncoderForm() {
   return (
     <div className="w-full">
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h1 className="text-2xl font-semibold text-[#2E3A8C] mb-6">New Sale Entry • LAYOUT TEST</h1>
+        <h1 className="text-2xl font-semibold text-[#2E3A8C] mb-6">New Sale Entry</h1>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-5">
+          {/* Row 1 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Event</label>
-            <select
-              name="event"
-              value={form.event}
-              onChange={updateField}
-              className={selectClass}
-            >
+            <select name="event" value={form.event} onChange={updateField} className={selectClass}>
               <option value="" disabled>
                 Select event
               </option>
@@ -260,13 +256,7 @@ export function EncoderForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
-            <input
-              type="date"
-              name="date"
-              value={form.date}
-              onChange={updateField}
-              className={inputClass}
-            />
+            <input type="date" name="date" value={form.date} onChange={updateField} className={inputClass} />
           </div>
 
           <div>
@@ -283,6 +273,7 @@ export function EncoderForm() {
 
           <div className="hidden lg:block" />
 
+          {/* Row 2 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Member Name</label>
             <input
@@ -314,9 +305,7 @@ export function EncoderForm() {
                 type="button"
                 onClick={() => setNewMember("yes")}
                 className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  form.newMember === "yes"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-600 hover:bg-gray-50"
+                  form.newMember === "yes" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 Yes
@@ -325,9 +314,7 @@ export function EncoderForm() {
                 type="button"
                 onClick={() => setNewMember("no")}
                 className={`px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 ${
-                  form.newMember === "no"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-600 hover:bg-gray-50"
+                  form.newMember === "no" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 No
@@ -337,14 +324,10 @@ export function EncoderForm() {
 
           <div className="hidden lg:block" />
 
+          {/* Row 3 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Member Type</label>
-            <select
-              name="memberType"
-              value={form.memberType}
-              onChange={updateField}
-              className={selectClass}
-            >
+            <select name="memberType" value={form.memberType} onChange={updateField} className={selectClass}>
               <option value="" disabled>
                 Select type
               </option>
@@ -356,12 +339,7 @@ export function EncoderForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Package Type</label>
-            <select
-              name="packageType"
-              value={form.packageType}
-              onChange={updateField}
-              className={selectClass}
-            >
+            <select name="packageType" value={form.packageType} onChange={updateField} className={selectClass}>
               <option value="" disabled>
                 Select package
               </option>
@@ -373,12 +351,7 @@ export function EncoderForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">To Blister?</label>
-            <select
-              name="toBlister"
-              value={form.toBlister}
-              onChange={updateField}
-              className={selectClass}
-            >
+            <select name="toBlister" value={form.toBlister} onChange={updateField} className={selectClass}>
               <option value="" disabled>
                 Select option
               </option>
@@ -389,25 +362,13 @@ export function EncoderForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Original Price</label>
-            <input
-              type="number"
-              name="originalPrice"
-              value={form.originalPrice}
-              readOnly
-              className={readOnlyClass}
-            />
+            <input type="number" name="originalPrice" value={form.originalPrice} readOnly className={readOnlyClass} />
           </div>
 
+          {/* Row 4 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Quantity</label>
-            <input
-              type="number"
-              name="quantity"
-              value={form.quantity}
-              onChange={updateField}
-              className={inputClass}
-              min={0}
-            />
+            <input type="number" name="quantity" value={form.quantity} onChange={updateField} className={inputClass} min={0} />
           </div>
 
           <div>
@@ -424,12 +385,7 @@ export function EncoderForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Discount</label>
-            <select
-              name="discountRate"
-              value={form.discountRate}
-              onChange={updateField}
-              className={selectClass}
-            >
+            <select name="discountRate" value={form.discountRate} onChange={updateField} className={selectClass}>
               <option value="0">No discount</option>
               <option value="0.1">10% discount</option>
               <option value="0.2">20% discount</option>
@@ -447,6 +403,7 @@ export function EncoderForm() {
             />
           </div>
 
+          {/* Row 5 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">One-Time Discount</label>
             <input
@@ -462,13 +419,7 @@ export function EncoderForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Total Sales</label>
-            <input
-              type="number"
-              name="totalSales"
-              value={totals.totalSales.toFixed(2)}
-              readOnly
-              className={readOnlyClass}
-            />
+            <input type="number" name="totalSales" value={totals.totalSales.toFixed(2)} readOnly className={readOnlyClass} />
           </div>
 
           <div className="hidden lg:block" />
@@ -476,14 +427,10 @@ export function EncoderForm() {
 
           <div className="col-span-1 md:col-span-2 lg:col-span-4 pt-2 mt-2 border-t border-[#E5E7EB]" />
 
+          {/* Payments */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Mode of Payment</label>
-            <select
-              name="paymentMode"
-              value={form.paymentMode}
-              onChange={updateField}
-              className={selectClass}
-            >
+            <select name="paymentMode" value={form.paymentMode} onChange={updateField} className={selectClass}>
               <option value="" disabled>
                 Select mode
               </option>
@@ -496,12 +443,7 @@ export function EncoderForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Mode Type</label>
-            <select
-              name="paymentModeType"
-              value={form.paymentModeType}
-              onChange={updateField}
-              className={selectClass}
-            >
+            <select name="paymentModeType" value={form.paymentModeType} onChange={updateField} className={selectClass}>
               <option value="" disabled>
                 Select type
               </option>
@@ -527,12 +469,7 @@ export function EncoderForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Mode of Payment (2)</label>
-            <select
-              name="paymentMode2"
-              value={form.paymentMode2}
-              onChange={updateField}
-              className={selectClass}
-            >
+            <select name="paymentMode2" value={form.paymentMode2} onChange={updateField} className={selectClass}>
               <option value="" disabled>
                 Select mode
               </option>
@@ -545,12 +482,7 @@ export function EncoderForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Mode Type (2)</label>
-            <select
-              name="paymentModeType2"
-              value={form.paymentModeType2}
-              onChange={updateField}
-              className={selectClass}
-            >
+            <select name="paymentModeType2" value={form.paymentModeType2} onChange={updateField} className={selectClass}>
               <option value="" disabled>
                 Select type
               </option>
@@ -585,6 +517,7 @@ export function EncoderForm() {
             />
           </div>
 
+          {/* Release / Follow-up */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Released (Bottle)</label>
             <input
@@ -647,38 +580,20 @@ export function EncoderForm() {
 
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Received By</label>
-            <input
-              type="text"
-              name="receivedBy"
-              placeholder="Enter name"
-              className={inputClass}
-            />
+            <input type="text" name="receivedBy" placeholder="Enter name" className={inputClass} />
           </div>
 
           <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Collected By</label>
-            <input
-              type="text"
-              name="collectedBy"
-              placeholder="Enter name"
-              className={inputClass}
-            />
+            <input type="text" name="collectedBy" placeholder="Enter name" className={inputClass} />
           </div>
         </div>
 
         <div className="mt-6 flex gap-3">
-          <button
-            type="button"
-            onClick={handleSave}
-            className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded"
-          >
+          <button type="button" onClick={handleSave} className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded">
             Save Entry
           </button>
-          <button
-            type="button"
-            onClick={resetForm}
-            className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded"
-          >
+          <button type="button" onClick={resetForm} className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded">
             Clear Form
           </button>
         </div>
@@ -686,4 +601,3 @@ export function EncoderForm() {
     </div>
   );
 }
-
