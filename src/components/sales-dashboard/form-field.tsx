@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 type FormFieldProps = {
   label: string;
@@ -17,11 +17,23 @@ export function FormField({
   onChange,
   placeholder,
   disabled = false,
-  readOnly = false
+  readOnly = false,
 }: FormFieldProps) {
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
-    <div className="w-full">
-      <label className="mb-1.5 block text-sm text-gray-700">{label}</label>
+    <label className="block">
+      <span
+        className="block mb-2"
+        style={{
+          color: "#374151",
+          fontSize: "14px",
+          lineHeight: "20px",
+          fontWeight: 400,
+        }}
+      >
+        {label}
+      </span>
       <input
         type={type}
         value={value}
@@ -29,8 +41,23 @@ export function FormField({
         placeholder={placeholder}
         disabled={disabled}
         readOnly={readOnly}
-        className="h-11 w-full rounded-lg border border-[#D0D5DD] px-3 text-sm outline-none focus:border-[#2E3A8C] disabled:bg-gray-50 disabled:text-gray-400"
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        className="w-full px-3"
+        style={{
+          height: "44px",
+          borderWidth: "1px",
+          borderStyle: "solid",
+          borderColor: isFocused ? "#2E3A8C" : "#D0D5DD",
+          borderRadius: "8px",
+          outline: "none",
+          backgroundColor: disabled ? "#F9FAFB" : "#FFFFFF",
+          color: disabled ? "#9CA3AF" : "#111827",
+          fontSize: "14px",
+          lineHeight: "20px",
+          fontWeight: 400,
+        }}
       />
-    </div>
+    </label>
   );
 }

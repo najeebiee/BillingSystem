@@ -9,16 +9,11 @@ type SalesDashboardEncoderPageProps = {
 
 export function SalesDashboardEncoderPage({
   onSave = () => {},
-  savedCount = 0
+  savedCount = 0,
 }: SalesDashboardEncoderPageProps) {
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-gray-900">New Sale Entry</h1>
-        <p className="text-sm text-gray-600">Encode sale transactions.</p>
-        <p className="text-xs text-gray-500 mt-1">Saved entries: {savedCount}</p>
-      </div>
-      <EncoderForm onSave={onSave} />
+    <div className="w-full max-w-7xl mx-auto">
+      <EncoderForm onSave={onSave} savedCount={savedCount} />
     </div>
   );
 }
