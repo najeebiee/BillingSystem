@@ -10,12 +10,30 @@ type PaymentPart = { mode: string; type: string; reference: string; amount: numb
 
 const DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5, 1, 0.25] as const;
 
+const PRICE_MAP: Record<string, number> = {
+  silver: 3500,
+  gold: 10500,
+  platinum: 35000,
+  distributor: 0,
+  retail: 2280,
+  bottle: 2280,
+  "synbiotic (bottle)": 2280,
+  blister: 779,
+  "synbiotic (blister)": 779,
+  "blister (1 blister pack)": 779,
+  "employee discount": 0,
+  "total mobile stockist retail sales": 2280,
+  "total depot retail sales": 2280,
+};
+
 const toNumber = (value: string) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
 const normalize = (value: string) => value.trim().toLowerCase();
+
+const getPrice = (label: string) => PRICE_MAP[normalize(label)] ?? 0;
 
 const formatMoney = (value: number) =>
   value.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -133,8 +151,8 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
     return memberKeys.map(({ key, label }) => {
       const entries = filteredEntries.filter((entry) => normalize(entry.memberType) === key);
       const qty = entries.reduce((sum, entry) => sum + (parseInt(entry.quantity, 10) || 1), 0);
-      const amount = entries.reduce((sum, entry) => sum + computeTotal(entry), 0);
-      const price = qty > 0 ? Math.round(amount / qty) : 0;
+      const price = getPrice(label);
+      const amount = qty * price;
       return { label, qty, price, amount };
     });
   }, [filteredEntries]);
@@ -142,9 +160,9 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
   const bottleQty = filteredEntries.reduce((sum, entry) => sum + (parseInt(entry.releasedBottles, 10) || 0), 0);
   const blisterQty = filteredEntries.reduce((sum, entry) => sum + (parseInt(entry.releasedBlister, 10) || 0), 0);
   const retailRows = [
-    { label: "Bottle", qty: bottleQty, price: 2280, amount: bottleQty * 2280 },
-    { label: "Blister", qty: blisterQty, price: 1299, amount: blisterQty * 1299 },
-    { label: "Employee Discount", qty: 0, price: 0, amount: 0 },
+    { label: "Bottle", qty: bottleQty, price: getPrice("Bottle"), amount: bottleQty * getPrice("Bottle") },
+    { label: "Blister", qty: blisterQty, price: getPrice("Blister"), amount: blisterQty * getPrice("Blister") },
+    { label: "Employee Discount", qty: 0, price: getPrice("Employee Discount"), amount: 0 },
   ];
 
   const packageTotal = packageRows.reduce((sum, row) => sum + row.amount, 0);
@@ -165,8 +183,8 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
           normalize(entry.memberType) === tier.key
       );
       const qty = rowsForTier.reduce((sum, entry) => sum + (parseInt(entry.quantity, 10) || 1), 0);
-      const amount = rowsForTier.reduce((sum, entry) => sum + computeTotal(entry), 0);
-      const price = qty > 0 ? Math.round(amount / qty) : 0;
+      const price = getPrice(tier.label);
+      const amount = qty * price;
       return { label: tier.label, qty, price, amount };
     });
 
@@ -180,19 +198,33 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
   const depotPackageSection = summarizeLegacyPackageSection("depot");
 
   const legacyRetailRows = [
-    { label: "Synbiotic (Bottle)", qty: bottleQty, price: 2280, amount: bottleQty * 2280 },
-    { label: "Synbiotic (Blister)", qty: blisterQty, price: 1299, amount: blisterQty * 1299 },
-    { label: "Employee Discount", qty: 0, price: 0, amount: 0 },
+    {
+      label: "Synbiotic (Bottle)",
+      qty: bottleQty,
+      price: getPrice("Synbiotic (Bottle)"),
+      amount: bottleQty * getPrice("Synbiotic (Bottle)"),
+    },
+    {
+      label: "Synbiotic (Blister)",
+      qty: blisterQty,
+      price: getPrice("Synbiotic (Blister)"),
+      amount: blisterQty * getPrice("Synbiotic (Blister)"),
+    },
+    { label: "Employee Discount", qty: 0, price: getPrice("Employee Discount"), amount: 0 },
   ];
   const legacyRetailTotal = legacyRetailRows.reduce((sum, row) => sum + row.amount, 0);
 
-  const mobileStockistRetailTotal = filteredEntries
+  const mobileStockistRetailQty = filteredEntries
     .filter((entry) => normalize(entry.packageType).includes("mobile stockist retail"))
-    .reduce((sum, entry) => sum + computeTotal(entry), 0);
+    .reduce((sum, entry) => sum + (parseInt(entry.quantity, 10) || 1), 0);
+  const mobileStockistRetailPrice = getPrice("Total Mobile Stockist Retail Sales");
+  const mobileStockistRetailTotal = mobileStockistRetailQty * mobileStockistRetailPrice;
 
-  const depotRetailTotal = filteredEntries
+  const depotRetailQty = filteredEntries
     .filter((entry) => normalize(entry.packageType).includes("depot retail"))
-    .reduce((sum, entry) => sum + computeTotal(entry), 0);
+    .reduce((sum, entry) => sum + (parseInt(entry.quantity, 10) || 1), 0);
+  const depotRetailPrice = getPrice("Total Depot Retail Sales");
+  const depotRetailTotal = depotRetailQty * depotRetailPrice;
 
   const legacyGrandTotal =
     mobileStockistPackageSection.total +
@@ -402,8 +434,8 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
               <tbody>
                 <tr>
                   <td className="border border-black px-2 py-1">Total Mobile Stockist Retail Sales</td>
-                  <td className="border border-black px-2 py-1 text-right">0</td>
-                  <td className="border border-black px-2 py-1 text-right">0.00</td>
+                  <td className="border border-black px-2 py-1 text-right">{mobileStockistRetailQty}</td>
+                  <td className="border border-black px-2 py-1 text-right">{formatMoney(mobileStockistRetailPrice)}</td>
                   <td className="border border-black px-2 py-1 text-right">{formatMoney(mobileStockistRetailTotal)}</td>
                 </tr>
               </tbody>
@@ -421,8 +453,8 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
               <tbody>
                 <tr>
                   <td className="border border-black px-2 py-1">Total Depot Retail Sales</td>
-                  <td className="border border-black px-2 py-1 text-right">0</td>
-                  <td className="border border-black px-2 py-1 text-right">0.00</td>
+                  <td className="border border-black px-2 py-1 text-right">{depotRetailQty}</td>
+                  <td className="border border-black px-2 py-1 text-right">{formatMoney(depotRetailPrice)}</td>
                   <td className="border border-black px-2 py-1 text-right">{formatMoney(depotRetailTotal)}</td>
                 </tr>
               </tbody>
