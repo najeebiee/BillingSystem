@@ -3,6 +3,8 @@ import React, { useState } from "react";
 type SelectOption = {
   value: string;
   label: string;
+  disabled?: boolean;
+  hidden?: boolean;
 };
 
 type FormSelectProps = {
@@ -49,7 +51,12 @@ export function FormSelect({ label, value, onChange, options }: FormSelectProps)
         }}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option
+            key={`${option.value}-${option.label}`}
+            value={option.value}
+            disabled={option.disabled}
+            hidden={option.hidden}
+          >
             {option.label}
           </option>
         ))}

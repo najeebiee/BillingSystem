@@ -36,7 +36,7 @@ type FormData = {
 };
 
 const initialFormData: FormData = {
-  event: "",
+  event: "Davao City",
   date: "",
   pgfNumber: "",
   memberName: "",
@@ -150,7 +150,8 @@ export function EncoderForm() {
             value={formData.event}
             onChange={(value) => handleInputChange("event", value)}
             options={[
-              { value: "", label: "Select event" },
+              { value: "", label: "Select event", disabled: true, hidden: true },
+              { value: "Davao City", label: "Davao City" },
               { value: "Promo Event 1", label: "Promo Event 1" },
               { value: "Promo Event 2", label: "Promo Event 2" },
               { value: "Regular Sale", label: "Regular Sale" },
