@@ -151,6 +151,56 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
   const retailTotal = retailRows.reduce((sum, row) => sum + row.amount, 0);
   const grandTotal = packageTotal + retailTotal;
 
+  const legacyTierRows: Array<{ key: SaleEntry["memberType"]; label: string }> = [
+    { key: "platinum", label: "Platinum" },
+    { key: "gold", label: "Gold" },
+    { key: "silver", label: "Silver" },
+  ];
+
+  const summarizeLegacyPackageSection = (keyword: string) => {
+    const rows = legacyTierRows.map((tier) => {
+      const rowsForTier = filteredEntries.filter(
+        (entry) =>
+          normalize(entry.packageType).includes(keyword) &&
+          normalize(entry.memberType) === tier.key
+      );
+      const qty = rowsForTier.reduce((sum, entry) => sum + (parseInt(entry.quantity, 10) || 1), 0);
+      const amount = rowsForTier.reduce((sum, entry) => sum + computeTotal(entry), 0);
+      const price = qty > 0 ? Math.round(amount / qty) : 0;
+      return { label: tier.label, qty, price, amount };
+    });
+
+    return {
+      rows,
+      total: rows.reduce((sum, row) => sum + row.amount, 0),
+    };
+  };
+
+  const mobileStockistPackageSection = summarizeLegacyPackageSection("mobile stockist");
+  const depotPackageSection = summarizeLegacyPackageSection("depot");
+
+  const legacyRetailRows = [
+    { label: "Synbiotic (Bottle)", qty: bottleQty, price: 2280, amount: bottleQty * 2280 },
+    { label: "Synbiotic (Blister)", qty: blisterQty, price: 1299, amount: blisterQty * 1299 },
+    { label: "Employee Discount", qty: 0, price: 0, amount: 0 },
+  ];
+  const legacyRetailTotal = legacyRetailRows.reduce((sum, row) => sum + row.amount, 0);
+
+  const mobileStockistRetailTotal = filteredEntries
+    .filter((entry) => normalize(entry.packageType).includes("mobile stockist retail"))
+    .reduce((sum, entry) => sum + computeTotal(entry), 0);
+
+  const depotRetailTotal = filteredEntries
+    .filter((entry) => normalize(entry.packageType).includes("depot retail"))
+    .reduce((sum, entry) => sum + computeTotal(entry), 0);
+
+  const legacyGrandTotal =
+    mobileStockistPackageSection.total +
+    depotPackageSection.total +
+    legacyRetailTotal +
+    mobileStockistRetailTotal +
+    depotRetailTotal;
+
   const paymentRows: Array<{ label: string; key: PaymentKey }> = [
     { label: "Cash on Hand", key: "cash" },
     { label: "E-Wallet", key: "ewallet" },
@@ -250,6 +300,144 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
                     <td className="border border-black px-2 py-1 text-right">{formatMoney(row.amount)}</td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+
+            <table className="w-full border border-black border-collapse mt-3">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-black px-2 py-1 text-left">MOBILE STOCKIST PACKAGE</th>
+                  <th className="border border-black px-2 py-1 text-right">QTY</th>
+                  <th className="border border-black px-2 py-1 text-right">PRICE</th>
+                  <th className="border border-black px-2 py-1 text-right">AMOUNT TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mobileStockistPackageSection.rows.map((row) => (
+                  <tr key={`mobile-stockist-${row.label}`}>
+                    <td className="border border-black px-2 py-1">{row.label}</td>
+                    <td className="border border-black px-2 py-1 text-right">{row.qty}</td>
+                    <td className="border border-black px-2 py-1 text-right">{formatMoney(row.price)}</td>
+                    <td className="border border-black px-2 py-1 text-right">{formatMoney(row.amount)}</td>
+                  </tr>
+                ))}
+                <tr>
+                  <td className="border border-black px-2 py-1 font-bold" colSpan={3}>
+                    Total Mobile Stockist Package Sales
+                  </td>
+                  <td className="border border-black px-2 py-1 text-right font-bold">
+                    {formatMoney(mobileStockistPackageSection.total)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table className="w-full border border-black border-collapse mt-3">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-black px-2 py-1 text-left">DEPOT PACKS</th>
+                  <th className="border border-black px-2 py-1 text-right">QTY</th>
+                  <th className="border border-black px-2 py-1 text-right">PRICE</th>
+                  <th className="border border-black px-2 py-1 text-right">AMOUNT TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {depotPackageSection.rows.map((row) => (
+                  <tr key={`depot-${row.label}`}>
+                    <td className="border border-black px-2 py-1">{row.label}</td>
+                    <td className="border border-black px-2 py-1 text-right">{row.qty}</td>
+                    <td className="border border-black px-2 py-1 text-right">{formatMoney(row.price)}</td>
+                    <td className="border border-black px-2 py-1 text-right">{formatMoney(row.amount)}</td>
+                  </tr>
+                ))}
+                <tr>
+                  <td className="border border-black px-2 py-1 font-bold" colSpan={3}>
+                    Total Depot Package Sales
+                  </td>
+                  <td className="border border-black px-2 py-1 text-right font-bold">
+                    {formatMoney(depotPackageSection.total)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table className="w-full border border-black border-collapse mt-3">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-black px-2 py-1 text-left">RETAIL</th>
+                  <th className="border border-black px-2 py-1 text-right">QTY</th>
+                  <th className="border border-black px-2 py-1 text-right">PRICE</th>
+                  <th className="border border-black px-2 py-1 text-right">AMOUNT TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {legacyRetailRows.map((row) => (
+                  <tr key={`legacy-retail-${row.label}`}>
+                    <td className="border border-black px-2 py-1">{row.label}</td>
+                    <td className="border border-black px-2 py-1 text-right">{row.qty}</td>
+                    <td className="border border-black px-2 py-1 text-right">{formatMoney(row.price)}</td>
+                    <td className="border border-black px-2 py-1 text-right">{formatMoney(row.amount)}</td>
+                  </tr>
+                ))}
+                <tr>
+                  <td className="border border-black px-2 py-1 font-bold" colSpan={3}>
+                    Total Retail Sales
+                  </td>
+                  <td className="border border-black px-2 py-1 text-right font-bold">
+                    {formatMoney(legacyRetailTotal)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table className="w-full border border-black border-collapse mt-3">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-black px-2 py-1 text-left">MOBILE STOCKIST RETAIL</th>
+                  <th className="border border-black px-2 py-1 text-right">QTY</th>
+                  <th className="border border-black px-2 py-1 text-right">PRICE</th>
+                  <th className="border border-black px-2 py-1 text-right">AMOUNT TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="border border-black px-2 py-1">Total Mobile Stockist Retail Sales</td>
+                  <td className="border border-black px-2 py-1 text-right">0</td>
+                  <td className="border border-black px-2 py-1 text-right">0.00</td>
+                  <td className="border border-black px-2 py-1 text-right">{formatMoney(mobileStockistRetailTotal)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table className="w-full border border-black border-collapse mt-3">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-black px-2 py-1 text-left">DEPOT RETAIL</th>
+                  <th className="border border-black px-2 py-1 text-right">QTY</th>
+                  <th className="border border-black px-2 py-1 text-right">PRICE</th>
+                  <th className="border border-black px-2 py-1 text-right">AMOUNT TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="border border-black px-2 py-1">Total Depot Retail Sales</td>
+                  <td className="border border-black px-2 py-1 text-right">0</td>
+                  <td className="border border-black px-2 py-1 text-right">0.00</td>
+                  <td className="border border-black px-2 py-1 text-right">{formatMoney(depotRetailTotal)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table className="w-full border border-black border-collapse mt-3">
+              <tbody>
+                <tr className="bg-gray-100">
+                  <td className="border border-black px-2 py-1 font-bold" colSpan={3}>
+                    GRAND TOTAL
+                  </td>
+                  <td className="border border-black px-2 py-1 text-right font-bold">
+                    {formatMoney(legacyGrandTotal)}
+                  </td>
+                </tr>
               </tbody>
             </table>
 
