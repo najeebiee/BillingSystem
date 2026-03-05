@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
+import { SalesDashboardNavItem } from './navigation/SalesDashboardNavItem';
 
 export function Navigation() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -40,6 +41,7 @@ export function Navigation() {
             >
               Event Forms
             </Link>
+            <SalesDashboardNavItem />
           </div>
         </div>
 
