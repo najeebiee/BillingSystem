@@ -54,6 +54,15 @@ const DISCOUNT_OPTIONS: Array<{ label: string; value: number }> = [
   { label: "₱500", value: 500 },
   { label: "₱600", value: 600 },
   { label: "₱800", value: 800 },
+  { label: "₱1748", value: 1748 },
+  { label: "40% (₱1,520)", value: 1520 },
+  { label: "45% (₱1,710)", value: 1710 },
+  { label: "47.5% (₱1,805)", value: 1805 },
+  { label: "50% (₱1,900)", value: 1900 },
+  { label: "40% (₱520)", value: 520 },
+  { label: "45% (₱585)", value: 585 },
+  { label: "47.5% (₱618)", value: 618 },
+  { label: "50% (₱650)", value: 650 },
 ];
 
 const initialFormData: FormData = {
