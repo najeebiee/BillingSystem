@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import type { SaleEntry } from "../types/sales";
 
 type SalesDashboardSalesReportPageProps = {
@@ -129,6 +129,7 @@ function getPaymentDetailRows(entries: SaleEntry[], key: PaymentKey) {
 export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSalesReportPageProps) {
   const [reportDate, setReportDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [showEncodedEntries, setShowEncodedEntries] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
   const [cashPieces, setCashPieces] = useState<Record<string, string>>(() =>
     Object.fromEntries(DENOMINATIONS.map((denom) => [String(denom), "0"]))
   );
@@ -260,72 +261,53 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
   }, 0);
 
   const handlePrint = () => {
-    requestAnimationFrame(() => {
-      window.print();
-    });
+    const el = reportRef.current;
+    if (!el) return;
+
+    const printWindow = window.open("", "_blank", "width=900,height=650");
+    if (!printWindow) return;
+
+    const html = el.outerHTML;
+
+    printWindow.document.open();
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Daily Sales Report</title>
+          <style>
+            @page { size: A4 portrait; margin: 10mm; }
+            html, body { padding: 0; margin: 0; font-family: Arial, sans-serif; }
+            .print-root {
+              width: 100%;
+              transform: scale(0.88);
+              transform-origin: top left;
+            }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #cfcfcf; padding: 4px 6px; font-size: 12px; }
+            th { font-weight: 700; }
+            table, tr, td, th { page-break-inside: avoid; break-inside: avoid; }
+            .no-print { display: none !important; }
+          </style>
+        </head>
+        <body>
+          <div class="print-root">
+            ${html}
+          </div>
+          <script>
+            window.onload = function() {
+              window.focus();
+              window.print();
+              setTimeout(function() { window.close(); }, 300);
+            };
+          <\/script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (
     <div className="bg-white rounded-lg border border-gray-300 p-4" style={{ fontFamily: "Arial, sans-serif", fontSize: "11px" }}>
-      <style>
-        {`
-          @media print {
-            html, body {
-              height: auto !important;
-            }
-
-            body * {
-              visibility: hidden !important;
-            }
-
-            #sales-report-print, #sales-report-print * {
-              visibility: visible !important;
-            }
-
-            #sales-report-print {
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100% !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              transform: scale(0.88);
-              transform-origin: top left;
-            }
-
-            .no-print {
-              display: none !important;
-            }
-
-            table {
-              width: 100% !important;
-              border-collapse: collapse !important;
-            }
-
-            th, td {
-              border: 1px solid #cfcfcf !important;
-              padding: 4px 6px !important;
-            }
-
-            .report-root, table, tr, td, th {
-              page-break-inside: avoid !important;
-              break-inside: avoid !important;
-            }
-
-            .report-root {
-              overflow: visible !important;
-              max-height: none !important;
-              height: auto !important;
-            }
-
-            @page {
-              size: A4 portrait;
-              margin: 10mm;
-            }
-          }
-        `}
-      </style>
-
       <div className="mb-4 flex items-center justify-between gap-4 no-print">
         <div className="flex items-center gap-2">
           <span>Report Date:</span>
@@ -354,7 +336,7 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
         </div>
       </div>
 
-      <div id="sales-report-print" className="report-root">
+      <div ref={reportRef} id="sales-report-print" className="report-root">
         <div className="border border-black p-3">
         <div className="text-center font-bold">Company Name</div>
         <div className="text-center font-bold">Daily Sales Report</div>
