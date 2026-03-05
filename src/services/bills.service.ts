@@ -51,6 +51,7 @@ export async function listBills(params: ListBillsParams) {
       bank_account_no,
       status,
       remarks,
+      rejection_reason,
       total_amount,
       created_by,
       created_at,
@@ -76,9 +77,30 @@ export async function listBills(params: ListBillsParams) {
 
   if (params.search && params.search.trim()) {
     const q = params.search.trim();
-    request = request.or(
-      `reference_no.ilike.%${q}%,vendor.name.ilike.%${q}%`
-    );
+    const escaped = q.replace(/[%(),]/g, "").trim();
+    if (escaped) {
+      const { data: matchingVendors, error: vendorSearchError } = await supabase
+        .from("vendors")
+        .select("id")
+        .ilike("name", `%${escaped}%`)
+        .limit(100);
+
+      if (vendorSearchError) {
+        return { data: [], count: 0, error: vendorSearchError.message };
+      }
+
+      const vendorIds = (matchingVendors ?? [])
+        .map((vendor) => vendor.id)
+        .filter(Boolean);
+
+      if (vendorIds.length > 0) {
+        request = request.or(
+          `reference_no.ilike.%${escaped}%,vendor_id.in.(${vendorIds.join(",")})`
+        );
+      } else {
+        request = request.ilike("reference_no", `%${escaped}%`);
+      }
+    }
   }
 
   const { data, error, count } = await request;
@@ -320,6 +342,7 @@ export async function getBillById(id: string) {
       bank_account_no,
       status,
       remarks,
+      rejection_reason,
       total_amount,
       created_by,
       created_at,
@@ -333,6 +356,16 @@ export async function getBillById(id: string) {
 
   if (error) {
     return { data: null as BillDetails | null, error: error.message };
+  }
+
+  const { data: attachments, error: attachmentError } = await supabase
+    .from("bill_attachments")
+    .select("id,bill_id,file_path,file_name,mime_type,file_size,uploaded_by,created_at")
+    .eq("bill_id", id)
+    .order("created_at", { ascending: true });
+
+  if (attachmentError) {
+    return { data: null as BillDetails | null, error: attachmentError.message };
   }
 
   return {
@@ -349,16 +382,27 @@ export async function getBillById(id: string) {
         bank_account_no: data.bank_account_no,
         status: data.status,
         remarks: data.remarks,
+        rejection_reason: data.rejection_reason,
         total_amount: data.total_amount,
         created_by: data.created_by,
         created_at: data.created_at,
         updated_at: data.updated_at
       },
       vendor: Array.isArray(data.vendor) ? data.vendor[0] : data.vendor,
-      breakdowns: data.breakdowns ?? []
+      breakdowns: (data.breakdowns ?? []).map((breakdown) => ({
+        ...breakdown,
+        amount: roundMoney(breakdown.amount)
+      })),
+      attachments: attachments ?? []
     } as BillDetails,
     error: null as string | null
   };
+}
+
+function roundMoney(value: unknown) {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) return 0;
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
 }
 
 export interface CreateBillPayload {
@@ -367,9 +411,14 @@ export interface CreateBillPayload {
 }
 
 export async function createBill(payload: CreateBillPayload) {
+  const normalizedBill = {
+    ...payload.bill,
+    total_amount: roundMoney(payload.bill.total_amount)
+  };
+
   const { data: bill, error: billError } = await supabase
     .from("bills")
-    .insert(payload.bill)
+    .insert(normalizedBill)
     .select(
       `
       id,
@@ -383,6 +432,7 @@ export async function createBill(payload: CreateBillPayload) {
       bank_account_no,
       status,
       remarks,
+      rejection_reason,
       total_amount,
       created_by,
       created_at,
@@ -402,7 +452,7 @@ export async function createBill(payload: CreateBillPayload) {
     bill_id: bill.id,
     payment_method: b.payment_method,
     description: b.description ?? "",
-    amount: Number.isFinite(b.amount) ? b.amount : 0,
+    amount: roundMoney(b.amount),
     bank_name: b.payment_method === "bank_transfer" ? b.bank_name ?? null : null,
     bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name ?? null : null,
     bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no ?? null : null
@@ -430,9 +480,14 @@ export interface UpdateBillPayload {
 }
 
 export async function updateBill(id: string, payload: UpdateBillPayload) {
+  const normalizedBill = {
+    ...payload.bill,
+    total_amount: roundMoney(payload.bill.total_amount)
+  };
+
   const { data: updated, error: updateError } = await supabase
     .from("bills")
-    .update(payload.bill)
+    .update(normalizedBill)
     .eq("id", id)
     .select(
       `
@@ -447,6 +502,7 @@ export async function updateBill(id: string, payload: UpdateBillPayload) {
       bank_account_no,
       status,
       remarks,
+      rejection_reason,
       total_amount,
       created_by,
       created_at,
@@ -475,7 +531,7 @@ export async function updateBill(id: string, payload: UpdateBillPayload) {
     bill_id: id,
     payment_method: b.payment_method,
     description: b.description ?? "",
-    amount: Number.isFinite(b.amount) ? b.amount : 0,
+    amount: roundMoney(b.amount),
     bank_name: b.payment_method === "bank_transfer" ? b.bank_name ?? null : null,
     bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name ?? null : null,
     bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no ?? null : null
@@ -494,10 +550,16 @@ export async function updateBill(id: string, payload: UpdateBillPayload) {
   return { data: updated as Bill, error: null as string | null };
 }
 
-export async function updateBillStatus(id: string, status: BillStatus) {
+export async function updateBillStatus(id: string, status: BillStatus, rejectionReason?: string | null) {
+  const trimmedReason = (rejectionReason || "").trim();
+  const updatePayload = {
+    status,
+    rejection_reason: status === "rejected" ? trimmedReason || null : null
+  };
+
   const { data, error } = await supabase
     .from("bills")
-    .update({ status })
+    .update(updatePayload)
     .eq("id", id)
     .select(
       `
@@ -512,6 +574,7 @@ export async function updateBillStatus(id: string, status: BillStatus) {
       bank_account_no,
       status,
       remarks,
+      rejection_reason,
       total_amount,
       created_by,
       created_at,

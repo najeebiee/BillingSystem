@@ -3,9 +3,14 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { VoidBillModal } from "./VoidBillModal";
 import { ChevronRight, AlertCircle, Plus, X, Upload } from "lucide-react";
 import { getBillById, updateBill, updateBillStatus, type ServiceError } from "../services/bills.service";
+import {
+  deleteBillAttachments,
+  uploadBillAttachments
+} from "../services/billAttachments.service";
 import { createVendor, listVendors } from "../services/vendors.service";
 import { confirmDiscardChanges } from "../lib/alerts";
-import type { PaymentMethod, PriorityLevel, Vendor } from "../types/billing";
+import { useAuth } from "../auth/AuthContext";
+import type { BillAttachment, PaymentMethod, PriorityLevel, Vendor } from "../types/billing";
 interface PaymentBreakdown {
   id: string;
   payment_method: PaymentMethod;
@@ -32,10 +37,12 @@ export function EditBillPage() {
   const [requestDate, setRequestDate] = useState("");
   const [priority, setPriority] = useState("Standard");
   const [reasonForPayment, setReasonForPayment] = useState("");
-  const [attachments, setAttachments] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<BillAttachment[]>([]);
+  const [attachmentsToDelete, setAttachmentsToDelete] = useState<BillAttachment[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [breakdowns, setBreakdowns] = useState<PaymentBreakdown[]>([]);
+  const { user } = useAuth();
   const priorityMap: Record<string, PriorityLevel> = useMemo(
     () => ({
       Urgent: "urgent",
@@ -57,7 +64,8 @@ export function EditBillPage() {
         return "Other";
     }
   };
-  const canEdit = billStatus === "draft" || billStatus === "awaiting_approval";
+  const canEdit =
+    billStatus === "draft" || billStatus === "awaiting_approval" || billStatus === "rejected";
   const isDuplicatePrfError = (error: string | ServiceError | null | undefined) =>
     typeof error === "object" && error?.code === "DUPLICATE_PRF";
   useEffect(() => {
@@ -75,7 +83,7 @@ export function EditBillPage() {
           setErrorMessage(result.error || "Bill not found.");
           return;
         }
-        const { bill, vendor, breakdowns: lineItems } = result.data;
+        const { bill, vendor, breakdowns: lineItems, attachments: existingAttachments } = result.data;
         setBillStatus(bill.status);
         setVendorInput(vendor.name);
         setSelectedVendor(vendor);
@@ -91,7 +99,9 @@ export function EditBillPage() {
             : "Standard"
         );
         setReasonForPayment(bill.remarks || "");
-        setAttachments([]);
+        setAttachments(existingAttachments);
+        setAttachmentsToDelete([]);
+        setNewFiles([]);
         setBreakdowns(
           lineItems.map((b, idx) => ({
             id: b.id || idx.toString(),
@@ -146,6 +156,8 @@ export function EditBillPage() {
         return "bg-gray-100 text-gray-700";
       case "awaiting_approval":
         return "bg-yellow-100 text-yellow-700";
+      case "rejected":
+        return "bg-orange-100 text-orange-700";
       case "approved":
         return "bg-blue-100 text-blue-700";
       case "paid":
@@ -162,6 +174,8 @@ export function EditBillPage() {
         return "Draft";
       case "awaiting_approval":
         return "Awaiting Approval";
+      case "rejected":
+        return "Rejected";
       case "approved":
         return "Approved";
       case "paid":
@@ -209,10 +223,12 @@ export function EditBillPage() {
     );
   };
   const calculateTotal = () => {
-    return breakdowns.reduce((sum, b) => {
-      const amount = parseFloat(b.amount) || 0;
-      return sum + amount;
-    }, 0);
+    return roundMoney(
+      breakdowns.reduce((sum, b) => {
+        const amount = roundMoney(b.amount);
+        return sum + amount;
+      }, 0)
+    );
   };
   const addFiles = (files: FileList | File[]) => {
     const nextFiles = Array.from(files);
@@ -239,6 +255,10 @@ export function EditBillPage() {
     addFiles(e.dataTransfer.files);
   };
   const removeAttachment = (index: number) => {
+    const removed = attachments[index];
+    if (removed) {
+      setAttachmentsToDelete((prev) => [...prev, removed]);
+    }
     setAttachments(attachments.filter((_, i) => i !== index));
   };
   const removeNewFile = (index: number) => {
@@ -315,15 +335,15 @@ export function EditBillPage() {
       breakdowns: breakdowns.map((b) => ({
         payment_method: b.payment_method,
         description: b.description ? b.description : "",
-        amount: parseFloat(b.amount) || 0,
+        amount: roundMoney(b.amount),
         bank_name: b.payment_method === "bank_transfer" ? b.bank_name || null : null,
         bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name || null : null,
         bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no || null : null
       }))
     };
     const result = await updateBill(id, payload);
-    setIsSaving(false);
     if (result.error) {
+      setIsSaving(false);
       if (isDuplicatePrfError(result.error)) {
         setReferenceError(
           "Warning: PRF already existing. Please choose another PRF or leave blank to auto-generate."
@@ -334,6 +354,26 @@ export function EditBillPage() {
       setErrorMessage(message || "Failed to update bill.");
       return;
     }
+
+    if (attachmentsToDelete.length > 0) {
+      const deleteResult = await deleteBillAttachments(attachmentsToDelete);
+      if (deleteResult.error) {
+        setIsSaving(false);
+        setErrorMessage(`Bill updated, but failed to delete attachments: ${deleteResult.error}`);
+        return;
+      }
+    }
+
+    if (newFiles.length > 0) {
+      const uploadResult = await uploadBillAttachments(id, newFiles, user?.id);
+      if (uploadResult.error) {
+        setIsSaving(false);
+        setErrorMessage(`Bill updated, but attachment upload failed: ${uploadResult.error}`);
+        return;
+      }
+    }
+
+    setIsSaving(false);
     navigate(`/bills/${id}`);
   };
   const handleCancel = async () => {
@@ -358,7 +398,7 @@ export function EditBillPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6 text-gray-600">
             Loading bill...
           </div>
@@ -369,7 +409,7 @@ export function EditBillPage() {
   if (errorMessage && !billStatus) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h1 className="text-xl font-semibold text-gray-900 mb-2">Bill not found</h1>
             <p className="text-gray-600 mb-4">{errorMessage}</p>
@@ -384,7 +424,7 @@ export function EditBillPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           {/* Edit Mode Banner */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-blue-600" />
@@ -725,7 +765,7 @@ export function EditBillPage() {
                           key={index}
                           className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200"
                         >
-                          <span className="text-sm text-gray-900">{attachment}</span>
+                          <span className="text-sm text-gray-900">{attachment.file_name}</span>
                           <button
                             type="button"
                             onClick={() => removeAttachment(index)}
@@ -852,4 +892,10 @@ export function EditBillPage() {
       />
     </div>
   );
+}
+
+function roundMoney(value: unknown) {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) return 0;
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
 }

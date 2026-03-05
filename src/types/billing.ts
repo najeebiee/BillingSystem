@@ -1,6 +1,7 @@
 export type BillStatus =
   | "draft"
   | "awaiting_approval"
+  | "rejected"
   | "approved"
   | "paid"
   | "void";
@@ -27,6 +28,7 @@ export interface Bill {
   bank_account_no?: string | null;
   status: BillStatus;
   remarks?: string | null;
+  rejection_reason?: string | null;
   total_amount: number;
   created_by: string;
   created_at?: string;
@@ -44,8 +46,20 @@ export interface BillBreakdown {
   bank_account_no?: string | null;
 }
 
+export interface BillAttachment {
+  id: string;
+  bill_id: string;
+  file_path: string;
+  file_name: string;
+  mime_type?: string | null;
+  file_size?: number | null;
+  uploaded_by?: string | null;
+  created_at?: string;
+}
+
 export interface BillDetails {
   bill: Bill;
   vendor: Vendor;
   breakdowns: BillBreakdown[];
+  attachments: BillAttachment[];
 }

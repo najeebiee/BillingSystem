@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRight, Plus, X, Upload } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { createBill, type ServiceError } from "../services/bills.service";
+import { uploadBillAttachments } from "../services/billAttachments.service";
 import { createVendor, listVendors } from "../services/vendors.service";
 import type { PaymentMethod, PriorityLevel, Vendor } from "../types/billing";
 interface PaymentBreakdown {
@@ -50,6 +51,9 @@ export function CreateBillPage() {
     }),
     []
   );
+  useEffect(() => {
+    document.title = "Create New Bill | GuildLedger";
+  }, []);
   const formatPaymentMethod = (method: PaymentMethod) => {
     switch (method) {
       case "bank_transfer":
@@ -125,10 +129,12 @@ export function CreateBillPage() {
     );
   };
   const calculateTotal = () => {
-    return breakdowns.reduce((sum, b) => {
-      const amount = parseFloat(b.amount) || 0;
-      return sum + amount;
-    }, 0);
+    return roundMoney(
+      breakdowns.reduce((sum, b) => {
+        const amount = roundMoney(b.amount);
+        return sum + amount;
+      }, 0)
+    );
   };
   const addFiles = (files: FileList | File[]) => {
     const nextFiles = Array.from(files);
@@ -228,15 +234,15 @@ export function CreateBillPage() {
       breakdowns: breakdowns.map((b) => ({
         payment_method: b.payment_method,
         description: b.description ? b.description : "",
-        amount: parseFloat(b.amount) || 0,
+        amount: roundMoney(b.amount),
         bank_name: b.payment_method === "bank_transfer" ? b.bank_name || null : null,
         bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name || null : null,
         bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no || null : null
       }))
     };
     const result = await createBill(payload);
-    setIsSaving(false);
     if (result.error || !result.data) {
+      setIsSaving(false);
       if (isDuplicatePrfError(result.error)) {
         setReferenceError(
           "Warning: PRF already existing. Please choose another PRF or leave blank to auto-generate."
@@ -247,6 +253,21 @@ export function CreateBillPage() {
       setErrorMessage(message || "Failed to create bill.");
       return;
     }
+
+    if (attachments.length > 0) {
+      const attachmentResult = await uploadBillAttachments(result.data.id, attachments, user.id);
+      if (attachmentResult.error) {
+        setIsSaving(false);
+        navigate(`/bills/${result.data.id}`, {
+          state: {
+            attachmentError: `Bill created, but attachment upload failed: ${attachmentResult.error}`
+          }
+        });
+        return;
+      }
+    }
+
+    setIsSaving(false);
     navigate(`/bills/${result.data.id}`);
   };
   const handleSubmit = async (e: React.FormEvent) => {
@@ -259,7 +280,7 @@ export function CreateBillPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
             <button onClick={() => navigate("/bills")} className="hover:text-blue-600">
@@ -270,14 +291,9 @@ export function CreateBillPage() {
           </div>
           {/* Page Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">New Payment Request</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Create New Bill</h1>
             <p className="text-gray-600 mt-1">Create a new payment request for approval</p>
           </div>
-          {errorMessage && (
-            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {errorMessage}
-            </div>
-          )}
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               {/* SECTION 1 — Payee & Reference */}
@@ -631,6 +647,11 @@ export function CreateBillPage() {
               </div>
             </div>
             {/* Footer Actions */}
+            {errorMessage && (
+              <div className="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {errorMessage}
+              </div>
+            )}
             <div className="mt-8 flex items-center justify-end gap-3 pb-8">
               <button
                 type="button"
@@ -660,4 +681,10 @@ export function CreateBillPage() {
       </div>
     </div>
   );
+}
+
+function roundMoney(value: unknown) {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) return 0;
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
 }

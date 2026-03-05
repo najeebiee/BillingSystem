@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Plus, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "../auth/AuthContext";
+import { getUserDisplayName } from "../auth/userDisplayName";
 import { listBills, listBillsForExport } from "../services/bills.service";
 import type { BillStatus } from "../types/billing";
 import {
@@ -36,9 +38,11 @@ export function BillsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"csv" | "xlsx" | "pdf" | null>(null);
+  const { user } = useAuth();
+  const currentUserDisplayName = getUserDisplayName(user);
   const navigate = useNavigate();
 
-  const tabs = ["All", "Draft", "Awaiting Approval", "Approved", "Paid", "Void"];
+  const tabs = ["All", "Draft", "Awaiting Approval", "Rejected", "Approved", "Paid", "Void"];
 
   const statusFilter = useMemo<BillStatus | undefined>(() => {
     switch (activeTab) {
@@ -46,6 +50,8 @@ export function BillsPage() {
         return "draft";
       case "Awaiting Approval":
         return "awaiting_approval";
+      case "Rejected":
+        return "rejected";
       case "Approved":
         return "approved";
       case "Paid":
@@ -63,6 +69,8 @@ export function BillsPage() {
         return "bg-gray-100 text-gray-700";
       case "awaiting_approval":
         return "bg-yellow-100 text-yellow-700";
+      case "rejected":
+        return "bg-orange-100 text-orange-700";
       case "approved":
         return "bg-blue-100 text-blue-700";
       case "paid":
@@ -95,6 +103,8 @@ export function BillsPage() {
         return "Draft";
       case "awaiting_approval":
         return "Awaiting Approval";
+      case "rejected":
+        return "Rejected";
       case "approved":
         return "Approved";
       case "paid":
@@ -163,6 +173,10 @@ export function BillsPage() {
   };
 
   useEffect(() => {
+    document.title = "Bills | GuildLedger";
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
     setErrorMessage(null);
@@ -203,6 +217,21 @@ export function BillsPage() {
   }, [statusFilter, searchQuery, dateFrom, dateTo, page, pageSize]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const startItem = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const endItem = totalCount === 0 ? 0 : Math.min(totalCount, (page - 1) * pageSize + bills.length);
+
+  const pageWindow = 5;
+  const halfWindow = Math.floor(pageWindow / 2);
+  let windowStart = Math.max(1, page - halfWindow);
+  let windowEnd = Math.min(totalPages, windowStart + pageWindow - 1);
+  if (windowEnd - windowStart + 1 < pageWindow) {
+    windowStart = Math.max(1, windowEnd - pageWindow + 1);
+  }
+
+  const visiblePages: number[] = [];
+  for (let p = windowStart; p <= windowEnd; p += 1) {
+    visiblePages.push(p);
+  }
 
   const fetchBillsForExport = async () => {
     const result = await listBillsForExport({
@@ -256,7 +285,7 @@ export function BillsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           {/* Page Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -508,7 +537,7 @@ export function BillsPage() {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-900">
-                          {bill.created_by}
+                          {bill.created_by === user?.id ? currentUserDisplayName : bill.created_by}
                         </td>
                         <td className="px-4 py-4">
                           <button
@@ -527,7 +556,7 @@ export function BillsPage() {
               {/* Pagination */}
               <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
                 <div className="text-sm text-gray-600">
-                  Showing {bills.length} of {totalCount} results
+                  Showing {startItem}-{endItem} of {totalCount} results
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -537,9 +566,51 @@ export function BillsPage() {
                   >
                     Previous
                   </button>
-                  <button className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">
-                    {page}
-                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {windowStart > 1 && (
+                      <>
+                        <button
+                          onClick={() => setPage(1)}
+                          className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          1
+                        </button>
+                        {windowStart > 2 && (
+                          <span className="px-2 text-sm text-gray-500">...</span>
+                        )}
+                      </>
+                    )}
+
+                    {visiblePages.map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        className={`px-3 py-1 rounded-md text-sm ${
+                          p === page
+                            ? "bg-blue-600 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+
+                    {windowEnd < totalPages && (
+                      <>
+                        {windowEnd < totalPages - 1 && (
+                          <span className="px-2 text-sm text-gray-500">...</span>
+                        )}
+                        <button
+                          onClick={() => setPage(totalPages)}
+                          className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
                   <button
                     onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                     disabled={page >= totalPages}

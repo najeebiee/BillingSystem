@@ -1,14 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { VoidBillModal } from "./VoidBillModal";
 import { ApproveRejectModal } from "./ApproveRejectModal";
 import { ChevronRight, Printer, Download, Edit2 } from "lucide-react";
+import { useAuth } from "../auth/AuthContext";
+import { getUserDisplayName } from "../auth/userDisplayName";
 import { getBillById, updateBillStatus } from "../services/bills.service";
 import type { BillDetails } from "../types/billing";
+import { buildReceiptHtml as buildPrintReceiptHtml } from "../print/receiptTemplate";
+import { printReceipt } from "../print/printReceipt";
+import {
+  buildA4Html,
+  buildReceiptHtml as buildReceiptPdfHtml,
+  type PdfTemplateData
+} from "../pdf/pdfTemplates";
+import { exportHtmlToPdf } from "../pdf/exportPdf";
+import { downloadBillAttachment } from "../services/billAttachments.service";
 
 export function ViewBillPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   const [billDetails, setBillDetails] = useState<BillDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -55,9 +68,18 @@ export function ViewBillPage() {
     };
   }, [id]);
 
+  useEffect(() => {
+    const state = location.state as { attachmentError?: string } | null;
+    if (state?.attachmentError) {
+      setActionError(state.attachmentError);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, location.state, navigate]);
+
   const bill = billDetails?.bill;
   const vendor = billDetails?.vendor;
   const breakdowns = billDetails?.breakdowns ?? [];
+  const attachments = billDetails?.attachments ?? [];
 
   const getStatusColor = (status?: string) => {
     switch (status) {
@@ -65,6 +87,8 @@ export function ViewBillPage() {
         return "bg-gray-100 text-gray-700";
       case "awaiting_approval":
         return "bg-yellow-100 text-yellow-700";
+      case "rejected":
+        return "bg-orange-100 text-orange-700";
       case "approved":
         return "bg-blue-100 text-blue-700";
       case "paid":
@@ -97,6 +121,8 @@ export function ViewBillPage() {
         return "Draft";
       case "awaiting_approval":
         return "Awaiting Approval";
+      case "rejected":
+        return "Rejected";
       case "approved":
         return "Approved";
       case "paid":
@@ -151,14 +177,18 @@ export function ViewBillPage() {
     setApproveRejectModal({ isOpen: true, action: "reject" });
   };
 
-  const handleConfirmApproveReject = async (_notes: string) => {
+  const handleConfirmApproveReject = async (notes: string) => {
     if (!bill) return;
     if (isUpdatingStatus) return;
 
-    const nextStatus = approveRejectModal.action === "approve" ? "approved" : "draft";
+    const nextStatus = approveRejectModal.action === "approve" ? "approved" : "rejected";
     setActionError(null);
     setIsUpdatingStatus(true);
-    const result = await updateBillStatus(bill.id, nextStatus);
+    const result = await updateBillStatus(
+      bill.id,
+      nextStatus,
+      approveRejectModal.action === "reject" ? notes : null
+    );
     setIsUpdatingStatus(false);
 
     if (result.error) {
@@ -167,7 +197,16 @@ export function ViewBillPage() {
     }
 
     setBillDetails((prev) =>
-      prev ? { ...prev, bill: { ...prev.bill, status: nextStatus } } : prev
+      prev
+        ? {
+            ...prev,
+            bill: {
+              ...prev.bill,
+              status: nextStatus,
+              rejection_reason: nextStatus === "rejected" ? notes.trim() : null
+            }
+          }
+        : prev
     );
     setApproveRejectModal({ isOpen: false, action: "approve" });
   };
@@ -219,16 +258,98 @@ export function ViewBillPage() {
     navigate(`/bills/${bill.id}/edit`);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const totalAmount = roundMoney(
+    breakdowns.reduce((sum, b) => sum + roundMoney(b.amount), 0)
+  );
+  const resolvedTotalAmount = roundMoney(bill?.total_amount) > 0 ? roundMoney(bill?.total_amount) : totalAmount;
+  const currentUserDisplayName = getUserDisplayName(user);
+  const requestedByDisplay =
+    bill?.created_by === user?.id ? currentUserDisplayName : bill?.created_by || "-";
+
+  useEffect(() => {
+    if (bill?.reference_no) {
+      document.title = `${bill.reference_no} | GuildLedger`;
+      return;
+    }
+    document.title = "Bill Details | GuildLedger";
+  }, [bill?.reference_no]);
+
+  const buildPdfTemplateData = (): PdfTemplateData | null => {
+    if (!bill || !vendor) return;
+
+    return {
+      reference_no: bill.reference_no,
+      request_date: bill.request_date,
+      status: bill.status,
+      vendor_name: vendor.name,
+      requester_name: requestedByDisplay,
+      checked_by: "-",
+      approved_by: "-",
+      breakdowns: breakdowns.map((breakdown) => ({
+        description: breakdown.description,
+        amount: breakdown.amount,
+        payment_method: breakdown.payment_method,
+        bank_name: breakdown.bank_name,
+        bank_account_name: breakdown.bank_account_name,
+        bank_account_no: breakdown.bank_account_no
+      })),
+      total_amount: resolvedTotalAmount,
+      remarks: bill.remarks || "",
+      attachments: attachments.map((attachment) => attachment.file_name),
+      company_name: "GuildLedger"
+    };
   };
 
-  const totalAmount = breakdowns.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+  const handlePrintReceipt = () => {
+    const templateData = buildPdfTemplateData();
+    if (!templateData) return;
+
+    const receiptHtml = buildPrintReceiptHtml(
+      {
+        reference_no: templateData.reference_no,
+        request_date: templateData.request_date,
+        status: templateData.status,
+        vendor_name: templateData.vendor_name,
+        requester_name: templateData.requester_name,
+        breakdowns: templateData.breakdowns,
+        total_amount: templateData.total_amount,
+        remarks: templateData.remarks,
+        company_name: templateData.company_name
+      },
+      { paper: "80mm" }
+    );
+
+    printReceipt(receiptHtml);
+  };
+
+  const handleDownloadA4Pdf = async () => {
+    const templateData = buildPdfTemplateData();
+    if (!templateData) return;
+
+    const a4Html = buildA4Html(templateData);
+    await exportHtmlToPdf({
+      html: a4Html,
+      filename: `PRF-${templateData.reference_no}-A4.pdf`,
+      preset: "A4"
+    });
+  };
+
+  const handleDownloadReceiptPdf = async () => {
+    const templateData = buildPdfTemplateData();
+    if (!templateData) return;
+
+    const receiptHtml = buildReceiptPdfHtml(templateData, { paper: "80mm" });
+    await exportHtmlToPdf({
+      html: receiptHtml,
+      filename: `PRF-${templateData.reference_no}-RECEIPT-80mm.pdf`,
+      preset: "RECEIPT_80"
+    });
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6 text-gray-600">
             Loading bill...
           </div>
@@ -240,7 +361,7 @@ export function ViewBillPage() {
   if (errorMessage || !bill || !vendor) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h1 className="text-xl font-semibold text-gray-900 mb-2">Bill not found</h1>
             <p className="text-gray-600 mb-4">{errorMessage || "The bill you are looking for does not exist."}</p>
@@ -256,7 +377,7 @@ export function ViewBillPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-16">
-        <div className="max-w-[1440px] mx-auto px-6 py-8">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
             <button onClick={() => navigate("/bills")} className="hover:text-blue-600">
@@ -269,7 +390,7 @@ export function ViewBillPage() {
           {/* Page Header */}
           <div className="flex items-start justify-between mb-6">
             <div>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
                 <h1 className="text-2xl font-semibold text-gray-900">Payment Request</h1>
                 <span
                   className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
@@ -278,25 +399,41 @@ export function ViewBillPage() {
                 >
                   {formatStatus(bill.status)}
                 </span>
+                <span className="text-lg text-gray-600 font-medium">{bill.reference_no}</span>
               </div>
-              <p className="text-lg text-gray-600">{bill.reference_no}</p>
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
               <button
-                onClick={handlePrint}
+                onClick={handlePrintReceipt}
+                disabled={!billDetails}
                 className="p-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-                title="Print"
+                title="Print Receipt"
               >
                 <Printer className="w-5 h-5" />
               </button>
               <button
-                onClick={handlePrint}
-                className="p-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-                title="Download PDF"
+                onClick={handleDownloadA4Pdf}
+                disabled={!billDetails}
+                className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+                title="Download A4 PDF"
               >
-                <Download className="w-5 h-5" />
+                <span className="inline-flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </span>
+              </button>
+              <button
+                onClick={handleDownloadReceiptPdf}
+                disabled={!billDetails}
+                className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+                title="Download Receipt PDF"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Download Receipt PDF
+                </span>
               </button>
               {bill.status !== "paid" && bill.status !== "void" && (
                 <button
@@ -431,7 +568,7 @@ export function ViewBillPage() {
                 <div className="text-right">
                   <div className="text-sm text-gray-600 mb-1">Total Amount</div>
                   <div className="text-2xl font-semibold text-gray-900">
-                    ₱{totalAmount.toLocaleString("en-PH", {
+                    ₱{resolvedTotalAmount.toLocaleString("en-PH", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
                     })}
@@ -450,10 +587,49 @@ export function ViewBillPage() {
               </div>
             </div>
 
+            {bill.status === "rejected" && bill.rejection_reason && (
+              <div className="bg-white rounded-lg border border-orange-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Rejection Reason</h2>
+                <div className="bg-orange-50 rounded-md p-4 border border-orange-200">
+                  <p className="text-sm text-orange-900 whitespace-pre-wrap">
+                    {bill.rejection_reason}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* SECTION 4 -- Attachments */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h2>
-              <p className="text-sm text-gray-500">No attachments</p>
+              {attachments.length === 0 ? (
+                <p className="text-sm text-gray-500">No attachments</p>
+              ) : (
+                <div className="space-y-2">
+                  {attachments.map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200"
+                    >
+                      <span className="text-sm text-gray-900">{attachment.file_name}</span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const result = await downloadBillAttachment(
+                            attachment.file_path,
+                            attachment.file_name
+                          );
+                          if (result.error) {
+                            setActionError(result.error);
+                          }
+                        }}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* SECTION 5 -- Request & Approval Info */}
@@ -462,7 +638,7 @@ export function ViewBillPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <div className="text-sm font-medium text-gray-500 mb-1">Requested By</div>
-                  <div className="text-base text-gray-900">{bill.created_by}</div>
+                  <div className="text-base text-gray-900">{requestedByDisplay}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium text-gray-500 mb-1">Submitted Date</div>
@@ -528,7 +704,7 @@ export function ViewBillPage() {
         onConfirm={handleConfirmVoid}
         billReference={bill.reference_no}
         billVendor={vendor.name}
-        billAmount={totalAmount}
+        billAmount={resolvedTotalAmount}
       />
 
       {/* Approve/Reject Modal */}
@@ -539,9 +715,15 @@ export function ViewBillPage() {
         action={approveRejectModal.action}
         billReference={bill.reference_no}
         billVendor={vendor.name}
-        billAmount={totalAmount}
+        billAmount={resolvedTotalAmount}
         billPriority={formatPriority(bill.priority_level) as "Urgent" | "High" | "Standard" | "Low"}
       />
     </div>
   );
+}
+
+function roundMoney(value: unknown) {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) return 0;
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
 }
