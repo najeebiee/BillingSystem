@@ -259,24 +259,38 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
     return sum + denom * toNumber(cashPieces[String(denom)] || "0");
   }, 0);
 
+  const handlePrint = () => {
+    requestAnimationFrame(() => {
+      window.print();
+    });
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-300 p-4" style={{ fontFamily: "Arial, sans-serif", fontSize: "11px" }}>
       <style>
         {`
           @media print {
+            html, body {
+              height: auto !important;
+            }
+
             body * {
-              visibility: hidden;
+              visibility: hidden !important;
             }
 
             #sales-report-print, #sales-report-print * {
-              visibility: visible;
+              visibility: visible !important;
             }
 
             #sales-report-print {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              transform: scale(0.88);
+              transform-origin: top left;
             }
 
             .no-print {
@@ -284,17 +298,29 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
             }
 
             table {
-              width: 100%;
-              border-collapse: collapse;
+              width: 100% !important;
+              border-collapse: collapse !important;
             }
 
             th, td {
-              border: 1px solid #ccc;
+              border: 1px solid #cfcfcf !important;
+              padding: 4px 6px !important;
+            }
+
+            .report-root, table, tr, td, th {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+
+            .report-root {
+              overflow: visible !important;
+              max-height: none !important;
+              height: auto !important;
             }
 
             @page {
-              size: A4;
-              margin: 12mm;
+              size: A4 portrait;
+              margin: 10mm;
             }
           }
         `}
@@ -320,7 +346,7 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
           </button>
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="rounded border border-black px-3 py-1"
           >
             Print Report
@@ -328,7 +354,7 @@ export function SalesDashboardSalesReportPage({ salesEntries }: SalesDashboardSa
         </div>
       </div>
 
-      <div id="sales-report-print">
+      <div id="sales-report-print" className="report-root">
         <div className="border border-black p-3">
         <div className="text-center font-bold">Company Name</div>
         <div className="text-center font-bold">Daily Sales Report</div>
