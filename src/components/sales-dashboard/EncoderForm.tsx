@@ -35,6 +35,14 @@ type FormData = {
   collectedBy: string;
 };
 
+const PACKAGE_PRICE_MAP: Record<string, number> = {
+  "Silver (1 bottle)": 3500,
+  "Gold (3 bottles)": 10500,
+  "Platinum (10 bottles)": 35000,
+  "Retail (1 bottle)": 2280,
+  "Blister (1 blister pack)": 779,
+};
+
 const initialFormData: FormData = {
   event: "Davao City",
   date: "",
@@ -43,9 +51,9 @@ const initialFormData: FormData = {
   username: "",
   newMember: "",
   memberType: "Distributor",
-  packageType: "",
+  packageType: "Silver (1 bottle)",
   toBlister: "",
-  originalPrice: "3000",
+  originalPrice: "3500",
   quantity: "",
   blisterCount: "",
   discount: "",
@@ -120,7 +128,7 @@ export function EncoderForm() {
   const [isClearHovered, setIsClearHovered] = useState(false);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    if (field === "event") {
+    if (field === "event" || field === "originalPrice") {
       return;
     }
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -131,6 +139,17 @@ export function EncoderForm() {
       setFormData((prev) => ({ ...prev, event: "Davao City" }));
     }
   }, [formData.event]);
+
+  useEffect(() => {
+    const price = PACKAGE_PRICE_MAP[formData.packageType] ?? 0;
+    const nextPrice = String(price);
+    setFormData((prev) => {
+      if (prev.originalPrice === nextPrice) {
+        return prev;
+      }
+      return { ...prev, originalPrice: nextPrice };
+    });
+  }, [formData.packageType]);
 
   const handleClear = () => {
     setFormData(initialFormData);
@@ -244,10 +263,11 @@ export function EncoderForm() {
             value={formData.packageType}
             onChange={(value) => handleInputChange("packageType", value)}
             options={[
-              { value: "Silver 1", label: "Silver 1" },
-              { value: "Silver 2", label: "Silver 2" },
-              { value: "Gold 1", label: "Gold 1" },
-              { value: "Platinum 1", label: "Platinum 1" },
+              { value: "Silver (1 bottle)", label: "Silver (1 bottle)" },
+              { value: "Gold (3 bottles)", label: "Gold (3 bottles)" },
+              { value: "Platinum (10 bottles)", label: "Platinum (10 bottles)" },
+              { value: "Retail (1 bottle)", label: "Retail (1 bottle)" },
+              { value: "Blister (1 blister pack)", label: "Blister (1 blister pack)" },
             ]}
           />
           <FormSelect
@@ -264,6 +284,7 @@ export function EncoderForm() {
             value={formData.originalPrice}
             onChange={(value) => handleInputChange("originalPrice", value)}
             placeholder="3000"
+            readOnly
           />
         </div>
 

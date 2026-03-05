@@ -7,6 +7,7 @@ type FormFieldProps = {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  readOnly?: boolean;
 };
 
 export function FormField({
@@ -16,6 +17,7 @@ export function FormField({
   onChange,
   placeholder,
   disabled = false,
+  readOnly = false,
 }: FormFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -38,6 +40,7 @@ export function FormField({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         disabled={disabled}
+        readOnly={readOnly}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         className="w-full px-3"
