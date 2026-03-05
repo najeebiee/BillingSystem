@@ -1,6 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FormField } from "./form-field";
 import { FormSelect } from "./form-select";
+
+const PAYMENT_MODES = [
+  "CASH",
+  "GCASH",
+  "MAYA",
+  "BANK TRANSFER",
+  "CHECK",
+  "CREDIT CARD",
+  "MIXED",
+] as const;
+
+const SPLIT_PAYMENT_MODES = PAYMENT_MODES.filter((mode) => mode !== "MIXED");
+const CARD_TYPES = ["VISA", "MASTERCARD", "JCB", "AMEX"] as const;
+
+type PaymentMode = (typeof PAYMENT_MODES)[number];
 
 type FormData = {
   event: string;
@@ -19,13 +34,19 @@ type FormData = {
   priceAfterDiscount: string;
   oneTimeDiscount: string;
   totalSales: string;
-  modeOfPayment: string;
-  paymentModeType: string;
+  modeOfPayment: PaymentMode | "";
+  paymentAmount: string;
   referenceNumber: string;
-  modeOfPayment2: string;
-  paymentModeType2: string;
+  bankName: string;
+  checkDate: string;
+  cardType: string;
+  modeOfPayment1: Exclude<PaymentMode, "MIXED"> | "";
+  modeOfPayment2: Exclude<PaymentMode, "MIXED"> | "";
+  paymentAmount2: string;
   referenceNumber2: string;
-  amount2: string;
+  bankName2: string;
+  checkDate2: string;
+  cardType2: string;
   releasedBottles: string;
   releasedBlister: string;
   toFollowBottles: string;
@@ -87,6 +108,18 @@ function formatPofForSave(digits: string) {
   return `${POF_PREFIX}${raw.slice(0, 6)}-${raw.slice(6, 9)}`;
 }
 
+function requiresReference(mode: string) {
+  return mode === "GCASH" || mode === "MAYA" || mode === "BANK TRANSFER" || mode === "CHECK" || mode === "CREDIT CARD";
+}
+
+function requiresBankName(mode: string) {
+  return mode === "BANK TRANSFER" || mode === "CHECK";
+}
+
+function requiresCardType(mode: string) {
+  return mode === "CREDIT CARD";
+}
+
 const initialFormData: FormData = {
   event: "Davao City",
   date: "",
@@ -105,12 +138,18 @@ const initialFormData: FormData = {
   oneTimeDiscount: "",
   totalSales: "",
   modeOfPayment: "",
-  paymentModeType: "",
+  paymentAmount: "",
   referenceNumber: "",
+  bankName: "",
+  checkDate: "",
+  cardType: "",
+  modeOfPayment1: "",
   modeOfPayment2: "",
-  paymentModeType2: "",
+  paymentAmount2: "",
   referenceNumber2: "",
-  amount2: "",
+  bankName2: "",
+  checkDate2: "",
+  cardType2: "",
   releasedBottles: "",
   releasedBlister: "",
   toFollowBottles: "",
@@ -175,7 +214,25 @@ export function EncoderForm() {
     if (field === "event" || field === "originalPrice" || field === "priceAfterDiscount") {
       return;
     }
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      if (field === "modeOfPayment") {
+        if (value !== "MIXED") {
+          return {
+            ...prev,
+            modeOfPayment: value as FormData["modeOfPayment"],
+            modeOfPayment1: "",
+            modeOfPayment2: "",
+            paymentAmount2: "",
+            referenceNumber2: "",
+            bankName2: "",
+            checkDate2: "",
+            cardType2: "",
+          };
+        }
+        return { ...prev, modeOfPayment: value as FormData["modeOfPayment"] };
+      }
+      return { ...prev, [field]: value };
+    });
   };
 
   useEffect(() => {
@@ -183,6 +240,12 @@ export function EncoderForm() {
       setFormData((prev) => ({ ...prev, event: "Davao City" }));
     }
   }, [formData.event]);
+
+  const netAmount = useMemo(() => {
+    const afterDiscount = Number(formData.priceAfterDiscount || 0);
+    const oneTimeDiscount = Number(formData.oneTimeDiscount || 0);
+    return Math.max(0, afterDiscount - oneTimeDiscount);
+  }, [formData.priceAfterDiscount, formData.oneTimeDiscount]);
 
   useEffect(() => {
     const price = PACKAGE_PRICE_MAP[formData.packageType] ?? 0;
@@ -209,15 +272,142 @@ export function EncoderForm() {
     });
   }, [formData.originalPrice, formData.discount]);
 
+  useEffect(() => {
+    setFormData((prev) => {
+      const nextTotal = String(netAmount);
+      const nextPaymentAmount = prev.modeOfPayment === "MIXED" ? prev.paymentAmount : nextTotal;
+      const nextPaymentAmount2 = prev.modeOfPayment === "MIXED" ? prev.paymentAmount2 : "";
+      if (
+        prev.totalSales === nextTotal &&
+        prev.paymentAmount === nextPaymentAmount &&
+        prev.paymentAmount2 === nextPaymentAmount2
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        totalSales: nextTotal,
+        paymentAmount: nextPaymentAmount,
+        paymentAmount2: nextPaymentAmount2,
+      };
+    });
+  }, [netAmount, formData.modeOfPayment]);
+
   const handleClear = () => {
     setFormData(initialFormData);
   };
 
   const handleSave = () => {
     const pofNumber = formatPofForSave(formData.pofDigits);
+    if (!pofNumber) {
+      alert("POF Number must contain exactly 9 digits.");
+      return;
+    }
+
+    if (!formData.modeOfPayment) {
+      alert("Mode of Payment is required.");
+      return;
+    }
+
+    const isMixed = formData.modeOfPayment === "MIXED";
+    const primaryAmount = Number(formData.paymentAmount || 0);
+    const secondaryAmount = Number(formData.paymentAmount2 || 0);
+    const paymentMode1 = isMixed ? formData.modeOfPayment1 : formData.modeOfPayment;
+    const paymentMode2 = isMixed ? formData.modeOfPayment2 : "";
+
+    if (!isMixed) {
+      if (requiresReference(formData.modeOfPayment) && !formData.referenceNumber.trim()) {
+        alert("Reference No is required for the selected mode of payment.");
+        return;
+      }
+      if (requiresBankName(formData.modeOfPayment) && !formData.bankName.trim()) {
+        alert("Bank Name is required for the selected mode of payment.");
+        return;
+      }
+      if (requiresCardType(formData.modeOfPayment) && !formData.cardType) {
+        alert("Card Type is required for Credit Card payments.");
+        return;
+      }
+      if (primaryAmount <= 0) {
+        alert("Amount is required.");
+        return;
+      }
+    } else {
+      if (!paymentMode1 || !paymentMode2) {
+        alert("Both payment modes are required for mixed payments.");
+        return;
+      }
+      if (requiresReference(paymentMode1) && !formData.referenceNumber.trim()) {
+        alert("Payment 1 reference number is required.");
+        return;
+      }
+      if (requiresReference(paymentMode2) && !formData.referenceNumber2.trim()) {
+        alert("Payment 2 reference number is required.");
+        return;
+      }
+      if (requiresBankName(paymentMode1) && !formData.bankName.trim()) {
+        alert("Payment 1 bank name is required.");
+        return;
+      }
+      if (requiresBankName(paymentMode2) && !formData.bankName2.trim()) {
+        alert("Payment 2 bank name is required.");
+        return;
+      }
+      if (requiresCardType(paymentMode1) && !formData.cardType) {
+        alert("Payment 1 card type is required.");
+        return;
+      }
+      if (requiresCardType(paymentMode2) && !formData.cardType2) {
+        alert("Payment 2 card type is required.");
+        return;
+      }
+      if (primaryAmount <= 0 || secondaryAmount <= 0) {
+        alert("Both mixed payment amounts are required.");
+        return;
+      }
+      if (Math.abs(primaryAmount + secondaryAmount - netAmount) > 0.001) {
+        alert("Mixed payment amounts must equal the net amount.");
+        return;
+      }
+    }
+
+    const paymentDetails = isMixed
+      ? [
+          {
+            mode: paymentMode1,
+            amount: primaryAmount,
+            referenceNo: formData.referenceNumber || null,
+            bankName: formData.bankName || null,
+            cardType: formData.cardType || null,
+            checkDate: formData.checkDate || null,
+          },
+          {
+            mode: paymentMode2,
+            amount: secondaryAmount,
+            referenceNo: formData.referenceNumber2 || null,
+            bankName: formData.bankName2 || null,
+            cardType: formData.cardType2 || null,
+            checkDate: formData.checkDate2 || null,
+          },
+        ]
+      : [
+          {
+            mode: formData.modeOfPayment,
+            amount: primaryAmount,
+            referenceNo: formData.referenceNumber || null,
+            bankName: formData.bankName || null,
+            cardType: formData.cardType || null,
+            checkDate: formData.checkDate || null,
+          },
+        ];
+
     const payload = {
       ...formData,
       pofNumber,
+      payment_mode: formData.modeOfPayment,
+      payment_details: JSON.stringify(paymentDetails),
+      payment_amount: primaryAmount,
+      payment_amount_2: isMixed ? secondaryAmount : 0,
     };
 
     // eslint-disable-next-line no-console
@@ -440,68 +630,193 @@ export function EncoderForm() {
             value={formData.modeOfPayment}
             onChange={(value) => handleInputChange("modeOfPayment", value)}
             options={[
-              { value: "Cash", label: "Cash" },
-              { value: "Bank Transfer", label: "Bank Transfer" },
-              { value: "E-Wallet", label: "E-Wallet" },
-              { value: "Cheque", label: "Cheque" },
+              { value: "", label: "Select payment mode" },
+              ...PAYMENT_MODES.map((mode) => ({ value: mode, label: mode })),
             ]}
           />
-          <FormSelect
-            label="Payment Mode Type"
-            value={formData.paymentModeType}
-            onChange={(value) => handleInputChange("paymentModeType", value)}
-            options={[
-              { value: "N/A", label: "N/A" },
-              { value: "Maya", label: "Maya" },
-              { value: "GCash", label: "GCash" },
-              { value: "BDO", label: "BDO" },
-              { value: "BPI", label: "BPI" },
-            ]}
-          />
-          <FormField
-            label="Reference Number"
-            value={formData.referenceNumber}
-            onChange={(value) => handleInputChange("referenceNumber", value)}
-            placeholder="Enter reference number"
-          />
+          {formData.modeOfPayment === "MIXED" ? (
+            <>
+              <FormSelect
+                label="Payment 1 Mode"
+                value={formData.modeOfPayment1}
+                onChange={(value) => handleInputChange("modeOfPayment1", value)}
+                options={[
+                  { value: "", label: "Select mode" },
+                  ...SPLIT_PAYMENT_MODES.map((mode) => ({ value: mode, label: mode })),
+                ]}
+              />
+              <FormSelect
+                label="Payment 2 Mode"
+                value={formData.modeOfPayment2}
+                onChange={(value) => handleInputChange("modeOfPayment2", value)}
+                options={[
+                  { value: "", label: "Select mode" },
+                  ...SPLIT_PAYMENT_MODES.map((mode) => ({ value: mode, label: mode })),
+                ]}
+              />
+            </>
+          ) : (
+            <>
+              <FormField
+                label="Amount"
+                type="number"
+                value={formData.paymentAmount}
+                onChange={(value) => handleInputChange("paymentAmount", value)}
+                placeholder="0"
+                readOnly={formData.modeOfPayment === "CASH"}
+              />
+            </>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <FormSelect
-            label="Mode of Payment (2)"
-            value={formData.modeOfPayment2}
-            onChange={(value) => handleInputChange("modeOfPayment2", value)}
-            options={[
-              { value: "N/A", label: "N/A" },
-              { value: "Cash", label: "Cash" },
-              { value: "Bank Transfer", label: "Bank Transfer" },
-              { value: "E-Wallet", label: "E-Wallet" },
-            ]}
-          />
-          <FormSelect
-            label="Payment Mode Type (2)"
-            value={formData.paymentModeType2}
-            onChange={(value) => handleInputChange("paymentModeType2", value)}
-            options={[
-              { value: "N/A", label: "N/A" },
-              { value: "Maya", label: "Maya" },
-              { value: "GCash", label: "GCash" },
-            ]}
-          />
-          <FormField
-            label="Reference Number (2)"
-            value={formData.referenceNumber2}
-            onChange={(value) => handleInputChange("referenceNumber2", value)}
-            placeholder="Enter reference number"
-          />
-          <FormField
-            label="Amount (2)"
-            type="number"
-            value={formData.amount2}
-            onChange={(value) => handleInputChange("amount2", value)}
-            placeholder="0"
-          />
-        </div>
+        {formData.modeOfPayment && formData.modeOfPayment !== "MIXED" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {requiresBankName(formData.modeOfPayment) && (
+              <FormField
+                label="Bank Name"
+                value={formData.bankName}
+                onChange={(value) => handleInputChange("bankName", value)}
+                placeholder="Enter bank name"
+              />
+            )}
+            {requiresCardType(formData.modeOfPayment) && (
+              <FormSelect
+                label="Card Type"
+                value={formData.cardType}
+                onChange={(value) => handleInputChange("cardType", value)}
+                options={[
+                  { value: "", label: "Select card type" },
+                  ...CARD_TYPES.map((cardType) => ({ value: cardType, label: cardType })),
+                ]}
+              />
+            )}
+            {requiresReference(formData.modeOfPayment) && (
+              <FormField
+                label={formData.modeOfPayment === "CHECK" ? "Check No" : formData.modeOfPayment === "CREDIT CARD" ? "Auth/Ref No" : "Reference No"}
+                value={formData.referenceNumber}
+                onChange={(value) => handleInputChange("referenceNumber", value)}
+                placeholder="Enter reference number"
+              />
+            )}
+            {formData.modeOfPayment === "CHECK" && (
+              <FormField
+                label="Check Date"
+                type="date"
+                value={formData.checkDate}
+                onChange={(value) => handleInputChange("checkDate", value)}
+              />
+            )}
+          </div>
+        )}
+
+        {formData.modeOfPayment === "MIXED" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <div className="border rounded-lg p-4" style={{ borderColor: "#D0D5DD" }}>
+              <div
+                className="mb-3"
+                style={{ color: "#2E3A8C", fontSize: "14px", lineHeight: "20px", fontWeight: 500 }}
+              >
+                Payment 1
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {requiresBankName(formData.modeOfPayment1) && (
+                  <FormField
+                    label="Bank Name"
+                    value={formData.bankName}
+                    onChange={(value) => handleInputChange("bankName", value)}
+                    placeholder="Enter bank name"
+                  />
+                )}
+                {requiresCardType(formData.modeOfPayment1) && (
+                  <FormSelect
+                    label="Card Type"
+                    value={formData.cardType}
+                    onChange={(value) => handleInputChange("cardType", value)}
+                    options={[
+                      { value: "", label: "Select card type" },
+                      ...CARD_TYPES.map((cardType) => ({ value: cardType, label: cardType })),
+                    ]}
+                  />
+                )}
+                {requiresReference(formData.modeOfPayment1) && (
+                  <FormField
+                    label={formData.modeOfPayment1 === "CHECK" ? "Check No" : formData.modeOfPayment1 === "CREDIT CARD" ? "Auth/Ref No" : "Reference No"}
+                    value={formData.referenceNumber}
+                    onChange={(value) => handleInputChange("referenceNumber", value)}
+                    placeholder="Enter reference number"
+                  />
+                )}
+                {formData.modeOfPayment1 === "CHECK" && (
+                  <FormField
+                    label="Check Date"
+                    type="date"
+                    value={formData.checkDate}
+                    onChange={(value) => handleInputChange("checkDate", value)}
+                  />
+                )}
+                <FormField
+                  label="Amount"
+                  type="number"
+                  value={formData.paymentAmount}
+                  onChange={(value) => handleInputChange("paymentAmount", value)}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div className="border rounded-lg p-4" style={{ borderColor: "#D0D5DD" }}>
+              <div
+                className="mb-3"
+                style={{ color: "#2E3A8C", fontSize: "14px", lineHeight: "20px", fontWeight: 500 }}
+              >
+                Payment 2
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {requiresBankName(formData.modeOfPayment2) && (
+                  <FormField
+                    label="Bank Name"
+                    value={formData.bankName2}
+                    onChange={(value) => handleInputChange("bankName2", value)}
+                    placeholder="Enter bank name"
+                  />
+                )}
+                {requiresCardType(formData.modeOfPayment2) && (
+                  <FormSelect
+                    label="Card Type"
+                    value={formData.cardType2}
+                    onChange={(value) => handleInputChange("cardType2", value)}
+                    options={[
+                      { value: "", label: "Select card type" },
+                      ...CARD_TYPES.map((cardType) => ({ value: cardType, label: cardType })),
+                    ]}
+                  />
+                )}
+                {requiresReference(formData.modeOfPayment2) && (
+                  <FormField
+                    label={formData.modeOfPayment2 === "CHECK" ? "Check No" : formData.modeOfPayment2 === "CREDIT CARD" ? "Auth/Ref No" : "Reference No"}
+                    value={formData.referenceNumber2}
+                    onChange={(value) => handleInputChange("referenceNumber2", value)}
+                    placeholder="Enter reference number"
+                  />
+                )}
+                {formData.modeOfPayment2 === "CHECK" && (
+                  <FormField
+                    label="Check Date"
+                    type="date"
+                    value={formData.checkDate2}
+                    onChange={(value) => handleInputChange("checkDate2", value)}
+                  />
+                )}
+                <FormField
+                  label="Amount"
+                  type="number"
+                  value={formData.paymentAmount2}
+                  onChange={(value) => handleInputChange("paymentAmount2", value)}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <FormField
