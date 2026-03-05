@@ -43,6 +43,19 @@ const PACKAGE_PRICE_MAP: Record<string, number> = {
   "Blister (1 blister pack)": 779,
 };
 
+const DISCOUNT_OPTIONS: Array<{ label: string; value: number }> = [
+  { label: "No Discount", value: 0 },
+  { label: "₱50", value: 50 },
+  { label: "₱60", value: 60 },
+  { label: "₱80", value: 80 },
+  { label: "₱150", value: 150 },
+  { label: "₱180", value: 180 },
+  { label: "₱240", value: 240 },
+  { label: "₱500", value: 500 },
+  { label: "₱600", value: 600 },
+  { label: "₱800", value: 800 },
+];
+
 const initialFormData: FormData = {
   event: "Davao City",
   date: "",
@@ -56,8 +69,8 @@ const initialFormData: FormData = {
   originalPrice: "3500",
   quantity: "",
   blisterCount: "",
-  discount: "",
-  priceAfterDiscount: "3000",
+  discount: "0",
+  priceAfterDiscount: "3500",
   oneTimeDiscount: "",
   totalSales: "",
   modeOfPayment: "",
@@ -128,7 +141,7 @@ export function EncoderForm() {
   const [isClearHovered, setIsClearHovered] = useState(false);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    if (field === "event" || field === "originalPrice") {
+    if (field === "event" || field === "originalPrice" || field === "priceAfterDiscount") {
       return;
     }
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -150,6 +163,20 @@ export function EncoderForm() {
       return { ...prev, originalPrice: nextPrice };
     });
   }, [formData.packageType]);
+
+  useEffect(() => {
+    const original = Number(formData.originalPrice || 0);
+    const discountAmount = Number(formData.discount || 0);
+    const net = Math.max(0, original - discountAmount);
+    const nextPriceAfterDiscount = String(net);
+
+    setFormData((prev) => {
+      if (prev.priceAfterDiscount === nextPriceAfterDiscount) {
+        return prev;
+      }
+      return { ...prev, priceAfterDiscount: nextPriceAfterDiscount };
+    });
+  }, [formData.originalPrice, formData.discount]);
 
   const handleClear = () => {
     setFormData(initialFormData);
@@ -307,19 +334,17 @@ export function EncoderForm() {
             label="Discount"
             value={formData.discount}
             onChange={(value) => handleInputChange("discount", value)}
-            options={[
-              { value: "No Discount", label: "No Discount" },
-              { value: "5%", label: "5%" },
-              { value: "10%", label: "10%" },
-              { value: "15%", label: "15%" },
-              { value: "20%", label: "20%" },
-            ]}
+            options={DISCOUNT_OPTIONS.map((option) => ({
+              label: option.label,
+              value: String(option.value),
+            }))}
           />
           <FormField
             label="Price After Discount"
             value={formData.priceAfterDiscount}
             onChange={(value) => handleInputChange("priceAfterDiscount", value)}
             placeholder="3000"
+            readOnly
           />
         </div>
 
