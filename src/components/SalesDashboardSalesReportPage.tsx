@@ -347,6 +347,21 @@ const buildPaymentFallback = (
   const mayaRows: DetailRow[] = [];
   const gcashRows: DetailRow[] = [];
   const modeTotals: PaymentModeTotals = { ...EMPTY_PAYMENT_MODE_TOTALS };
+  const applyModeAmount = (mode: string, paymentType: string, amount: number) => {
+    if (amount <= 0) return;
+
+    if (mode.includes("cash")) modeTotals.cash += amount;
+    if (mode.includes("bank")) modeTotals.bankTransfer += amount;
+    if (mode.includes("cheque") || mode.includes("check")) modeTotals.cheque += amount;
+
+    const isEwallet = mode.includes("ewallet") || mode.includes("e-wallet");
+    const isMaya = paymentType.includes("maya") || mode.includes("maya");
+    const isGcash = paymentType.includes("gcash") || mode.includes("gcash");
+
+    if (isEwallet || isMaya || isGcash) modeTotals.ewallet += amount;
+    if (isMaya) modeTotals.maya += amount;
+    if (isGcash) modeTotals.gcash += amount;
+  };
 
   paymentRows.forEach((row) => {
     const entryId = paymentLinkedEntryId(row);
@@ -366,35 +381,49 @@ const buildPaymentFallback = (
       amount
     };
 
-    if (mode.includes("cash")) {
-      modeTotals.cash += amount;
-    }
+    applyModeAmount(mode, paymentType, amount);
+
     if (mode.includes("bank")) {
-      modeTotals.bankTransfer += amount;
       bankRows.push(detail);
     }
-    if (mode.includes("cheque") || mode.includes("check")) {
-      modeTotals.cheque += amount;
-    }
-
-    const isEwallet = mode.includes("ewallet") || mode.includes("e-wallet");
     const isMaya = paymentType.includes("maya") || mode.includes("maya");
     const isGcash = paymentType.includes("gcash") || mode.includes("gcash");
-
-    if (isEwallet || isMaya || isGcash) {
-      modeTotals.ewallet += amount;
-    }
     if (isMaya) {
-      modeTotals.maya += amount;
       mayaRows.push(detail);
     }
     if (isGcash) {
-      modeTotals.gcash += amount;
       gcashRows.push(detail);
     }
   });
 
+  const hasPaymentRows = paymentRows.length > 0;
+  if (!hasPaymentRows) {
+    entryRows.forEach((row) => {
+      const mode = toNormalized(pickString(row, ["primary_payment_mode", "payment_mode", "mode"], ""));
+      const paymentType = toNormalized(pickString(row, ["payment_type", "mode_type"], ""));
+      const amount = pickNumber(row, ["primary_payment_amount", "amount", "total_amount", "amount_total"]);
+      applyModeAmount(mode, paymentType, amount);
+    });
+  }
+
   return { bankRows, mayaRows, gcashRows, modeTotals };
+};
+
+const buildEstimatedDenominationRows = (cashAmount: number): CashDenominationRow[] => {
+  let remainingCents = Math.max(0, Math.round(cashAmount * 100));
+
+  return DENOMINATIONS.map((denom) => {
+    const denominationCents = Math.round(denom * 100);
+    const pieces = denominationCents > 0 ? Math.floor(remainingCents / denominationCents) : 0;
+    const amount = (pieces * denominationCents) / 100;
+    remainingCents -= pieces * denominationCents;
+
+    return {
+      label: String(denom === 0.25 ? 0.25 : denom),
+      pieces,
+      amount
+    };
+  });
 };
 
 const buildEmptyCashBreakdown = (): CashBreakdownMap =>
@@ -671,7 +700,7 @@ export function SalesDashboardSalesReportPage() {
         const summaryRowsForUi =
           hasPositiveSummarySectionMetrics(filteredSummaryRows) || !derivedSummaryRow
             ? filteredSummaryRows
-            : [...filteredSummaryRows, derivedSummaryRow];
+            : [derivedSummaryRow];
 
         const selectedEntryIds = new Set<string>(
           filteredSalesEntryRows.map((row) => rowId(row)).filter((value) => Boolean(value))
@@ -1048,7 +1077,21 @@ export function SalesDashboardSalesReportPage() {
     [cashBreakdown]
   );
 
-  const totalCash = cashTotalFromSource ?? cashRows.reduce((sum, row) => sum + row.amount, 0);
+  const cashOnHandAmount =
+    paymentRows.find((row) => row.label === "Cash on Hand")?.amount ?? paymentModeTotals.cash;
+  const hasDenominationData = cashRows.some((row) => row.pieces > 0 || row.amount > 0);
+  const displayedCashRows = hasDenominationData
+    ? cashRows
+    : cashOnHandAmount > 0
+    ? buildEstimatedDenominationRows(cashOnHandAmount)
+    : cashRows;
+  const totalCash =
+    cashTotalFromSource ??
+    (hasDenominationData
+      ? cashRows.reduce((sum, row) => sum + row.amount, 0)
+      : cashOnHandAmount > 0
+      ? cashOnHandAmount
+      : 0);
 
   return (
     <div className="bg-white rounded-md border border-gray-300 p-3 text-[11px] leading-tight">
@@ -1202,7 +1245,7 @@ export function SalesDashboardSalesReportPage() {
                   <table className="w-full border-collapse border border-black">
                     <SalesTableHeader cols={["DENOMINATION", "PIECES", "AMOUNT"]} />
                     <tbody>
-                      {cashRows.map((row) => (
+                      {displayedCashRows.map((row) => (
                         <tr key={row.label}>
                           <td className="border border-black px-2 py-1">{row.label}</td>
                           <td className="border border-black px-2 py-1 text-right">
