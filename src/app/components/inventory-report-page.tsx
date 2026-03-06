@@ -200,6 +200,61 @@ export function InventoryReportPage() {
     };
   }, [reportDate]);
 
+  const handlePrintReport = () => {
+    const printContainer = document.getElementById("inventory-report-print");
+    if (!printContainer) {
+      window.print();
+      return;
+    }
+
+    const printWindow = window.open("", "_blank", "width=1200,height=900");
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    const copiedStyles = Array.from(
+      document.querySelectorAll('style, link[rel="stylesheet"]')
+    )
+      .map((node) => node.outerHTML)
+      .join("\n");
+
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Inventory Daily Report</title>
+    ${copiedStyles}
+    <style>
+      @page { size: A4 portrait; margin: 10mm; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      #inventory-report-print { box-shadow: none !important; border-radius: 0 !important; margin: 0 !important; }
+      #inventory-report-print table { width: 100% !important; border-collapse: collapse !important; table-layout: fixed !important; }
+      .no-print { display: none !important; }
+    </style>
+  </head>
+  <body>
+    ${printContainer.outerHTML}
+  </body>
+</html>`);
+    printWindow.document.close();
+
+    const triggerPrint = () => {
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    };
+
+    if (printWindow.document.readyState === "complete") {
+      setTimeout(triggerPrint, 120);
+    } else {
+      printWindow.onload = () => {
+        setTimeout(triggerPrint, 120);
+      };
+    }
+  };
+
   return (
     <div style={{ fontFamily: "Inter, sans-serif" }}>
       <style>{`
@@ -285,7 +340,7 @@ export function InventoryReportPage() {
           <button
             type="button"
             className="flex items-center gap-2 px-6"
-            onClick={() => window.print()}
+            onClick={handlePrintReport}
             onMouseEnter={() => setIsPrintHovered(true)}
             onMouseLeave={() => setIsPrintHovered(false)}
             style={{
