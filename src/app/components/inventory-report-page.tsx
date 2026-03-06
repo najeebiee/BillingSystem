@@ -208,20 +208,50 @@ export function InventoryReportPage() {
             size: A4 portrait;
             margin: 10mm;
           }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+          }
           .no-print {
             display: none !important;
           }
-          body * {
-            visibility: hidden;
-          }
           #inventory-report-print, #inventory-report-print * {
-            visibility: visible;
+            display: block !important;
+            visibility: visible !important;
           }
           #inventory-report-print {
             position: absolute;
             left: 0;
             top: 0;
-            width: 100%;
+            width: 100% !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: #fff !important;
+          }
+          #inventory-report-print table {
+            display: table !important;
+            width: 100% !important;
+            table-layout: fixed !important;
+            border-collapse: collapse !important;
+          }
+          #inventory-report-print thead {
+            display: table-header-group !important;
+          }
+          #inventory-report-print tbody {
+            display: table-row-group !important;
+          }
+          #inventory-report-print tfoot {
+            display: table-footer-group !important;
+          }
+          #inventory-report-print tr {
+            display: table-row !important;
+          }
+          #inventory-report-print th,
+          #inventory-report-print td {
+            display: table-cell !important;
           }
         }
       `}</style>
