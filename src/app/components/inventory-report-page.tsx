@@ -307,8 +307,9 @@ export function InventoryReportPage() {
         </div>
       </div>
 
-      <div id="inventory-report-print" className="bg-white rounded-lg shadow-sm p-8">
-        <div className="mb-8 pb-6 text-center" style={{ borderBottom: "2px solid #2E3A8C" }}>
+      <div id="print-root">
+        <div id="inventory-report-print" className="bg-white rounded-lg shadow-sm p-8">
+          <div className="mb-8 pb-6 text-center" style={{ borderBottom: "2px solid #2E3A8C" }}>
           <h2
             style={{
               color: "#2E3A8C",
@@ -335,10 +336,10 @@ export function InventoryReportPage() {
           >
             Report Date: {reportDate}
           </p>
-        </div>
+          </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+            <table className="w-full">
             <thead>
               <tr style={{ backgroundColor: "#F3F4F6" }}>
                 <th
@@ -553,20 +554,21 @@ export function InventoryReportPage() {
                 </td>
               </tr>
             </tfoot>
-          </table>
-        </div>
-
-        <div className="mt-12 grid grid-cols-2 gap-12 pt-8" style={{ borderTop: "1px solid #D0D5DD" }}>
-          <div>
-            <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "48px" }}>Prepared By:</p>
-            <div style={{ borderTop: "1px solid #374151", paddingTop: "8px" }}>
-              <p style={{ fontSize: "14px", textAlign: "center", color: "#374151" }}>Name & Signature</p>
-            </div>
+            </table>
           </div>
-          <div>
-            <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "48px" }}>Checked By:</p>
-            <div style={{ borderTop: "1px solid #374151", paddingTop: "8px" }}>
-              <p style={{ fontSize: "14px", textAlign: "center", color: "#374151" }}>Name & Signature</p>
+
+          <div className="mt-12 grid grid-cols-2 gap-12 pt-8" style={{ borderTop: "1px solid #D0D5DD" }}>
+            <div>
+              <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "48px" }}>Prepared By:</p>
+              <div style={{ borderTop: "1px solid #374151", paddingTop: "8px" }}>
+                <p style={{ fontSize: "14px", textAlign: "center", color: "#374151" }}>Name & Signature</p>
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "48px" }}>Checked By:</p>
+              <div style={{ borderTop: "1px solid #374151", paddingTop: "8px" }}>
+                <p style={{ fontSize: "14px", textAlign: "center", color: "#374151" }}>Name & Signature</p>
+              </div>
             </div>
           </div>
         </div>
