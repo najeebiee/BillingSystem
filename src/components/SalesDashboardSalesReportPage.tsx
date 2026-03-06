@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   fetchBankTransferDetails,
   fetchDailyCashCountRows,
@@ -39,6 +39,14 @@ const DATE_KEYS = ["report_date", "cash_date", "entry_date", "date", "transactio
 const isSalesReportDebugEnabled =
   import.meta.env.DEV || import.meta.env.VITE_DEBUG_SALES_REPORT === "true";
 
+const getTodayLocalDate = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const toNumber = (value: unknown): number => {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   if (typeof value === "string") {
@@ -77,14 +85,6 @@ const isRowForDate = (row: SalesDashboardRawRow, reportDate: string): boolean =>
 
 const filterRowsForDate = (rows: SalesDashboardRawRow[], reportDate: string): SalesDashboardRawRow[] =>
   rows.filter((row) => isRowForDate(row, reportDate));
-
-const getLatestReportDate = (rows: SalesDashboardRawRow[]): string | null => {
-  const dates = rows
-    .map((row) => pickString(row, DATE_KEYS, "").slice(0, 10))
-    .filter((value) => Boolean(value))
-    .sort((left, right) => right.localeCompare(left));
-  return dates[0] ?? null;
-};
 
 const hasAnyKey = (row: SalesDashboardRawRow, keys: string[]): boolean =>
   keys.some((key) => row[key] !== undefined && row[key] !== null);
@@ -304,8 +304,7 @@ function TotalRow({ label, amount }: { label: string; amount: number }) {
 }
 
 export function SalesDashboardSalesReportPage() {
-  const [reportDate, setReportDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const hasAutoPickedDateRef = useRef(false);
+  const [reportDate, setReportDate] = useState<string>(() => getTodayLocalDate());
   const [preparedBy, setPreparedBy] = useState("");
   const [checkedBy, setCheckedBy] = useState("");
   const [cashBreakdown, setCashBreakdown] = useState<CashBreakdownMap>(() => buildEmptyCashBreakdown());
@@ -341,28 +340,6 @@ export function SalesDashboardSalesReportPage() {
         const filteredMayaRows = filterRowsForDate(mayaData, reportDate);
         const filteredGcashRows = filterRowsForDate(gcashData, reportDate);
         const filteredDailyCashRows = filterRowsForDate(dailyCashCountData, reportDate);
-
-        const hasAnyRowsForSelectedDate =
-          filteredSummaryRows.length > 0 ||
-          filteredBankRows.length > 0 ||
-          filteredMayaRows.length > 0 ||
-          filteredGcashRows.length > 0 ||
-          filteredDailyCashRows.length > 0;
-
-        if (!hasAutoPickedDateRef.current && !hasAnyRowsForSelectedDate) {
-          const latestReportDate = getLatestReportDate([
-            ...summaryData,
-            ...bankData,
-            ...mayaData,
-            ...gcashData,
-            ...dailyCashCountData
-          ]);
-          if (latestReportDate && latestReportDate !== reportDate) {
-            hasAutoPickedDateRef.current = true;
-            setReportDate(latestReportDate);
-            return;
-          }
-        }
 
         setSummaryRows(filteredSummaryRows);
         setBankRows(mapDetailRows(filteredBankRows));
@@ -675,10 +652,7 @@ export function SalesDashboardSalesReportPage() {
           <input
             type="date"
             value={reportDate}
-            onChange={(event) => {
-              hasAutoPickedDateRef.current = true;
-              setReportDate(event.target.value);
-            }}
+            onChange={(event) => setReportDate(event.target.value)}
             className="border border-black px-2 py-1 text-[11px]"
           />
         </div>
