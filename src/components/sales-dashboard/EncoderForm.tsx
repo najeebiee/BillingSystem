@@ -117,6 +117,8 @@ const DISCOUNT_OPTIONS: Array<{ label: string; value: number }> = [
 ];
 
 const POF_PREFIX = "POF-";
+const isEncoderSaveDebugEnabled =
+  import.meta.env.DEV || import.meta.env.VITE_DEBUG_SALES_SAVE === "true";
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
@@ -144,6 +146,16 @@ function getTodayLocalDate() {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function toNumber(value: string) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function toWholeNumber(value: string) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function requiresReference(mode: string) {
@@ -211,12 +223,54 @@ function mapSaveErrorToMessage(error: unknown): string {
     status?: number;
   };
 
+  const joined = [saveError.message, saveError.details]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    .join(" ");
+  const columnMatch = joined.match(/column ['"]?([a-zA-Z0-9_]+)['"]?/i);
+  const columnName = columnMatch?.[1] ?? null;
+  const humanizeColumn = (value: string | null) => {
+    if (!value) return null;
+    const labels: Record<string, string> = {
+      pof_number: "POF Number",
+      po_number: "POF Number",
+      member_name: "Member Name",
+      username: "Username",
+      member_type: "Member Type",
+      package_type: "Package Type",
+      quantity: "Quantity",
+      original_price: "Original Price",
+      price_after_discount: "Price After Discount",
+      total_sales: "Total Sales",
+      primary_payment_mode: "Mode of Payment",
+      primary_payment_amount: "Amount",
+      report_date: "Date",
+      entry_date: "Date",
+      sale_date: "Date"
+    };
+    return labels[value] ?? value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
   if (saveError.code === "23502") {
-    return "Unable to save entry. A required field is missing.";
+    const field = humanizeColumn(columnName);
+    return field
+      ? `Unable to save entry. ${field} is required.`
+      : "Unable to save entry. A required field is missing.";
   }
 
   if (saveError.code === "23505") {
     return "Unable to save entry. A duplicate record already exists.";
+  }
+
+  if (saveError.code === "23503") {
+    return "Unable to save entry. A related record is missing or invalid.";
+  }
+
+  if (saveError.code === "23514") {
+    return "Unable to save entry. One or more values failed a database validation rule.";
+  }
+
+  if (saveError.code === "22P02") {
+    return "Unable to save entry. One of the numeric or date fields has an invalid value.";
   }
 
   if (saveError.code === "42501" || saveError.status === 401 || saveError.status === 403) {
@@ -231,7 +285,103 @@ function mapSaveErrorToMessage(error: unknown): string {
     return "Unable to save entry due to a network/configuration issue. Please try again.";
   }
 
+  if (saveError.message && /users_directory/i.test(saveError.message)) {
+    return "Unable to save entry because the Users directory table is missing. Run the latest database migration first.";
+  }
+
   return fallback;
+}
+
+function getExpectedTotal(formData: FormData): number {
+  const quantity = toWholeNumber(formData.quantity);
+  const afterDiscount = toNumber(formData.priceAfterDiscount);
+  const oneTimeDiscount = toNumber(formData.oneTimeDiscount);
+  if (quantity <= 0 || afterDiscount <= 0) return 0;
+  return Math.max(0, quantity * afterDiscount - oneTimeDiscount);
+}
+
+function validateFormData(formData: FormData): string[] {
+  const errors: string[] = [];
+  const quantity = toWholeNumber(formData.quantity);
+  const totalSales = getExpectedTotal(formData);
+  const primaryAmount = toNumber(formData.paymentAmount);
+  const secondaryAmount = toNumber(formData.paymentAmount2);
+  const releasedBottles = toWholeNumber(formData.releasedBottles);
+  const releasedBlister = toWholeNumber(formData.releasedBlister);
+  const toFollowBottles = toWholeNumber(formData.toFollowBottles);
+  const toFollowBlister = toWholeNumber(formData.toFollowBlister);
+
+  if (!formData.date) errors.push("Date is required.");
+  if (!formatPofForSave(formData.pofDigits)) errors.push("POF Number must contain exactly 9 digits.");
+  if (!formData.memberName.trim()) errors.push("Member Name is required.");
+  if (!formData.username.trim()) errors.push("Username is required.");
+  if (!formData.newMember) errors.push("New Member selection is required.");
+  if (!formData.memberType.trim()) errors.push("Member Type is required.");
+  if (!formData.packageType.trim()) errors.push("Package Type is required.");
+  if (quantity <= 0) errors.push("Quantity must be greater than 0.");
+  if (!formData.modeOfPayment) errors.push("Mode of Payment is required.");
+  if (totalSales <= 0) errors.push("Total Sales must be greater than 0.");
+
+  if (
+    releasedBottles < 0 ||
+    releasedBlister < 0 ||
+    toFollowBottles < 0 ||
+    toFollowBlister < 0
+  ) {
+    errors.push("Released and To Follow quantities cannot be negative.");
+  }
+
+  if (formData.modeOfPayment && formData.modeOfPayment !== "MIXED") {
+    if (requiresReference(formData.modeOfPayment) && !formData.referenceNumber.trim()) {
+      errors.push("Reference No is required for the selected mode of payment.");
+    }
+    if (requiresBankName(formData.modeOfPayment) && !formData.bankName.trim()) {
+      errors.push("Bank Name is required for the selected mode of payment.");
+    }
+    if (requiresCardType(formData.modeOfPayment) && !formData.cardType) {
+      errors.push("Card Type is required for Credit Card payments.");
+    }
+    if (primaryAmount <= 0) {
+      errors.push("Amount must be greater than 0.");
+    }
+  }
+
+  if (formData.modeOfPayment === "MIXED") {
+    if (!formData.modeOfPayment1 || !formData.modeOfPayment2) {
+      errors.push("Both payment modes are required for mixed payments.");
+    }
+    if (requiresReference(formData.modeOfPayment1) && !formData.referenceNumber.trim()) {
+      errors.push("Payment 1 reference number is required.");
+    }
+    if (requiresReference(formData.modeOfPayment2) && !formData.referenceNumber2.trim()) {
+      errors.push("Payment 2 reference number is required.");
+    }
+    if (requiresBankName(formData.modeOfPayment1) && !formData.bankName.trim()) {
+      errors.push("Payment 1 bank name is required.");
+    }
+    if (requiresBankName(formData.modeOfPayment2) && !formData.bankName2.trim()) {
+      errors.push("Payment 2 bank name is required.");
+    }
+    if (requiresCardType(formData.modeOfPayment1) && !formData.cardType) {
+      errors.push("Payment 1 card type is required.");
+    }
+    if (requiresCardType(formData.modeOfPayment2) && !formData.cardType2) {
+      errors.push("Payment 2 card type is required.");
+    }
+    if (primaryAmount <= 0 || secondaryAmount <= 0) {
+      errors.push("Both mixed payment amounts must be greater than 0.");
+    }
+    if (Math.abs(primaryAmount + secondaryAmount - totalSales) > 0.001) {
+      errors.push("Mixed payment amounts must equal Total Sales.");
+    }
+  }
+
+  return Array.from(new Set(errors));
+}
+
+function formatValidationMessage(errors: string[]): string {
+  if (errors.length <= 3) return errors.join("\n");
+  return `${errors.slice(0, 3).join("\n")}\n...and ${errors.length - 3} more issue(s).`;
 }
 
 const initialFormData: FormData = {
@@ -389,10 +539,8 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
   }, [formData.username, isUsernameOpen]);
 
   const netAmount = useMemo(() => {
-    const afterDiscount = Number(formData.priceAfterDiscount || 0);
-    const oneTimeDiscount = Number(formData.oneTimeDiscount || 0);
-    return Math.max(0, afterDiscount - oneTimeDiscount);
-  }, [formData.priceAfterDiscount, formData.oneTimeDiscount]);
+    return getExpectedTotal(formData);
+  }, [formData]);
 
   useEffect(() => {
     const price = PACKAGE_PRICE_MAP[formData.packageType] ?? 0;
@@ -464,78 +612,23 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
   const handleSave = async () => {
     if (isSaving) return;
 
-    const pofNumber = formatPofForSave(formData.pofDigits);
-    if (!pofNumber) {
-      alert("POF Number must contain exactly 9 digits.");
+    const validationErrors = validateFormData(formData);
+    if (isEncoderSaveDebugEnabled) {
+      console.log("ENCODER FORM STATE", formData);
+    }
+    if (validationErrors.length > 0) {
+      console.warn("VALIDATION FAILED", validationErrors);
+      alert(formatValidationMessage(validationErrors));
       return;
     }
 
-    if (!formData.modeOfPayment) {
-      alert("Mode of Payment is required.");
-      return;
-    }
+    const pofNumber = formatPofForSave(formData.pofDigits);
 
     const isMixed = formData.modeOfPayment === "MIXED";
-    const primaryAmount = Number(formData.paymentAmount || 0);
-    const secondaryAmount = Number(formData.paymentAmount2 || 0);
+    const primaryAmount = toNumber(formData.paymentAmount);
+    const secondaryAmount = toNumber(formData.paymentAmount2);
     const paymentMode1 = isMixed ? formData.modeOfPayment1 : formData.modeOfPayment;
     const paymentMode2 = isMixed ? formData.modeOfPayment2 : "";
-
-    if (!isMixed) {
-      if (requiresReference(formData.modeOfPayment) && !formData.referenceNumber.trim()) {
-        alert("Reference No is required for the selected mode of payment.");
-        return;
-      }
-      if (requiresBankName(formData.modeOfPayment) && !formData.bankName.trim()) {
-        alert("Bank Name is required for the selected mode of payment.");
-        return;
-      }
-      if (requiresCardType(formData.modeOfPayment) && !formData.cardType) {
-        alert("Card Type is required for Credit Card payments.");
-        return;
-      }
-      if (primaryAmount <= 0) {
-        alert("Amount is required.");
-        return;
-      }
-    } else {
-      if (!paymentMode1 || !paymentMode2) {
-        alert("Both payment modes are required for mixed payments.");
-        return;
-      }
-      if (requiresReference(paymentMode1) && !formData.referenceNumber.trim()) {
-        alert("Payment 1 reference number is required.");
-        return;
-      }
-      if (requiresReference(paymentMode2) && !formData.referenceNumber2.trim()) {
-        alert("Payment 2 reference number is required.");
-        return;
-      }
-      if (requiresBankName(paymentMode1) && !formData.bankName.trim()) {
-        alert("Payment 1 bank name is required.");
-        return;
-      }
-      if (requiresBankName(paymentMode2) && !formData.bankName2.trim()) {
-        alert("Payment 2 bank name is required.");
-        return;
-      }
-      if (requiresCardType(paymentMode1) && !formData.cardType) {
-        alert("Payment 1 card type is required.");
-        return;
-      }
-      if (requiresCardType(paymentMode2) && !formData.cardType2) {
-        alert("Payment 2 card type is required.");
-        return;
-      }
-      if (primaryAmount <= 0 || secondaryAmount <= 0) {
-        alert("Both mixed payment amounts are required.");
-        return;
-      }
-      if (Math.abs(primaryAmount + secondaryAmount - netAmount) > 0.001) {
-        alert("Mixed payment amounts must equal the net amount.");
-        return;
-      }
-    }
 
     const primaryPayment = mapPayment(paymentMode1 as SplitPaymentMode | "");
     const secondaryPayment = mapPayment(paymentMode2 as SplitPaymentMode | "");
@@ -578,6 +671,10 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
       collectedBy: formData.collectedBy,
     };
 
+    if (isEncoderSaveDebugEnabled) {
+      console.log("ENCODER PAYLOAD", entry);
+    }
+
     try {
       setIsSaving(true);
       await onSave(entry);
@@ -585,7 +682,7 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
       alert("Entry saved successfully!");
       handleClear();
     } catch (error) {
-      console.error("SAVE ERROR", error);
+      console.error("ENCODER SAVE ERROR", error);
       alert(mapSaveErrorToMessage(error));
     } finally {
       setIsSaving(false);
