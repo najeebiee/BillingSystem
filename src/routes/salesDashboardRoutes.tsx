@@ -48,6 +48,19 @@ const pickNumber = (row: SalesDashboardRawRow, keys: string[]): number => {
   return 0;
 };
 
+const toDateKey = (value: string): string => {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const mapSalesEntryToReportEntry = (
   row: SalesDashboardRawRow,
   inventoryByEntryId: Map<string, SalesDashboardRawRow>,
@@ -55,15 +68,21 @@ const mapSalesEntryToReportEntry = (
 ): SaleEntry => {
   const id = String(row.id ?? "");
   const inventoryRow = inventoryByEntryId.get(id);
-  const paymentRows = paymentsByEntryId.get(id) ?? [];
-  const primaryPayment = paymentRows.find((payment) => pickNumber(payment, ["payment_no"]) === 1) ?? paymentRows[0];
-  const secondaryPayment = paymentRows.find((payment) => pickNumber(payment, ["payment_no"]) === 2);
+  const paymentRows = [...(paymentsByEntryId.get(id) ?? [])].sort(
+    (left, right) => pickNumber(left, ["payment_no"]) - pickNumber(right, ["payment_no"])
+  );
+  const primaryPayment =
+    paymentRows.find((payment) => pickNumber(payment, ["payment_no"]) === 1) ?? paymentRows[0] ?? null;
+  const secondaryPayment = paymentRows.find((payment) => pickNumber(payment, ["payment_no"]) === 2) ?? null;
+  const entryDate =
+    pickString(row, ["report_date", "entry_date", "sale_date", "date"]) ||
+    toDateKey(pickString(row, ["created_at"]));
 
   return {
     id,
     savedAt: pickString(row, ["created_at", "saved_at"]),
     event: pickString(row, ["event"]),
-    date: pickString(row, ["report_date", "entry_date", "sale_date", "date"]),
+    date: entryDate,
     pgfNumber: pickString(row, ["pof_number", "po_number", "pgf_number"]),
     memberName: pickString(row, ["member_name"]),
     username: pickString(row, ["username"]),
@@ -78,9 +97,13 @@ const mapSalesEntryToReportEntry = (
     priceAfterDiscount: String(pickNumber(row, ["price_after_discount"])),
     oneTimeDiscount: String(pickNumber(row, ["one_time_discount"])),
     totalSales: String(pickNumber(row, ["total_sales"])),
-    modeOfPayment: pickString(primaryPayment ?? {}, ["payment_mode", "mode", "primary_payment_mode"]),
+    modeOfPayment:
+      pickString(primaryPayment ?? {}, ["payment_mode", "mode"]) ||
+      pickString(row, ["primary_payment_mode"]),
     paymentModeType: pickString(primaryPayment ?? {}, ["payment_type", "mode_type"]),
-    referenceNumber: pickString(primaryPayment ?? {}, ["reference_number", "reference_no"]),
+    referenceNumber:
+      pickString(primaryPayment ?? {}, ["reference_number", "reference_no"]) ||
+      pickString(row, ["reference_number", "reference_no"]),
     modeOfPayment2: pickString(secondaryPayment ?? {}, ["payment_mode", "mode"]),
     paymentModeType2: pickString(secondaryPayment ?? {}, ["payment_type", "mode_type"]),
     referenceNumber2: pickString(secondaryPayment ?? {}, ["reference_number", "reference_no"]),
@@ -195,6 +218,7 @@ function SalesDashboardReportsRoute() {
         entryRows.map((row) => mapSalesEntryToReportEntry(row, inventoryByEntryId, paymentsByEntryId))
       );
     } catch (error) {
+      console.error("REPORT FETCH ERROR", error);
       const message =
         error instanceof Error ? error.message : "Failed to load sales report entries.";
       setErrorMessage(message);
@@ -216,14 +240,26 @@ function SalesDashboardReportsRoute() {
   );
 
   if (isLoading) {
-    return <div className="text-sm text-gray-600">Loading reports...</div>;
+    return (
+      <ReportsPage
+        salesEntries={salesEntries}
+        onRemoveEntry={handleRemoveEntry}
+        isLoading
+        errorMessage={errorMessage}
+        onRefresh={loadEntries}
+      />
+    );
   }
 
-  if (errorMessage) {
-    return <div className="text-sm text-red-600">{errorMessage}</div>;
-  }
-
-  return <ReportsPage salesEntries={salesEntries} onRemoveEntry={handleRemoveEntry} />;
+  return (
+    <ReportsPage
+      salesEntries={salesEntries}
+      onRemoveEntry={handleRemoveEntry}
+      isLoading={isLoading}
+      errorMessage={errorMessage}
+      onRefresh={loadEntries}
+    />
+  );
 }
 
 export const salesDashboardRoutes = (
