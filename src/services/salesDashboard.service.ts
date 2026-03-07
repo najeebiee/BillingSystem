@@ -391,6 +391,51 @@ export async function fetchSalesEntryRows(): Promise<SalesDashboardRawRow[]> {
   return (data as SalesDashboardRawRow[] | null) ?? [];
 }
 
+export async function fetchSalesEntryInventoryRows(): Promise<SalesDashboardRawRow[]> {
+  const { data, error } = await supabase.from("sales_entry_inventory").select("*");
+  if (error) throw error;
+  return (data as SalesDashboardRawRow[] | null) ?? [];
+}
+
+async function deleteRowsByPossibleColumns(
+  table: string,
+  value: string | number,
+  columns: string[]
+): Promise<void> {
+  let lastError: unknown = null;
+
+  for (const column of columns) {
+    const { error } = await supabase.from(table).delete().eq(column, value);
+    if (!error) return;
+
+    const missingColumn = toColumnNameFromError(error);
+    if (missingColumn === column) {
+      lastError = error;
+      continue;
+    }
+
+    throw error;
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+}
+
+export async function deleteSalesEntry(entryId: string): Promise<void> {
+  await deleteRowsByPossibleColumns("sales_entry_payments", entryId, [
+    "sales_entry_id",
+    "sale_entry_id"
+  ]);
+  await deleteRowsByPossibleColumns("sales_entry_inventory", entryId, [
+    "sales_entry_id",
+    "sale_entry_id"
+  ]);
+
+  const { error } = await supabase.from("sales_entries").delete().eq("id", entryId);
+  if (error) throw error;
+}
+
 export async function fetchSalesEntryPaymentRows(): Promise<SalesDashboardRawRow[]> {
   const { data, error } = await supabase.from("sales_entry_payments").select("*");
   if (error) throw error;

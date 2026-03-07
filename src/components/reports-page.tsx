@@ -46,7 +46,7 @@ const paymentLabel = (mode: string, type: string): string => {
 };
 
 const fmtAmount = (n: number): string =>
-  `?${n.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
+  `\u20B1${n.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
 
 function HoverButton({
   label,
