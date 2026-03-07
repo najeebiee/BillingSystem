@@ -49,10 +49,42 @@
         '@': path.resolve(__dirname, './src'),
       },
     },
-    build: {
-      target: 'esnext',
-      outDir: 'build',
-    },
+  build: {
+    target: 'esnext',
+    outDir: 'build',
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+
+          if (id.includes('/react/') || id.includes('\\react\\') || id.includes('react-dom') || id.includes('react-router-dom')) {
+            return 'react-vendor';
+          }
+
+          if (id.includes('@supabase/supabase-js')) {
+            return 'supabase';
+          }
+
+          if (
+            id.includes('jspdf') ||
+            id.includes('jspdf-autotable') ||
+            id.includes('html2canvas')
+          ) {
+            return 'pdf';
+          }
+
+          if (id.includes('xlsx') || id.includes('file-saver') || id.includes('papaparse')) {
+            return 'excel';
+          }
+
+          if (id.includes('recharts')) {
+            return 'charts';
+          }
+        }
+      }
+    }
+  },
     server: {
       port: 3000,
       open: true,

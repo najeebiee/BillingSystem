@@ -1,8 +1,4 @@
 import Papa from "papaparse";
-import { saveAs } from "file-saver";
-import * as XLSX from "xlsx";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 import type { BillExportRow } from "../services/billsExportFetch";
 
 type ExportFormat = "csv" | "xlsx" | "pdf";
@@ -85,10 +81,11 @@ function buildFileName(ext: "csv" | "xlsx" | "pdf") {
   return `payment_requests_${getTimestamp()}.${ext}`;
 }
 
-export function exportBills(rows: BillExportRow[], format: ExportFormat) {
+export async function exportBills(rows: BillExportRow[], format: ExportFormat) {
   const records = toExportRecords(rows);
 
   if (format === "csv") {
+    const { saveAs } = await import("file-saver");
     const csv = Papa.unparse(records);
     const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8;" });
     saveAs(blob, buildFileName("csv"));
@@ -96,6 +93,7 @@ export function exportBills(rows: BillExportRow[], format: ExportFormat) {
   }
 
   if (format === "xlsx") {
+    const [{ saveAs }, XLSX] = await Promise.all([import("file-saver"), import("xlsx")]);
     const worksheet = XLSX.utils.json_to_sheet(records);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Payment Requests");
@@ -107,6 +105,11 @@ export function exportBills(rows: BillExportRow[], format: ExportFormat) {
     return;
   }
 
+  const [{ jsPDF }, autoTableModule] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable")
+  ]);
+  const autoTable = autoTableModule.default;
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
   doc.setFontSize(12);
   doc.text("Payment Requests", 40, 36);

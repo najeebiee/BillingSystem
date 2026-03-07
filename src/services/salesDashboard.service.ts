@@ -2,7 +2,15 @@ import { supabase } from "../lib/supabaseClient";
 import type { SaleEntry } from "../types/sales";
 
 export type SalesDashboardRawRow = Record<string, unknown>;
+export type SalesDashboardUser = {
+  id: string;
+  username: string;
+  member_name: string | null;
+  created_at: string;
+};
+
 type SaveStep = "sales_entries" | "sales_entry_inventory" | "sales_entry_payments";
+const USERS_DIRECTORY_TABLE = "users_directory";
 
 const isSalesSaveDebugEnabled =
   import.meta.env.DEV || import.meta.env.VITE_DEBUG_SALES_SAVE === "true";
@@ -163,33 +171,26 @@ async function insertRowsWithColumnFallback(
   throw new Error(`Insert retries exceeded for ${table}.`);
 }
 
-async function resolveSalesUserId(username: string): Promise<number | null> {
-  const trimmed = username.trim();
-  if (!trimmed) return null;
+export async function fetchSalesDashboardUsers(): Promise<SalesDashboardUser[]> {
+  const { data, error } = await supabase
+    .from(USERS_DIRECTORY_TABLE)
+    .select("*")
+    .order("username", { ascending: true });
 
-  try {
-    const { data, error } = await supabase
-      .from("sales_users")
-      .select("id")
-      .eq("username", trimmed)
-      .maybeSingle();
-
-    if (error) return null;
-    const rawId = (data as { id?: number | string } | null)?.id;
-    const parsed = typeof rawId === "number" ? rawId : Number(rawId);
-    return Number.isFinite(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
+  if (error) throw error;
+  return ((data as Array<Record<string, unknown>> | null) ?? []).map((row) => ({
+    id: String(row.id ?? ""),
+    username: toText(row.username),
+    member_name: toText(row.member_name) || null,
+    created_at: toText(row.created_at)
+  }));
 }
 
 export async function saveSalesEntry(entry: SaleEntry): Promise<void> {
   const primaryAmount = Math.max(0, toNumber(entry.totalSales) - toNumber(entry.amount2));
   const secondaryAmount = Math.max(0, toNumber(entry.amount2));
-  const salesUserIdPromise = resolveSalesUserId(entry.username);
   const authUserPromise = supabase.auth.getUser();
-
-  const [salesUserId, authUserResult] = await Promise.all([salesUserIdPromise, authUserPromise]);
+  const authUserResult = await authUserPromise;
   const authUserId = authUserResult.data.user?.id ?? null;
   const saleDate = toText(entry.date) || toLocalDateIso();
   const pofNumber = toText(entry.pgfNumber) || null;
@@ -228,10 +229,6 @@ export async function saveSalesEntry(entry: SaleEntry): Promise<void> {
     collected_by: toText(entry.collectedBy)
   };
 
-  if (salesUserId !== null) {
-    // Optional link when username can be resolved.
-    salesEntryInsert.sales_user_id = salesUserId;
-  }
   if (authUserId) {
     // Helps satisfy common INSERT RLS policy shape: created_by = auth.uid().
     salesEntryInsert.created_by = authUserId;
@@ -345,12 +342,13 @@ export async function saveSalesEntry(entry: SaleEntry): Promise<void> {
       });
     }
   } catch (error) {
-    console.error("SAVE ERROR", {
+    const debugMeta = {
       step: failedStep,
       table: failedStep,
       salesEntryId,
       error: toErrorDebugMeta(error)
-    });
+    };
+    console.error("SAVE ERROR", debugMeta);
 
     if (salesEntryId !== null) {
       const paymentDeleteFilter = `sales_entry_id.eq.${salesEntryId},sale_entry_id.eq.${salesEntryId}`;
@@ -358,6 +356,13 @@ export async function saveSalesEntry(entry: SaleEntry): Promise<void> {
       await supabase.from("sales_entry_payments").delete().or(paymentDeleteFilter);
       await supabase.from("sales_entry_inventory").delete().or(paymentDeleteFilter);
       await supabase.from("sales_entries").delete().eq("id", salesEntryId);
+    }
+
+    if (error && typeof error === "object") {
+      Object.assign(error as Record<string, unknown>, {
+        saveStep: failedStep,
+        debugMeta
+      });
     }
 
     throw error;
@@ -389,6 +394,51 @@ export async function fetchSalesEntryRows(): Promise<SalesDashboardRawRow[]> {
   const { data, error } = await supabase.from("sales_entries").select("*");
   if (error) throw error;
   return (data as SalesDashboardRawRow[] | null) ?? [];
+}
+
+export async function fetchSalesEntryInventoryRows(): Promise<SalesDashboardRawRow[]> {
+  const { data, error } = await supabase.from("sales_entry_inventory").select("*");
+  if (error) throw error;
+  return (data as SalesDashboardRawRow[] | null) ?? [];
+}
+
+async function deleteRowsByPossibleColumns(
+  table: string,
+  value: string | number,
+  columns: string[]
+): Promise<void> {
+  let lastError: unknown = null;
+
+  for (const column of columns) {
+    const { error } = await supabase.from(table).delete().eq(column, value);
+    if (!error) return;
+
+    const missingColumn = toColumnNameFromError(error);
+    if (missingColumn === column) {
+      lastError = error;
+      continue;
+    }
+
+    throw error;
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+}
+
+export async function deleteSalesEntry(entryId: string): Promise<void> {
+  await deleteRowsByPossibleColumns("sales_entry_payments", entryId, [
+    "sales_entry_id",
+    "sale_entry_id"
+  ]);
+  await deleteRowsByPossibleColumns("sales_entry_inventory", entryId, [
+    "sales_entry_id",
+    "sale_entry_id"
+  ]);
+
+  const { error } = await supabase.from("sales_entries").delete().eq("id", entryId);
+  if (error) throw error;
 }
 
 export async function fetchSalesEntryPaymentRows(): Promise<SalesDashboardRawRow[]> {

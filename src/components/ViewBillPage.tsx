@@ -14,7 +14,6 @@ import {
   buildReceiptHtml as buildReceiptPdfHtml,
   type PdfTemplateData
 } from "../pdf/pdfTemplates";
-import { exportHtmlToPdf } from "../pdf/exportPdf";
 import { downloadBillAttachment } from "../services/billAttachments.service";
 
 export function ViewBillPage() {
@@ -326,6 +325,7 @@ export function ViewBillPage() {
     const templateData = buildPdfTemplateData();
     if (!templateData) return;
 
+    const { exportHtmlToPdf } = await import("../pdf/exportPdf");
     const a4Html = buildA4Html(templateData);
     await exportHtmlToPdf({
       html: a4Html,
@@ -338,6 +338,7 @@ export function ViewBillPage() {
     const templateData = buildPdfTemplateData();
     if (!templateData) return;
 
+    const { exportHtmlToPdf } = await import("../pdf/exportPdf");
     const receiptHtml = buildReceiptPdfHtml(templateData, { paper: "80mm" });
     await exportHtmlToPdf({
       html: receiptHtml,

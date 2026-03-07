@@ -51,7 +51,7 @@ export function BillsExportButtons({
         return;
       }
 
-      exportBills(result.data, format);
+      await exportBills(result.data, format);
       toast.success(`Exported ${result.data.length} record(s) to ${format.toUpperCase()}.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to export payment requests.";

@@ -3,8 +3,10 @@ import { NavLink, Outlet } from "react-router-dom";
 
 const tabs = [
   { label: "Encoder", to: "/sales-dashboard/encoder" },
+  { label: "Reports", to: "/sales-dashboard/reports" },
   { label: "Inventory Report", to: "/sales-dashboard/inventory-report" },
-  { label: "Sales Report", to: "/sales-dashboard/sales-report" }
+  { label: "Sales Report", to: "/sales-dashboard/sales-report" },
+  { label: "Users", to: "/sales-dashboard/users" }
 ];
 
 export function SalesDashboardLayout() {

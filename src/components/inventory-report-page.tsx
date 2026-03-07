@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Printer } from "lucide-react";
+import { printElementById } from "../print/printReport";
 import {
   fetchInventoryReportRows,
   type SalesDashboardRawRow
-} from "../../services/salesDashboard.service";
+} from "../services/salesDashboard.service";
 
 const INVENTORY_DATE_KEYS = ["entry_date", "created_at"] as const;
 
@@ -24,6 +25,54 @@ const formatCurrency = (amount: number): string =>
   new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount);
 
 const renderDashForZero = (value: number): number | string => (value === 0 ? "-" : value);
+
+const INVENTORY_PRINT_CSS = `
+  #inventory-report-print {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+  #inventory-report-print .overflow-x-auto {
+    overflow: visible !important;
+  }
+  #inventory-report-print table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+  }
+  #inventory-report-print th,
+  #inventory-report-print td {
+    min-width: 0 !important;
+    padding: 4px 5px !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+  #inventory-report-print h2 {
+    font-size: 20px !important;
+    margin: 0 0 6px !important;
+  }
+  #inventory-report-print h3 {
+    font-size: 16px !important;
+    margin: 0 0 6px !important;
+  }
+  #inventory-report-print .mb-8 {
+    margin-bottom: 14px !important;
+    padding-bottom: 10px !important;
+  }
+  #inventory-report-print .mt-12 {
+    margin-top: 18px !important;
+  }
+  #inventory-report-print .pt-8 {
+    padding-top: 10px !important;
+  }
+`;
 
 const toNumber = (value: unknown): number => {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -200,187 +249,22 @@ export function InventoryReportPage() {
     };
   }, [reportDate]);
 
-  const handlePrintReport = () => {
-    const printContainer = document.getElementById("inventory-report-print");
-    if (!printContainer) {
-      window.print();
-      return;
-    }
-
-    const printWindow = window.open("", "_blank", "width=1200,height=900");
-    if (!printWindow) {
-      window.print();
-      return;
-    }
-
-    const copiedStyles = Array.from(
-      document.querySelectorAll('style, link[rel="stylesheet"]')
-    )
-      .map((node) => node.outerHTML)
-      .join("\n");
-
-    printWindow.document.open();
-    printWindow.document.write(`<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Inventory Daily Report</title>
-    ${copiedStyles}
-    <style>
-      @page { size: A4 landscape; margin: 8mm; }
-      html, body {
-        margin: 0;
-        padding: 0;
-        background: #fff;
-        width: 100%;
-        overflow: visible !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      #inventory-report-print {
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 auto !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        background: #fff !important;
-      }
-      #inventory-report-print .overflow-x-auto {
-        overflow: visible !important;
-      }
-      #inventory-report-print table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        table-layout: fixed !important;
-      }
-      #inventory-report-print th,
-      #inventory-report-print td {
-        min-width: 0 !important;
-        padding: 4px 5px !important;
-        font-size: 10px !important;
-        line-height: 1.2 !important;
-        white-space: normal !important;
-        word-break: break-word !important;
-        overflow-wrap: anywhere !important;
-      }
-      #inventory-report-print h2 {
-        font-size: 20px !important;
-        margin: 0 0 6px !important;
-      }
-      #inventory-report-print h3 {
-        font-size: 16px !important;
-        margin: 0 0 6px !important;
-      }
-      #inventory-report-print .mb-8 {
-        margin-bottom: 14px !important;
-        padding-bottom: 10px !important;
-      }
-      #inventory-report-print .mt-12 {
-        margin-top: 18px !important;
-      }
-      #inventory-report-print .pt-8 {
-        padding-top: 10px !important;
-      }
-      .no-print {
-        display: none !important;
-      }
-    </style>
-  </head>
-  <body>
-    ${printContainer.outerHTML}
-  </body>
-</html>`);
-    printWindow.document.close();
-
-    const triggerPrint = () => {
-      printWindow.focus();
-      printWindow.print();
-      printWindow.close();
-    };
-
-    if (printWindow.document.readyState === "complete") {
-      setTimeout(triggerPrint, 120);
-    } else {
-      printWindow.onload = () => {
-        setTimeout(triggerPrint, 120);
-      };
+  const handlePrintReport = async () => {
+    try {
+      await printElementById({
+        elementId: "inventory-report-print",
+        title: "Inventory Daily Report",
+        pageCss: "@page { size: A4 landscape; margin: 8mm; }",
+        extraCss: INVENTORY_PRINT_CSS
+      });
+    } catch (printError) {
+      console.error("INVENTORY REPORT PRINT ERROR", printError);
+      alert("Unable to open the inventory print preview. Please try again.");
     }
   };
 
   return (
     <div style={{ fontFamily: "Inter, sans-serif" }}>
-      <style>{`
-        @media print {
-          @page {
-            size: A4 landscape;
-            margin: 8mm;
-          }
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            background: #fff !important;
-            overflow: visible !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          #print-root {
-            width: 100% !important;
-            max-width: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          .no-print {
-            display: none !important;
-          }
-          #inventory-report-print {
-            width: 100% !important;
-            max-width: none !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            background: #fff !important;
-          }
-          #inventory-report-print .overflow-x-auto {
-            overflow: visible !important;
-          }
-          #inventory-report-print table {
-            width: 100% !important;
-            table-layout: fixed !important;
-            border-collapse: collapse !important;
-          }
-          #inventory-report-print th,
-          #inventory-report-print td {
-            min-width: 0 !important;
-            padding: 4px 5px !important;
-            font-size: 10px !important;
-            line-height: 1.2 !important;
-            white-space: normal !important;
-            word-break: break-word !important;
-            overflow-wrap: anywhere !important;
-          }
-          #inventory-report-print h2 {
-            font-size: 20px !important;
-            margin: 0 0 6px !important;
-          }
-          #inventory-report-print h3 {
-            font-size: 16px !important;
-            margin: 0 0 6px !important;
-          }
-          #inventory-report-print .mb-8 {
-            margin-bottom: 14px !important;
-            padding-bottom: 10px !important;
-          }
-          #inventory-report-print .mt-12 {
-            margin-top: 18px !important;
-          }
-          #inventory-report-print .pt-8 {
-            padding-top: 10px !important;
-          }
-        }
-      `}</style>
-
       <div className="mb-6 flex items-center justify-between gap-3 no-print">
         <h1
           style={{
