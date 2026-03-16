@@ -290,7 +290,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
   return (
     <section className="space-y-3">
       <div className="rounded-xl border border-slate-200 bg-white px-5 py-3.5 shadow-sm">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3.5 lg:flex-nowrap lg:gap-5">
             <label className="block sm:w-[178px] lg:w-[182px]">
               <span className={filterLabelClassName}>FROM</span>
@@ -344,7 +344,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
             </div>
           </div>
 
-          <div className="hidden lg:block lg:flex-1" />
+          <div className="hidden lg:block lg:min-w-24 lg:flex-1" />
 
           <div className="lg:flex lg:justify-end">
             <label className="block lg:w-[230px] xl:w-[238px]">
