@@ -290,66 +290,70 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
   return (
     <section className="space-y-4">
       <div className="rounded-xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-[170px_170px_220px_84px_minmax(180px,1fr)] lg:items-end">
-          <div className="grid gap-2">
-            <div className={filterLabelClassName}>FROM</div>
-            <input
-              type="date"
-              value={pendingFromDate}
-              onChange={(event) => setPendingFromDate(event.target.value)}
-              className={filterFieldClassName}
-            />
-          </div>
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="flex flex-col gap-5 md:flex-row md:flex-wrap md:items-start md:gap-3 xl:flex-nowrap xl:gap-3">
+            <div className="flex min-w-[220px] flex-col gap-2">
+              <div className={filterLabelClassName}>FROM</div>
+              <input
+                type="date"
+                value={pendingFromDate}
+                onChange={(event) => setPendingFromDate(event.target.value)}
+                className={filterFieldClassName}
+              />
+            </div>
 
-          <div className="grid gap-2">
-            <div className={filterLabelClassName}>TO</div>
-            <input
-              type="date"
-              value={pendingToDate}
-              onChange={(event) => setPendingToDate(event.target.value)}
-              className={filterFieldClassName}
-            />
-          </div>
+            <div className="flex min-w-[220px] flex-col gap-2">
+              <div className={filterLabelClassName}>TO</div>
+              <input
+                type="date"
+                value={pendingToDate}
+                onChange={(event) => setPendingToDate(event.target.value)}
+                className={filterFieldClassName}
+              />
+            </div>
 
-          <div className="grid gap-2">
-            <div className={filterLabelClassName}>MODE OF PAYMENT</div>
-            <select
-              value={pendingPaymentMode}
-              onChange={(event) =>
-                setPendingPaymentMode(event.target.value as PaymentMode)
-              }
-              className={filterFieldClassName}
-            >
-              {paymentModes.map((mode) => (
-                <option key={mode} value={mode}>
-                  {mode}
-                </option>
+            <div className="flex min-w-[230px] flex-col gap-2">
+              <div className={filterLabelClassName}>MODE OF PAYMENT</div>
+              <select
+                value={pendingPaymentMode}
+                onChange={(event) =>
+                  setPendingPaymentMode(event.target.value as PaymentMode)
+                }
+                className={filterFieldClassName}
+              >
+                {paymentModes.map((mode) => (
+                  <option key={mode} value={mode}>
+                    {mode}
+                  </option>
                 ))}
-            </select>
+              </select>
+            </div>
+
+            <div className="flex items-end pt-[26px]">
+              <Button
+                variant="outline"
+                className="h-10 rounded-md border-slate-300 bg-white px-5 text-sm font-medium text-slate-900 hover:bg-slate-50"
+                onClick={() => {
+                  setFromDate(pendingFromDate);
+                  setToDate(pendingToDate);
+                  setPaymentMode(pendingPaymentMode);
+                }}
+              >
+                Apply
+              </Button>
+            </div>
           </div>
 
-          <div className="flex items-end lg:pt-[26px]">
-            <Button
-              variant="outline"
-              className="h-10 rounded-md border-slate-300 bg-white px-5 text-sm font-medium text-slate-900 hover:bg-slate-50"
-              onClick={() => {
-                setFromDate(pendingFromDate);
-                setToDate(pendingToDate);
-                setPaymentMode(pendingPaymentMode);
-              }}
-            >
-              Apply
-            </Button>
-          </div>
-
-          <div className="grid gap-2 lg:ml-auto lg:w-[220px] lg:justify-self-end">
-            <div className={filterLabelClassName}>SEARCH</div>
-            <input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search table..."
-              className={filterFieldClassName}
-            />
+          <div className="xl:ml-8 xl:flex xl:min-w-[250px] xl:justify-end">
+            <div className="flex min-w-[250px] flex-col gap-2">
+              <div className={filterLabelClassName}>SEARCH</div>
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search table..."
+                className={filterFieldClassName}
+              />
+            </div>
           </div>
         </div>
       </div>
