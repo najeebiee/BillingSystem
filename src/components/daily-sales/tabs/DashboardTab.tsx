@@ -290,8 +290,8 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
   return (
     <section className="space-y-3">
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-[170px_170px_220px_96px_minmax(180px,1fr)] md:items-end">
-          <label className="block">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-end">
+          <label className="block lg:col-span-2">
             <span className={filterLabelClassName}>FROM</span>
             <input
               type="date"
@@ -301,7 +301,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
             />
           </label>
 
-          <label className="block">
+          <label className="block lg:col-span-2">
             <span className={filterLabelClassName}>TO</span>
             <input
               type="date"
@@ -311,7 +311,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
             />
           </label>
 
-          <label className="block">
+          <label className="block lg:col-span-3">
             <span className={filterLabelClassName}>MODE OF PAYMENT</span>
             <select
               value={pendingPaymentMode}
@@ -328,7 +328,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
             </select>
           </label>
 
-          <div className="flex items-end">
+          <div className="flex items-end lg:col-span-1">
             <Button
               variant="outline"
               className="h-9 w-full rounded-md border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 hover:bg-slate-50"
@@ -342,7 +342,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
             </Button>
           </div>
 
-          <label className="block md:ml-auto md:w-full md:max-w-[220px]">
+          <label className="block lg:col-span-4 lg:ml-auto lg:max-w-[270px]">
             <span className={filterLabelClassName}>SEARCH</span>
             <input
               value={searchQuery}
