@@ -17,7 +17,7 @@ import { listDailySalesEntries } from "@/services/dailySales.service";
 import type { DailySalesRecord, PaymentMode } from "@/types/dailySales";
 
 const filterLabelClassName =
-  "mb-1.5 block text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500";
+  "mb-1 block text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500";
 const filterFieldClassName =
   "h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-400";
 
@@ -289,9 +289,9 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
 
   return (
     <section className="space-y-3">
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-end">
-          <label className="block lg:col-span-2">
+      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end lg:gap-2.5">
+          <label className="block lg:w-[172px]">
             <span className={filterLabelClassName}>FROM</span>
             <input
               type="date"
@@ -301,7 +301,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
             />
           </label>
 
-          <label className="block lg:col-span-2">
+          <label className="block lg:w-[172px]">
             <span className={filterLabelClassName}>TO</span>
             <input
               type="date"
@@ -311,7 +311,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
             />
           </label>
 
-          <label className="block lg:col-span-3">
+          <label className="block lg:w-[176px] xl:w-[188px]">
             <span className={filterLabelClassName}>MODE OF PAYMENT</span>
             <select
               value={pendingPaymentMode}
@@ -328,10 +328,10 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
             </select>
           </label>
 
-          <div className="flex items-end lg:col-span-1">
+          <div className="flex items-end lg:w-auto">
             <Button
               variant="outline"
-              className="h-9 w-full rounded-md border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 hover:bg-slate-50"
+              className="h-9 w-full rounded-md border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 hover:bg-slate-50 lg:w-auto"
               onClick={() => {
                 setFromDate(pendingFromDate);
                 setToDate(pendingToDate);
@@ -342,7 +342,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
             </Button>
           </div>
 
-          <label className="block lg:col-span-4 lg:ml-auto lg:max-w-[270px]">
+          <label className="block lg:ml-auto lg:w-[210px] xl:w-[230px]">
             <span className={filterLabelClassName}>SEARCH</span>
             <input
               value={searchQuery}
