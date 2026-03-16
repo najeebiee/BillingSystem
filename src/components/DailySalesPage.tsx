@@ -50,16 +50,8 @@ export function DailySalesPage() {
 
   return (
     <main className="mx-auto max-w-[1320px] space-y-4">
-      <div className="space-y-3">
-        <div>
-          <h1 className="text-[28px] font-semibold tracking-tight text-slate-900">
-            Daily Sales
-          </h1>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <DailySalesTabs activeTab={activeTab} onTabChange={onTabChange} />
-        </div>
+      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <DailySalesTabs activeTab={activeTab} onTabChange={onTabChange} />
       </div>
 
       {activeTab === "dashboard" ? <DashboardTab refreshTick={refreshTick} /> : null}

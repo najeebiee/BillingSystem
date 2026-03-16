@@ -28,12 +28,12 @@ export function DailySalesTabs({
 }) {
   return (
     <div className="w-full overflow-x-auto">
-      <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
+      <div className="flex min-w-max items-center gap-1.5 whitespace-nowrap">
         {tabItems.map((item) => (
           <button
             key={item.id}
             type="button"
-            className={`h-7 rounded-md px-3 text-xs font-medium transition-colors ${
+            className={`h-7 rounded-md px-3 text-[12px] font-medium transition-colors ${
               activeTab === item.id
                 ? "bg-slate-950 text-white"
                 : "text-slate-700 hover:bg-slate-100"
