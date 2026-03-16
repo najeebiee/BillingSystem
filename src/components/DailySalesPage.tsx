@@ -50,14 +50,14 @@ export function DailySalesPage() {
   const triggerRefresh = () => setRefreshTick((value) => value + 1);
 
   return (
-    <main className="mx-auto max-w-7xl">
-      <Card className="gap-0 border-slate-200 shadow-sm">
+    <main className="mx-auto max-w-7xl space-y-3">
+      <Card className="gap-0 rounded-lg border-slate-200 bg-white shadow-sm">
         <CardHeader className="pb-0">
-          <CardTitle className="text-2xl font-semibold text-slate-900">
+          <CardTitle className="text-xl font-semibold text-slate-900">
             Daily Sales
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="pt-3">
           <DailySalesTabs activeTab={activeTab} onTabChange={onTabChange} />
         </CardContent>
       </Card>

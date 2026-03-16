@@ -33,9 +33,9 @@ export function DailySalesTabs({
           <button
             key={item.id}
             type="button"
-            className={`h-8 rounded-md px-3 text-sm font-medium transition-colors ${
+            className={`h-7 rounded-md px-3 text-[12px] font-medium transition-colors ${
               activeTab === item.id
-                ? "bg-slate-900 text-white"
+                ? "bg-slate-950 text-white shadow-sm"
                 : "text-slate-700 hover:bg-slate-100"
             }`}
             onClick={() => onTabChange(item.id)}
@@ -47,4 +47,3 @@ export function DailySalesTabs({
     </div>
   );
 }
-
