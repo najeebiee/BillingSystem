@@ -17,9 +17,9 @@ import { listDailySalesEntries } from "@/services/dailySales.service";
 import type { DailySalesRecord, PaymentMode } from "@/types/dailySales";
 
 const filterLabelClassName =
-  "mb-1 block text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500";
+  "text-xs font-medium uppercase tracking-wide text-slate-700";
 const filterFieldClassName =
-  "h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-400";
+  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-400";
 
 const fallbackRows: DailySalesRecord[] = [
   {
@@ -289,74 +289,68 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
 
   return (
     <section className="space-y-3">
-      <div className="rounded-xl border border-slate-200 bg-white px-5 py-3.5 shadow-sm">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-8">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3.5 lg:flex-nowrap lg:gap-5">
-            <label className="block sm:w-[178px] lg:w-[182px]">
-              <span className={filterLabelClassName}>FROM</span>
-              <input
-                type="date"
-                value={pendingFromDate}
-                onChange={(event) => setPendingFromDate(event.target.value)}
-                className={filterFieldClassName}
-              />
-            </label>
+      <div className="rounded-xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
+        <div className="flex flex-wrap items-start gap-6">
+          <label className="flex min-w-[220px] flex-col gap-2">
+            <span className={filterLabelClassName}>FROM</span>
+            <input
+              type="date"
+              value={pendingFromDate}
+              onChange={(event) => setPendingFromDate(event.target.value)}
+              className={filterFieldClassName}
+            />
+          </label>
 
-            <label className="block sm:w-[178px] lg:w-[182px]">
-              <span className={filterLabelClassName}>TO</span>
-              <input
-                type="date"
-                value={pendingToDate}
-                onChange={(event) => setPendingToDate(event.target.value)}
-                className={filterFieldClassName}
-              />
-            </label>
+          <label className="flex min-w-[220px] flex-col gap-2">
+            <span className={filterLabelClassName}>TO</span>
+            <input
+              type="date"
+              value={pendingToDate}
+              onChange={(event) => setPendingToDate(event.target.value)}
+              className={filterFieldClassName}
+            />
+          </label>
 
-            <label className="block sm:w-[190px] lg:w-[248px]">
-              <span className={filterLabelClassName}>MODE OF PAYMENT</span>
-              <select
-                value={pendingPaymentMode}
-                onChange={(event) =>
-                  setPendingPaymentMode(event.target.value as PaymentMode)
-                }
-                className={filterFieldClassName}
-              >
-                {paymentModes.map((mode) => (
-                  <option key={mode} value={mode}>
-                    {mode}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <label className="flex min-w-[260px] flex-col gap-2">
+            <span className={filterLabelClassName}>MODE OF PAYMENT</span>
+            <select
+              value={pendingPaymentMode}
+              onChange={(event) =>
+                setPendingPaymentMode(event.target.value as PaymentMode)
+              }
+              className={filterFieldClassName}
+            >
+              {paymentModes.map((mode) => (
+                <option key={mode} value={mode}>
+                  {mode}
+                </option>
+              ))}
+            </select>
+          </label>
 
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                className="h-9 w-full rounded-md border-slate-300 bg-white px-0 text-sm font-medium text-slate-900 hover:bg-slate-50 sm:w-[78px] lg:w-[82px]"
-                onClick={() => {
-                  setFromDate(pendingFromDate);
-                  setToDate(pendingToDate);
-                  setPaymentMode(pendingPaymentMode);
-                }}
-              >
-                Apply
-              </Button>
-            </div>
+          <div className="flex items-end pt-[26px]">
+            <Button
+              variant="outline"
+              className="h-10 rounded-md border-slate-300 bg-white px-5 text-sm font-medium text-slate-900 hover:bg-slate-50"
+              onClick={() => {
+                setFromDate(pendingFromDate);
+                setToDate(pendingToDate);
+                setPaymentMode(pendingPaymentMode);
+              }}
+            >
+              Apply
+            </Button>
           </div>
 
-          <div className="hidden lg:block lg:min-w-24 lg:flex-1" />
-
-          <div className="lg:flex lg:justify-end">
-            <label className="block lg:w-[230px] xl:w-[238px]">
-              <span className={filterLabelClassName}>SEARCH</span>
-              <input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search table..."
-                className={filterFieldClassName}
-              />
-            </label>
-          </div>
+          <label className="ml-auto flex min-w-[260px] flex-col gap-2">
+            <span className={filterLabelClassName}>SEARCH</span>
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search table..."
+              className={filterFieldClassName}
+            />
+          </label>
         </div>
       </div>
 
