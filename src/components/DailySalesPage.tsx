@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DailySalesTabs, type DailySalesTabId } from "@/components/daily-sales/DailySalesTabs";
 import { DashboardTab } from "@/components/daily-sales/tabs/DashboardTab";
 import { EncoderTab } from "@/components/daily-sales/tabs/EncoderTab";
@@ -50,17 +49,18 @@ export function DailySalesPage() {
   const triggerRefresh = () => setRefreshTick((value) => value + 1);
 
   return (
-    <main className="mx-auto max-w-7xl space-y-3">
-      <Card className="gap-0 rounded-lg border-slate-200 bg-white shadow-sm">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-xl font-semibold text-slate-900">
+    <main className="mx-auto max-w-[1320px] space-y-4">
+      <div className="space-y-3">
+        <div>
+          <h1 className="text-[28px] font-semibold tracking-tight text-slate-900">
             Daily Sales
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-3">
+          </h1>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <DailySalesTabs activeTab={activeTab} onTabChange={onTabChange} />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {activeTab === "dashboard" ? <DashboardTab refreshTick={refreshTick} /> : null}
       {activeTab === "encoder" ? <EncoderTab onSaved={triggerRefresh} /> : null}
