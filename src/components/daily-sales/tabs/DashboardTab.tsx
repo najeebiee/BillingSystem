@@ -289,60 +289,62 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
 
   return (
     <section className="space-y-3">
-      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-        <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end lg:gap-2.5">
-          <label className="block lg:w-[172px]">
-            <span className={filterLabelClassName}>FROM</span>
-            <input
-              type="date"
-              value={pendingFromDate}
-              onChange={(event) => setPendingFromDate(event.target.value)}
-              className={filterFieldClassName}
-            />
-          </label>
+      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-2.5">
+            <label className="block sm:w-[172px]">
+              <span className={filterLabelClassName}>FROM</span>
+              <input
+                type="date"
+                value={pendingFromDate}
+                onChange={(event) => setPendingFromDate(event.target.value)}
+                className={filterFieldClassName}
+              />
+            </label>
 
-          <label className="block lg:w-[172px]">
-            <span className={filterLabelClassName}>TO</span>
-            <input
-              type="date"
-              value={pendingToDate}
-              onChange={(event) => setPendingToDate(event.target.value)}
-              className={filterFieldClassName}
-            />
-          </label>
+            <label className="block sm:w-[172px]">
+              <span className={filterLabelClassName}>TO</span>
+              <input
+                type="date"
+                value={pendingToDate}
+                onChange={(event) => setPendingToDate(event.target.value)}
+                className={filterFieldClassName}
+              />
+            </label>
 
-          <label className="block lg:w-[176px] xl:w-[188px]">
-            <span className={filterLabelClassName}>MODE OF PAYMENT</span>
-            <select
-              value={pendingPaymentMode}
-              onChange={(event) =>
-                setPendingPaymentMode(event.target.value as PaymentMode)
-              }
-              className={filterFieldClassName}
-            >
-              {paymentModes.map((mode) => (
-                <option key={mode} value={mode}>
-                  {mode}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label className="block sm:w-[180px]">
+              <span className={filterLabelClassName}>MODE OF PAYMENT</span>
+              <select
+                value={pendingPaymentMode}
+                onChange={(event) =>
+                  setPendingPaymentMode(event.target.value as PaymentMode)
+                }
+                className={filterFieldClassName}
+              >
+                {paymentModes.map((mode) => (
+                  <option key={mode} value={mode}>
+                    {mode}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <div className="flex items-end lg:w-auto">
-            <Button
-              variant="outline"
-              className="h-9 w-full rounded-md border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 hover:bg-slate-50 lg:w-auto"
-              onClick={() => {
-                setFromDate(pendingFromDate);
-                setToDate(pendingToDate);
-                setPaymentMode(pendingPaymentMode);
-              }}
-            >
-              Apply
-            </Button>
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                className="h-9 w-full rounded-md border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 hover:bg-slate-50 sm:w-auto"
+                onClick={() => {
+                  setFromDate(pendingFromDate);
+                  setToDate(pendingToDate);
+                  setPaymentMode(pendingPaymentMode);
+                }}
+              >
+                Apply
+              </Button>
+            </div>
           </div>
 
-          <label className="block lg:ml-auto lg:w-[210px] xl:w-[230px]">
+          <label className="block lg:w-[170px] xl:w-[172px]">
             <span className={filterLabelClassName}>SEARCH</span>
             <input
               value={searchQuery}
