@@ -49,26 +49,28 @@ export function DailySalesPage() {
   const triggerRefresh = () => setRefreshTick((value) => value + 1);
 
   return (
-    <main className="mx-auto flex max-w-[1320px] flex-col gap-5">
-      <div className="rounded-[22px] border border-[#e4e9f2] bg-white/75 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] backdrop-blur-sm">
-        <DailySalesTabs activeTab={activeTab} onTabChange={onTabChange} />
-      </div>
+    <main className="w-full">
+      <div className="mx-auto flex w-full max-w-[1300px] flex-col gap-6">
+        <div className="rounded-[22px] border border-[#e4e9f2] bg-white/75 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] backdrop-blur-sm">
+          <DailySalesTabs activeTab={activeTab} onTabChange={onTabChange} />
+        </div>
 
-      {activeTab === "dashboard" ? <DashboardTab refreshTick={refreshTick} /> : null}
-      {activeTab === "encoder" ? <EncoderTab onSaved={triggerRefresh} /> : null}
-      {activeTab === "reports" ? (
-        <ReportsTab refreshTick={refreshTick} onChanged={triggerRefresh} />
-      ) : null}
-      {activeTab === "inventory-report" ? (
-        <InventoryReportTab refreshTick={refreshTick} />
-      ) : null}
-      {activeTab === "sales-report" ? (
-        <SalesReportTab refreshTick={refreshTick} />
-      ) : null}
-      {activeTab === "users" ? <UsersTab /> : null}
-      {activeTab === "sales-metrics" ? (
-        <SalesMetricsTab refreshTick={refreshTick} />
-      ) : null}
+        {activeTab === "dashboard" ? <DashboardTab refreshTick={refreshTick} /> : null}
+        {activeTab === "encoder" ? <EncoderTab onSaved={triggerRefresh} /> : null}
+        {activeTab === "reports" ? (
+          <ReportsTab refreshTick={refreshTick} onChanged={triggerRefresh} />
+        ) : null}
+        {activeTab === "inventory-report" ? (
+          <InventoryReportTab refreshTick={refreshTick} />
+        ) : null}
+        {activeTab === "sales-report" ? (
+          <SalesReportTab refreshTick={refreshTick} />
+        ) : null}
+        {activeTab === "users" ? <UsersTab /> : null}
+        {activeTab === "sales-metrics" ? (
+          <SalesMetricsTab refreshTick={refreshTick} />
+        ) : null}
+      </div>
     </main>
   );
 }

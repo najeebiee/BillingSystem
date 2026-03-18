@@ -292,9 +292,9 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
   ];
 
   return (
-    <section className="space-y-5">
-      <div className={`${dashboardCardClassName} px-5 py-5 sm:px-6 sm:py-6`}>
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.15fr)_auto_minmax(280px,1.25fr)] xl:items-end">
+    <section className="w-full space-y-6">
+      <div className={`${dashboardCardClassName} w-full px-5 py-5 sm:px-6 sm:py-6`}>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5 xl:items-end">
           <div className="flex flex-col gap-2">
             <label className={filterLabelClassName} htmlFor="dashboard-from-date">
               From
@@ -356,7 +356,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
             </Button>
           </div>
 
-          <div className="flex flex-col gap-2 xl:justify-self-end xl:min-w-[300px] xl:max-w-[360px] xl:w-full">
+          <div className="flex w-full flex-col gap-2">
             <label className={filterLabelClassName} htmlFor="dashboard-search">
               Search
             </label>
@@ -382,7 +382,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
         ))}
       </div>
 
-      <div className={`${dashboardCardClassName} overflow-hidden`}>
+      <div className={`${dashboardCardClassName} w-full overflow-hidden`}>
         <div className="flex flex-col gap-3 border-b border-[#eef2f7] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <h2 className="text-lg font-semibold text-[#0f1b3d]">Recent Sales</h2>
           <Button
