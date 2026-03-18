@@ -17,9 +17,13 @@ import { listDailySalesEntries } from "@/services/dailySales.service";
 import type { DailySalesRecord, PaymentMode } from "@/types/dailySales";
 
 const filterLabelClassName =
-  "text-xs font-medium uppercase tracking-wide text-slate-700";
+  "text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500";
 const filterFieldClassName =
-  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-400";
+  "h-11 w-full rounded-xl border border-[#d8e0ec] bg-white px-4 text-sm text-slate-900 shadow-[inset_0_1px_2px_rgba(15,23,42,0.02)] outline-none transition focus:border-[#9aa8bf] focus:ring-4 focus:ring-[#dfe9ff] placeholder:text-slate-400";
+const dashboardCardClassName =
+  "rounded-[22px] border border-[#e4e9f2] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.05)]";
+const summaryCardClassName =
+  "rounded-[20px] border border-[#e4e9f2] bg-white px-5 py-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]";
 
 const fallbackRows: DailySalesRecord[] = [
   {
@@ -288,96 +292,102 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
   ];
 
   return (
-    <section className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="flex flex-col gap-5 md:flex-row md:flex-wrap md:items-start md:gap-3 xl:flex-nowrap xl:gap-3">
-            <div className="flex min-w-[220px] flex-col gap-2">
-              <div className={filterLabelClassName}>FROM</div>
-              <input
-                type="date"
-                value={pendingFromDate}
-                onChange={(event) => setPendingFromDate(event.target.value)}
-                className={filterFieldClassName}
-              />
-            </div>
-
-            <div className="flex min-w-[220px] flex-col gap-2">
-              <div className={filterLabelClassName}>TO</div>
-              <input
-                type="date"
-                value={pendingToDate}
-                onChange={(event) => setPendingToDate(event.target.value)}
-                className={filterFieldClassName}
-              />
-            </div>
-
-            <div className="flex min-w-[230px] flex-col gap-2">
-              <div className={filterLabelClassName}>MODE OF PAYMENT</div>
-              <select
-                value={pendingPaymentMode}
-                onChange={(event) =>
-                  setPendingPaymentMode(event.target.value as PaymentMode)
-                }
-                className={filterFieldClassName}
-              >
-                {paymentModes.map((mode) => (
-                  <option key={mode} value={mode}>
-                    {mode}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-end pt-[26px]">
-              <Button
-                variant="outline"
-                className="h-10 rounded-md border-slate-300 bg-white px-5 text-sm font-medium text-slate-900 hover:bg-slate-50"
-                onClick={() => {
-                  setFromDate(pendingFromDate);
-                  setToDate(pendingToDate);
-                  setPaymentMode(pendingPaymentMode);
-                }}
-              >
-                Apply
-              </Button>
-            </div>
+    <section className="space-y-5">
+      <div className={`${dashboardCardClassName} px-5 py-5 sm:px-6 sm:py-6`}>
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.15fr)_auto_minmax(280px,1.25fr)] xl:items-end">
+          <div className="flex flex-col gap-2">
+            <label className={filterLabelClassName} htmlFor="dashboard-from-date">
+              From
+            </label>
+            <input
+              id="dashboard-from-date"
+              type="date"
+              value={pendingFromDate}
+              onChange={(event) => setPendingFromDate(event.target.value)}
+              className={filterFieldClassName}
+            />
           </div>
 
-          <div className="xl:ml-8 xl:flex xl:min-w-[250px] xl:justify-end">
-            <div className="flex min-w-[250px] flex-col gap-2">
-              <div className={filterLabelClassName}>SEARCH</div>
-              <input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search table..."
-                className={filterFieldClassName}
-              />
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className={filterLabelClassName} htmlFor="dashboard-to-date">
+              To
+            </label>
+            <input
+              id="dashboard-to-date"
+              type="date"
+              value={pendingToDate}
+              onChange={(event) => setPendingToDate(event.target.value)}
+              className={filterFieldClassName}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className={filterLabelClassName} htmlFor="dashboard-payment-mode">
+              Mode of Payment
+            </label>
+            <select
+              id="dashboard-payment-mode"
+              value={pendingPaymentMode}
+              onChange={(event) =>
+                setPendingPaymentMode(event.target.value as PaymentMode)
+              }
+              className={filterFieldClassName}
+            >
+              {paymentModes.map((mode) => (
+                <option key={mode} value={mode}>
+                  {mode}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col justify-end gap-2">
+            <span className="sr-only">Apply filters</span>
+            <Button
+              variant="outline"
+              className="h-11 rounded-xl border-[#d8e0ec] bg-[#f8fafc] px-5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-100"
+              onClick={() => {
+                setFromDate(pendingFromDate);
+                setToDate(pendingToDate);
+                setPaymentMode(pendingPaymentMode);
+              }}
+            >
+              Apply
+            </Button>
+          </div>
+
+          <div className="flex flex-col gap-2 xl:justify-self-end xl:min-w-[300px] xl:max-w-[360px] xl:w-full">
+            <label className={filterLabelClassName} htmlFor="dashboard-search">
+              Search
+            </label>
+            <input
+              id="dashboard-search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search recent sales..."
+              className={filterFieldClassName}
+            />
           </div>
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {summaryItems.map((item) => (
-          <div
-            key={item.label}
-            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-          >
-            <p className="text-[10px] font-medium text-slate-500">{item.label}</p>
-            <p className="mt-2 text-[17px] font-semibold leading-none text-slate-950">
+          <div key={item.label} className={summaryCardClassName}>
+            <p className="text-sm font-semibold text-slate-500">{item.label}</p>
+            <p className="mt-3 text-[1.75rem] font-semibold leading-none text-[#0f1b3d]">
               {item.value}
             </p>
           </div>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between px-6 py-5">
-          <h2 className="text-sm font-medium text-slate-900">Recent Sales</h2>
+      <div className={`${dashboardCardClassName} overflow-hidden`}>
+        <div className="flex flex-col gap-3 border-b border-[#eef2f7] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <h2 className="text-lg font-semibold text-[#0f1b3d]">Recent Sales</h2>
           <Button
             size="sm"
-            className="h-8 rounded-md bg-slate-950 px-3 text-xs font-medium text-white hover:bg-slate-900"
+            className="h-9 rounded-xl bg-[#0f1b3d] px-4 text-xs font-semibold tracking-[0.08em] text-white shadow-[0_10px_24px_rgba(15,27,61,0.18)] hover:bg-[#162958] sm:self-start"
             onClick={() =>
               downloadCsv(
                 "daily-sales-dashboard.csv",
@@ -413,43 +423,45 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
         </div>
 
         {isLoading ? (
-          <p className="px-6 pb-2 text-xs text-slate-500">Loading daily sales...</p>
+          <p className="px-5 pt-4 text-sm text-slate-500 sm:px-6">
+            Loading daily sales...
+          </p>
         ) : null}
         {errorMessage ? (
-          <p className="px-6 pb-2 text-xs text-amber-600">{errorMessage}</p>
+          <p className="px-5 pt-4 text-sm text-amber-600 sm:px-6">{errorMessage}</p>
         ) : null}
 
-        <Table className="min-w-[1080px] text-xs">
-          <TableHeader className="bg-slate-50">
-            <TableRow className="border-b border-slate-200 hover:bg-slate-50">
-              <TableHead className="h-10 px-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+        <Table className="min-w-[1120px] text-sm">
+          <TableHeader className="bg-[#fbfcfe]">
+            <TableRow className="border-b border-[#e8edf5] hover:bg-[#fbfcfe]">
+              <TableHead className="h-12 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 sm:px-6">
                 POF NUMBER
               </TableHead>
-              <TableHead className="h-10 px-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+              <TableHead className="h-12 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                 DATE
               </TableHead>
-              <TableHead className="h-10 px-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+              <TableHead className="h-12 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                 MEMBER NAME
               </TableHead>
-              <TableHead className="h-10 px-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+              <TableHead className="h-12 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                 ZERO ONE
               </TableHead>
-              <TableHead className="h-10 px-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+              <TableHead className="h-12 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                 PACKAGE
               </TableHead>
-              <TableHead className="h-10 px-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+              <TableHead className="h-12 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                 BOTTLES
               </TableHead>
-              <TableHead className="h-10 px-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+              <TableHead className="h-12 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                 BLISTERS
               </TableHead>
-              <TableHead className="h-10 px-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+              <TableHead className="h-12 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                 SALES
               </TableHead>
-              <TableHead className="h-10 px-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+              <TableHead className="h-12 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                 MODE OF PAYMENT
               </TableHead>
-              <TableHead className="h-10 px-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+              <TableHead className="h-12 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 sm:px-6">
                 STATUS
               </TableHead>
             </TableRow>
@@ -459,7 +471,7 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
               <TableRow className="hover:bg-white">
                 <TableCell
                   colSpan={10}
-                  className="px-5 py-10 text-center text-sm text-slate-500"
+                  className="px-5 py-12 text-center text-sm text-slate-500"
                 >
                   No recent sales found for the selected filters.
                 </TableCell>
@@ -468,37 +480,39 @@ export function DashboardTab({ refreshTick }: { refreshTick: number }) {
               displayRows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="border-b border-slate-200 bg-white hover:bg-slate-50/50"
+                  className="border-b border-[#edf2f7] bg-white hover:bg-[#f8fafc]"
                 >
-                  <TableCell className="px-5 py-3 text-xs text-slate-900">
+                  <TableCell className="px-4 py-4 text-[13px] font-medium text-slate-900 sm:px-6">
                     {row.pofNumber}
                   </TableCell>
-                  <TableCell className="px-5 py-3 text-xs text-slate-900">
+                  <TableCell className="px-4 py-4 text-[13px] text-slate-700">
                     {row.date}
                   </TableCell>
-                  <TableCell className="px-5 py-3 text-xs text-slate-900">
+                  <TableCell className="px-4 py-4 text-[13px] text-slate-800">
                     {row.memberName}
                   </TableCell>
-                  <TableCell className="px-5 py-3 text-xs text-slate-900">
+                  <TableCell className="px-4 py-4 text-[13px] text-slate-700">
                     {row.zeroOne}
                   </TableCell>
-                  <TableCell className="px-5 py-3 text-xs text-slate-900">
+                  <TableCell className="px-4 py-4 text-[13px] text-slate-700">
                     {row.packageType}
                   </TableCell>
-                  <TableCell className="px-5 py-3 text-xs text-slate-900">
+                  <TableCell className="px-4 py-4 text-[13px] text-slate-700">
                     {row.bottles}
                   </TableCell>
-                  <TableCell className="px-5 py-3 text-xs text-slate-900">
+                  <TableCell className="px-4 py-4 text-[13px] text-slate-700">
                     {row.blisters}
                   </TableCell>
-                  <TableCell className="px-5 py-3 text-xs text-slate-900">
+                  <TableCell className="px-4 py-4 text-[13px] font-semibold text-[#0f1b3d]">
                     {formatCurrency(row.sales)}
                   </TableCell>
-                  <TableCell className="px-5 py-3 text-xs text-slate-900">
+                  <TableCell className="px-4 py-4 text-[13px] text-slate-700">
                     {row.paymentMode}
                   </TableCell>
-                  <TableCell className="px-5 py-3 text-xs text-slate-900">
-                    {row.status}
+                  <TableCell className="px-4 py-4 text-[13px] sm:px-6">
+                    <span className="inline-flex rounded-full bg-[#eef4ff] px-3 py-1 text-[12px] font-medium text-[#1d3b72]">
+                      {row.status}
+                    </span>
                   </TableCell>
                 </TableRow>
               ))

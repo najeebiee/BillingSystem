@@ -49,8 +49,8 @@ export function DailySalesPage() {
   const triggerRefresh = () => setRefreshTick((value) => value + 1);
 
   return (
-    <main className="mx-auto max-w-[1320px] space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <main className="mx-auto flex max-w-[1320px] flex-col gap-5">
+      <div className="rounded-[22px] border border-[#e4e9f2] bg-white/75 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] backdrop-blur-sm">
         <DailySalesTabs activeTab={activeTab} onTabChange={onTabChange} />
       </div>
 
