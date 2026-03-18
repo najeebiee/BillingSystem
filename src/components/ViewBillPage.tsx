@@ -228,6 +228,25 @@ export function ViewBillPage() {
     );
   };
 
+  const handleSubmitForApproval = async () => {
+    if (!bill) return;
+    if (isUpdatingStatus) return;
+
+    setActionError(null);
+    setIsUpdatingStatus(true);
+    const result = await updateBillStatus(bill.id, "awaiting_approval");
+    setIsUpdatingStatus(false);
+
+    if (result.error) {
+      setActionError(result.error);
+      return;
+    }
+
+    setBillDetails((prev) =>
+      prev ? { ...prev, bill: { ...prev.bill, status: "awaiting_approval" } } : prev
+    );
+  };
+
   const handleVoid = () => {
     setIsVoidModalOpen(true);
   };
@@ -665,6 +684,16 @@ export function ViewBillPage() {
             >
               Back to List
             </button>
+
+          {bill.status === "draft" && (
+            <button
+              onClick={handleSubmitForApproval}
+              disabled={isUpdatingStatus}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Submit for Approval
+            </button>
+          )}
 
           {bill.status === "awaiting_approval" && (
             <>
