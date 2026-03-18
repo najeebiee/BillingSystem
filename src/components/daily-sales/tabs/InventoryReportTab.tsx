@@ -1,21 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { DailySalesDialog } from "@/components/daily-sales/DailySalesDialog";
 import { SectionPrintPreviewDialog } from "@/components/daily-sales/SectionPrintPreviewDialog";
-import { fieldClassName, formatCurrency, formatDateSlash, type InventoryAggregateRow } from "@/components/daily-sales/shared";
+import "@/components/daily-sales/DailySalesInventoryReport.css";
+import { formatCurrency, formatDateSlash, type InventoryAggregateRow } from "@/components/daily-sales/shared";
 import { getPrintableHtmlById } from "@/lib/printElement";
 import { normalizeDailySalesPackageType } from "@/lib/dailySalesPackages";
 import { listDailySalesEntries } from "@/services/dailySales.service";
 import type { DailySalesRecord } from "@/types/dailySales";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 function buildInventoryRows(rows: DailySalesRecord[]) {
   const grouped = new Map<string, InventoryAggregateRow>();
@@ -138,89 +129,135 @@ export function InventoryReportTab({ refreshTick }: { refreshTick: number }) {
 
   return (
     <>
-      <section className="mt-4 space-y-4">
-        <Card className="gap-0 border-slate-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="grid gap-3 md:grid-cols-4">
-              <label className="text-xs font-medium text-slate-700">FROM<input type="date" value={pendingFromDate} onChange={(event) => setPendingFromDate(event.target.value)} className={fieldClassName} /></label>
-              <label className="text-xs font-medium text-slate-700">TO<input type="date" value={pendingToDate} onChange={(event) => setPendingToDate(event.target.value)} className={fieldClassName} /></label>
-              <div className="flex items-end">
-                <Button variant="secondary" className="w-full" onClick={onGenerate} disabled={isLoading}>
-                  {isLoading ? "Generating..." : "Generate Report"}
-                </Button>
-              </div>
-              <label className="text-xs font-medium text-slate-700">SEARCH<input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search table..." className={fieldClassName} /></label>
+      <section className="daily-sales-inventory-report">
+        <div className="daily-sales-inventory-report__card daily-sales-inventory-report__toolbar-card">
+          <div className="daily-sales-inventory-report__toolbar">
+            <div className="daily-sales-inventory-report__field">
+              <label className="daily-sales-inventory-report__label">FROM</label>
+              <input
+                type="date"
+                value={pendingFromDate}
+                onChange={(event) => setPendingFromDate(event.target.value)}
+                className="daily-sales-inventory-report__input"
+              />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card id="cntnrDailyInventory" className="gap-0 overflow-hidden border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-slate-700">{displayDateRange}</span>
-            <Button size="sm" variant="secondary" onClick={onPrint}>Print</Button>
+            <div className="daily-sales-inventory-report__field">
+              <label className="daily-sales-inventory-report__label">TO</label>
+              <input
+                type="date"
+                value={pendingToDate}
+                onChange={(event) => setPendingToDate(event.target.value)}
+                className="daily-sales-inventory-report__input"
+              />
+            </div>
+            <div className="daily-sales-inventory-report__action">
+              <button
+                type="button"
+                className="daily-sales-inventory-report__button"
+                onClick={onGenerate}
+                disabled={isLoading}
+              >
+                {isLoading ? "Generating..." : "Generate Report"}
+              </button>
+            </div>
+            <div className="daily-sales-inventory-report__field daily-sales-inventory-report__search">
+              <label className="daily-sales-inventory-report__label">SEARCH</label>
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search table..."
+                className="daily-sales-inventory-report__input"
+              />
+            </div>
           </div>
-          {errorMessage ? <p className="px-4 pb-2 text-xs text-amber-700">{errorMessage}</p> : null}
-          <Table className="min-w-[1600px]">
-            <TableHeader className="bg-slate-50">
-              <TableRow>
-                <TableHead rowSpan={2}>Name</TableHead>
-                <TableHead rowSpan={2}>GG TRANS NO.</TableHead>
-                <TableHead rowSpan={2}>POF NUMBER</TableHead>
-                <TableHead colSpan={3} className="text-center">PACKAGE TYPE</TableHead>
-                <TableHead colSpan={4} className="text-center">RETAIL</TableHead>
-                <TableHead rowSpan={2}>NUMBER OF BOTTLES</TableHead>
-                <TableHead rowSpan={2}>NUMBER OF BLISTERS</TableHead>
-                <TableHead rowSpan={2}>RELEASED (BOTTLE)</TableHead>
-                <TableHead rowSpan={2}>RELEASED (BLISTER)</TableHead>
-                <TableHead rowSpan={2}>TO FOLLOW (BOTTLE)</TableHead>
-                <TableHead rowSpan={2}>TO FOLLOW (BLISTER)</TableHead>
-                <TableHead rowSpan={2}>AMOUNT</TableHead>
-                <TableHead rowSpan={2}>MODE OF PAYMENT</TableHead>
-              </TableRow>
-              <TableRow>
-                <TableHead>PLATINUM</TableHead>
-                <TableHead>GOLD</TableHead>
-                <TableHead>SILVER</TableHead>
-                <TableHead>SYNBIOTIC+ (BOTTLE)</TableHead>
-                <TableHead>SYNBIOTIC+ (BLISTER)</TableHead>
-                <TableHead>VOUCHER</TableHead>
-                <TableHead>EMPLOYEE DISCOUNT</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredReportRows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={18} className="py-8 text-center text-slate-500">
-                    {hasGenerated ? "No inventory results for selected range" : "No inventory rows found for the selected filters."}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredReportRows.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell>{row.name}</TableCell>
-                    <TableCell>{row.ggTransNo}</TableCell>
-                    <TableCell>{row.pofNumber}</TableCell>
-                    <TableCell>{row.platinum}</TableCell>
-                    <TableCell>{row.gold}</TableCell>
-                    <TableCell>{row.silver}</TableCell>
-                    <TableCell>{row.synbioticBottle}</TableCell>
-                    <TableCell>{row.synbioticBlister}</TableCell>
-                    <TableCell>{row.voucher}</TableCell>
-                    <TableCell>{row.employeeDiscount}</TableCell>
-                    <TableCell>{row.numberOfBottles}</TableCell>
-                    <TableCell>{row.numberOfBlisters}</TableCell>
-                    <TableCell>{row.releasedBottle}</TableCell>
-                    <TableCell>{row.releasedBlister}</TableCell>
-                    <TableCell>{row.toFollowBottle}</TableCell>
-                    <TableCell>{row.toFollowBlister}</TableCell>
-                    <TableCell>{formatCurrency(row.amount)}</TableCell>
-                    <TableCell>{row.modeOfPayment}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </Card>
+        </div>
+
+        <div
+          id="cntnrDailyInventory"
+          className="daily-sales-inventory-report__card daily-sales-inventory-report__result-card"
+        >
+          <div className="daily-sales-inventory-report__header">
+            <div className="daily-sales-inventory-report__range">{displayDateRange}</div>
+            <button
+              type="button"
+              className="daily-sales-inventory-report__print"
+              onClick={onPrint}
+            >
+              Print
+            </button>
+          </div>
+          {errorMessage ? (
+            <p className="daily-sales-inventory-report__message">{errorMessage}</p>
+          ) : null}
+          <div className="daily-sales-inventory-report__table-wrap">
+            <table className="daily-sales-inventory-report__table">
+              <thead>
+                <tr>
+                  <th rowSpan={2}>Name</th>
+                  <th rowSpan={2}>GG Trans No.</th>
+                  <th rowSpan={2}>POF Number</th>
+                  <th colSpan={3} data-align="center">
+                    Package Type
+                  </th>
+                  <th colSpan={4} data-align="center">
+                    Retail
+                  </th>
+                  <th rowSpan={2}>Number of Bottles</th>
+                  <th rowSpan={2}>Number of Blisters</th>
+                  <th rowSpan={2}>Released (Bottle)</th>
+                  <th rowSpan={2}>Released (Blister)</th>
+                  <th rowSpan={2}>To Follow (Bottle)</th>
+                  <th rowSpan={2}>To Follow (Blister)</th>
+                  <th rowSpan={2}>Amount</th>
+                  <th rowSpan={2}>Mode of Payment</th>
+                </tr>
+                <tr>
+                  <th>Platinum</th>
+                  <th>Gold</th>
+                  <th>Silver</th>
+                  <th>Synbiotic+ (Bottle)</th>
+                  <th>Synbiotic+ (Blister)</th>
+                  <th>Voucher</th>
+                  <th>Employee Discount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredReportRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={18} className="daily-sales-inventory-report__empty">
+                      {hasGenerated
+                        ? "No inventory results for selected range"
+                        : "No inventory rows found for the selected filters."}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredReportRows.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.name}</td>
+                      <td>{row.ggTransNo}</td>
+                      <td>{row.pofNumber}</td>
+                      <td>{row.platinum}</td>
+                      <td>{row.gold}</td>
+                      <td>{row.silver}</td>
+                      <td>{row.synbioticBottle}</td>
+                      <td>{row.synbioticBlister}</td>
+                      <td>{row.voucher}</td>
+                      <td>{row.employeeDiscount}</td>
+                      <td>{row.numberOfBottles}</td>
+                      <td>{row.numberOfBlisters}</td>
+                      <td>{row.releasedBottle}</td>
+                      <td>{row.releasedBlister}</td>
+                      <td>{row.toFollowBottle}</td>
+                      <td>{row.toFollowBlister}</td>
+                      <td>{formatCurrency(row.amount)}</td>
+                      <td>{row.modeOfPayment}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <DailySalesDialog isOpen={isWarningOpen} title="Warning!" onClose={() => setIsWarningOpen(false)}>
