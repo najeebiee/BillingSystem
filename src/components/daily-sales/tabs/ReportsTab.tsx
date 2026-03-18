@@ -231,7 +231,7 @@ export function ReportsTab({
                 Generate Report
               </button>
             </div>
-            <div className="daily-sales-reports__field">
+            <div className="daily-sales-reports__field daily-sales-reports__search">
               <label className="daily-sales-reports__label">Search</label>
               <input
                 value={searchQuery}
@@ -339,17 +339,15 @@ export function ReportsTab({
                   ))
                 )}
               </tbody>
-              <tfoot>
-                <tr>
-                  <td colSpan={3}>Total:</td>
-                  <td>{formatPesoShort(totals.totalSales)}</td>
-                  <td />
-                  <td>{totals.totalBottles}</td>
-                  <td>{totals.totalBlisters}</td>
-                  <td />
-                </tr>
-              </tfoot>
             </Table>
+          </div>
+          <div className="daily-sales-reports__totals">
+            <span>Total:</span>
+            <div className="daily-sales-reports__totals-values">
+              <span>Sales: {formatPesoShort(totals.totalSales)}</span>
+              <span>Bottles: {totals.totalBottles}</span>
+              <span>Blisters: {totals.totalBlisters}</span>
+            </div>
           </div>
         </div>
       </section>

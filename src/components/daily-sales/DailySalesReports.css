@@ -1,10 +1,10 @@
 .daily-sales-reports {
   width: 100%;
-  max-width: 900px;
+  max-width: 1000px;
   align-self: flex-start;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .daily-sales-reports__panel,
@@ -23,7 +23,7 @@
 .daily-sales-reports__filters {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .daily-sales-reports__field {
@@ -68,6 +68,7 @@
 
 .daily-sales-reports__actions {
   padding-top: 8px;
+  margin: 2px 0;
 }
 
 .daily-sales-reports__generate,
@@ -100,12 +101,17 @@
   cursor: not-allowed;
 }
 
+.daily-sales-reports__search {
+  margin-top: 4px;
+}
+
 .daily-sales-reports__table-toolbar {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 16px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
 }
 
 .daily-sales-reports__message {
@@ -129,6 +135,7 @@
   width: 100%;
   min-width: 940px;
   border-collapse: collapse;
+  font-size: 14px;
 }
 
 .daily-sales-reports__table thead th {
@@ -143,8 +150,7 @@
   white-space: nowrap;
 }
 
-.daily-sales-reports__table tbody td,
-.daily-sales-reports__table tfoot td {
+.daily-sales-reports__table tbody td {
   padding: 14px 16px;
   border-bottom: 1px solid #eef2f7;
   color: #111827;
@@ -159,29 +165,43 @@
 }
 
 .daily-sales-reports__table tbody td:last-child,
-.daily-sales-reports__table thead th:last-child,
-.daily-sales-reports__table tfoot td:last-child {
+.daily-sales-reports__table thead th:last-child {
   text-align: left;
-}
-
-.daily-sales-reports__table tfoot td {
-  border-bottom: 0;
-  border-top: 1px solid #e5e7eb;
-  background: #fbfcfe;
-  font-weight: 600;
 }
 
 .daily-sales-reports__empty {
   text-align: center;
   color: #6b7280 !important;
-  padding-top: 32px !important;
-  padding-bottom: 32px !important;
+  padding-top: 24px !important;
+  padding-bottom: 24px !important;
 }
 
 .daily-sales-reports__row-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.daily-sales-reports__totals {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+  background: #fbfcfe;
+  color: #111827;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.daily-sales-reports__totals-values {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
   flex-wrap: wrap;
 }
 
@@ -192,5 +212,14 @@
 
   .daily-sales-reports__table-toolbar {
     padding: 14px;
+  }
+
+  .daily-sales-reports__totals {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .daily-sales-reports__totals-values {
+    gap: 12px;
   }
 }
