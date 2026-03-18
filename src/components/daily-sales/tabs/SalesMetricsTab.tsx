@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { AgentCardGrid, AgentDetailsDialog, SummaryCardGrid } from "@/components/daily-sales/MetricsComponents";
+import { AgentDetailsDialog } from "@/components/daily-sales/MetricsComponents";
+import "@/components/daily-sales/DailySalesMetrics.css";
 import { loadSalesMetricsDataset } from "@/services/dailySales.service";
-import type { AgentPerformance, SalesDataset, TimeRange } from "@/types/dailySales";
+import type {
+  AgentPerformance,
+  SalesDataset,
+  SummaryStat,
+  TimeRange,
+} from "@/types/dailySales";
 
 const emptyDataset: SalesDataset = {
   label: "Sales API Dataset",
@@ -12,6 +16,36 @@ const emptyDataset: SalesDataset = {
 };
 
 const toIsoDate = (date: Date) => date.toISOString().slice(0, 10);
+
+function findSummaryStat(
+  summary: SummaryStat[],
+  ids: string[],
+  labelIncludes: string[] = [],
+) {
+  return summary.find((item) => {
+    const normalizedLabel = item.label.toLowerCase();
+    return (
+      ids.includes(item.id) ||
+      labelIncludes.some((fragment) => normalizedLabel.includes(fragment))
+    );
+  });
+}
+
+function getAgentInitials(name: string) {
+  const parts = name
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) {
+    return "--";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
 function resolveDateRange(range: TimeRange, customStartDate: string, customEndDate: string) {
   const today = new Date();
@@ -86,46 +120,307 @@ export function SalesMetricsTab({ refreshTick }: { refreshTick: number }) {
     ? rankedAgentStats.findIndex((agent) => agent.id === selectedAgent.id) + 1
     : null;
 
+  const summaryCards = useMemo(() => {
+    const totalSales =
+      findSummaryStat(dataset.summary, ["total-sales"], ["total sales"]) ?? null;
+    const avgTicket =
+      findSummaryStat(dataset.summary, ["avg-order", "avg-ticket"], ["avg order", "avg ticket"]) ??
+      null;
+    const transactions =
+      findSummaryStat(dataset.summary, ["transactions"], ["transaction", "orders"]) ?? null;
+    const returns =
+      findSummaryStat(dataset.summary, ["returns", "refunds"], ["return", "refund"]) ?? null;
+
+    return [
+      {
+        id: "total-sales",
+        label: "Total Sales",
+        value: totalSales?.value ?? "PHP 0",
+        trend: totalSales?.trend ?? "neutral",
+      },
+      {
+        id: "avg-ticket",
+        label: "Avg Ticket",
+        value: avgTicket?.value ?? "PHP 0",
+        trend: avgTicket?.trend ?? "neutral",
+      },
+      {
+        id: "transactions",
+        label: "Transactions",
+        value: transactions?.value ?? "0",
+        trend: transactions?.trend ?? "neutral",
+      },
+      {
+        id: "returns",
+        label: "Returns",
+        value: returns?.value ?? "0",
+        trend: returns?.trend ?? "neutral",
+      },
+    ];
+  }, [dataset.summary]);
+
+  const displayAgents = useMemo(() => {
+    if (rankedAgentStats.length > 0) {
+      return rankedAgentStats.map((agent, index) => ({
+        ...agent,
+        rank: index + 1,
+        initials: getAgentInitials(agent.name),
+        isPlaceholder: false,
+      }));
+    }
+
+    return [
+      {
+        id: "placeholder-1",
+        name: "No team data",
+        sales: 0,
+        target: 0,
+        conversionRate: 0,
+        status: "idle" as const,
+        rank: 1,
+        initials: "ND",
+        isPlaceholder: true,
+      },
+      {
+        id: "placeholder-2",
+        name: "Awaiting metrics",
+        sales: 0,
+        target: 0,
+        conversionRate: 0,
+        status: "idle" as const,
+        rank: 2,
+        initials: "AM",
+        isPlaceholder: true,
+      },
+      {
+        id: "placeholder-3",
+        name: "No active reps",
+        sales: 0,
+        target: 0,
+        conversionRate: 0,
+        status: "idle" as const,
+        rank: 3,
+        initials: "NR",
+        isPlaceholder: true,
+      },
+    ];
+  }, [rankedAgentStats]);
+
   return (
     <>
-      <section className="mt-4 space-y-4">
-        <Card className="gap-0 border-slate-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-slate-900">Sales Metrics</h2>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" variant={range === "daily" ? "default" : "secondary"} onClick={() => setRange("daily")}>Daily</Button>
-                <Button size="sm" variant={range === "weekly" ? "default" : "secondary"} onClick={() => setRange("weekly")}>Weekly</Button>
-                <Button size="sm" variant={range === "monthly" ? "default" : "secondary"} onClick={() => setRange("monthly")}>Monthly</Button>
-                <Button size="sm" variant={range === "custom" ? "default" : "secondary"} onClick={() => setRange("custom")}>Custom</Button>
-                <div className="h-9 overflow-hidden">
-                  <div className={`flex h-9 items-center gap-2 transition-all ${range === "custom" ? "opacity-100" : "pointer-events-none opacity-0"}`}>
-                    <input type="date" value={customStartDate} onChange={(event) => setCustomStartDate(event.target.value)} className="h-9 rounded border border-slate-300 px-3 text-sm" />
-                    <input type="date" value={customEndDate} onChange={(event) => setCustomEndDate(event.target.value)} className="h-9 rounded border border-slate-300 px-3 text-sm" />
-                    <Button size="sm" variant="secondary" onClick={() => {
+      <section className="daily-sales-metrics">
+        <div className="daily-sales-metrics__header-card">
+          <div className="daily-sales-metrics__header-row">
+            <h2 className="daily-sales-metrics__title">Sales Metrics</h2>
+            <div className="daily-sales-metrics__tabs">
+              <button
+                type="button"
+                className={`daily-sales-metrics__tab ${
+                  range === "daily" ? "daily-sales-metrics__tab--active" : ""
+                }`}
+                onClick={() => setRange("daily")}
+              >
+                Daily
+              </button>
+              <button
+                type="button"
+                className={`daily-sales-metrics__tab ${
+                  range === "weekly" ? "daily-sales-metrics__tab--active" : ""
+                }`}
+                onClick={() => setRange("weekly")}
+              >
+                Weekly
+              </button>
+              <button
+                type="button"
+                className={`daily-sales-metrics__tab ${
+                  range === "monthly" ? "daily-sales-metrics__tab--active" : ""
+                }`}
+                onClick={() => setRange("monthly")}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                className={`daily-sales-metrics__tab ${
+                  range === "custom" ? "daily-sales-metrics__tab--active" : ""
+                }`}
+                onClick={() => setRange("custom")}
+              >
+                Custom
+              </button>
+            </div>
+          </div>
+
+          {range === "custom" ? (
+            <div className="daily-sales-metrics__custom-row">
+              <div className="daily-sales-metrics__custom-fields">
+                <div className="daily-sales-metrics__custom-field">
+                  <label className="daily-sales-metrics__custom-label">Start Date</label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(event) => setCustomStartDate(event.target.value)}
+                    className="daily-sales-metrics__custom-input"
+                  />
+                </div>
+                <div className="daily-sales-metrics__custom-field">
+                  <label className="daily-sales-metrics__custom-label">End Date</label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(event) => setCustomEndDate(event.target.value)}
+                    className="daily-sales-metrics__custom-input"
+                  />
+                </div>
+                <div className="daily-sales-metrics__custom-field">
+                  <label className="daily-sales-metrics__custom-label">&nbsp;</label>
+                  <button
+                    type="button"
+                    className="daily-sales-metrics__apply"
+                    onClick={() => {
                       setAppliedCustomStartDate(customStartDate);
                       setAppliedCustomEndDate(customEndDate);
-                    }}>
-                      Apply
-                    </Button>
-                  </div>
+                    }}
+                  >
+                    Apply
+                  </button>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          ) : null}
 
-        {isLoading ? <p className="text-sm text-slate-500">Loading latest sales performance...</p> : null}
-        {errorMessage ? <p className="text-sm text-amber-600">{errorMessage}</p> : null}
-        {!isLoading && !errorMessage && dataset.agents.length === 0 ? (
-          <p className="text-sm text-slate-500">No metrics for selected range.</p>
-        ) : null}
+          {isLoading ? (
+            <p className="daily-sales-metrics__notice">Loading latest sales performance...</p>
+          ) : null}
+          {errorMessage ? (
+            <p className="daily-sales-metrics__notice daily-sales-metrics__notice--error">
+              {errorMessage}
+            </p>
+          ) : null}
+        </div>
 
-        <SummaryCardGrid stats={dataset.summary} />
-        <AgentCardGrid agents={dataset.agents} onAgentSelect={setSelectedAgent} />
+        <div className="daily-sales-metrics__kpi-grid">
+          {summaryCards.map((card) => (
+            <article key={card.id} className="daily-sales-metrics__kpi-card">
+              <div className="daily-sales-metrics__kpi-top">
+                <span className="daily-sales-metrics__kpi-label">{card.label}</span>
+                <span
+                  className={`daily-sales-metrics__badge daily-sales-metrics__badge--${card.trend}`}
+                >
+                  {card.trend}
+                </span>
+              </div>
+              <div className="daily-sales-metrics__kpi-value">{card.value}</div>
+            </article>
+          ))}
+        </div>
+
+        <div className="daily-sales-metrics__section">
+          <div className="daily-sales-metrics__section-header">
+            <h3 className="daily-sales-metrics__section-title">Team Performance</h3>
+            <span className="daily-sales-metrics__section-subtitle">
+              Ranked by conversion and sales
+            </span>
+          </div>
+          <div className="daily-sales-metrics__team-grid">
+            {displayAgents.map((agent) => {
+              const cardClassName = `daily-sales-metrics__team-card daily-sales-metrics__team-card--${agent.status} ${
+                agent.isPlaceholder ? "" : "daily-sales-metrics__team-trigger"
+              }`;
+
+              if (agent.isPlaceholder) {
+                return (
+                  <div key={agent.id} className={cardClassName}>
+                    <div className="daily-sales-metrics__team-header">
+                      <div className="daily-sales-metrics__team-meta">
+                        <span className="daily-sales-metrics__rank">#{agent.rank}</span>
+                        <div className="daily-sales-metrics__avatar">{agent.initials}</div>
+                        <div className="daily-sales-metrics__identity">
+                          <div className="daily-sales-metrics__name">{agent.name}</div>
+                        </div>
+                      </div>
+                      <span
+                        className={`daily-sales-metrics__status daily-sales-metrics__status--${agent.status}`}
+                      >
+                        {agent.status}
+                      </span>
+                    </div>
+                    <div className="daily-sales-metrics__team-body">
+                      <div className="daily-sales-metrics__performance">0%</div>
+                      <div className="daily-sales-metrics__detail">
+                        <span>Sales</span>
+                        <strong>PHP 0</strong>
+                      </div>
+                      <div className="daily-sales-metrics__detail">
+                        <span>Target</span>
+                        <strong>PHP 0</strong>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <button
+                  key={agent.id}
+                  type="button"
+                  className={cardClassName}
+                  onClick={() => setSelectedAgent(agent)}
+                >
+                  <div className="daily-sales-metrics__team-header">
+                    <div className="daily-sales-metrics__team-meta">
+                      <span className="daily-sales-metrics__rank">#{agent.rank}</span>
+                      <div className="daily-sales-metrics__avatar">{agent.initials}</div>
+                      <div className="daily-sales-metrics__identity">
+                        <div className="daily-sales-metrics__name">{agent.name}</div>
+                      </div>
+                    </div>
+                    <span
+                      className={`daily-sales-metrics__status daily-sales-metrics__status--${agent.status}`}
+                    >
+                      {agent.status}
+                    </span>
+                  </div>
+                  <div className="daily-sales-metrics__team-body">
+                    <div className="daily-sales-metrics__performance">
+                      {agent.conversionRate}%
+                    </div>
+                    <div className="daily-sales-metrics__detail">
+                      <span>Sales</span>
+                      <strong>
+                        {agent.sales.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        })}
+                      </strong>
+                    </div>
+                    <div className="daily-sales-metrics__detail">
+                      <span>Target</span>
+                      <strong>
+                        {agent.target.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        })}
+                      </strong>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
-      <AgentDetailsDialog agent={selectedAgent} rank={selectedAgentRank} onClose={() => setSelectedAgent(null)} />
+      <AgentDetailsDialog
+        agent={selectedAgent}
+        rank={selectedAgentRank}
+        onClose={() => setSelectedAgent(null)}
+      />
     </>
   );
 }
