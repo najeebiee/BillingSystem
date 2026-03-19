@@ -7,14 +7,14 @@ export function SalesDashboardNavItem() {
 
   return (
     <NavLink
-      to="/sales-dashboard"
-      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+      to="/sales-dashboard/daily-sales"
+      className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
         isSalesDashboardRoute
           ? "bg-blue-600 text-white"
           : "text-gray-700 hover:bg-gray-100"
       }`}
     >
-      Sales Dashboard
+      Daily Sales
     </NavLink>
   );
 }

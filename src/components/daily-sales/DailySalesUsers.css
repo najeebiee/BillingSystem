@@ -1,0 +1,231 @@
+.daily-sales-users {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.daily-sales-users__card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  padding: 20px;
+}
+
+.daily-sales-users__title {
+  margin: 0 0 16px;
+  color: #111827;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.daily-sales-users__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.daily-sales-users__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.daily-sales-users__label {
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.daily-sales-users__input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  line-height: 20px;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.daily-sales-users__input:focus {
+  border-color: #0f1b3d;
+  box-shadow: 0 0 0 3px rgba(15, 27, 61, 0.12);
+}
+
+.daily-sales-users__input--readonly,
+.daily-sales-users__input[readonly] {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.daily-sales-users__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.daily-sales-users__button {
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.daily-sales-users__button:hover {
+  background: #f8fafc;
+}
+
+.daily-sales-users__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.daily-sales-users__button--primary {
+  border-color: #0f1b3d;
+  background: #0f1b3d;
+  color: #ffffff;
+}
+
+.daily-sales-users__button--primary:hover:not(:disabled) {
+  border-color: #162958;
+  background: #162958;
+}
+
+.daily-sales-users__button--small {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.daily-sales-users__header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.daily-sales-users__header-title {
+  margin: 0;
+  color: #111827;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.daily-sales-users__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.daily-sales-users__search {
+  width: 100%;
+  max-width: 280px;
+}
+
+.daily-sales-users__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.daily-sales-users__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.daily-sales-users__table--wide {
+  min-width: 1320px;
+}
+
+.daily-sales-users__table thead th {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  color: #475569;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.daily-sales-users__table tbody td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #eef2f7;
+  color: #111827;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.daily-sales-users__table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.daily-sales-users__empty {
+  text-align: center;
+  color: #64748b !important;
+  padding-top: 32px !important;
+  padding-bottom: 32px !important;
+}
+
+@media (min-width: 768px) {
+  .daily-sales-users__form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .daily-sales-users__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .daily-sales-users__search {
+    width: 260px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .daily-sales-users__form {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .daily-sales-users__field--wide {
+    grid-column: span 2;
+  }
+
+  .daily-sales-users__actions {
+    grid-column: span 2;
+    justify-content: flex-end;
+  }
+}

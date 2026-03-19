@@ -1,0 +1,214 @@
+.daily-sales-encoder {
+  width: 100%;
+}
+
+.daily-sales-encoder__card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.daily-sales-encoder__title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.daily-sales-encoder__error {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.daily-sales-encoder__form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.daily-sales-encoder__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.daily-sales-encoder__grid--quad {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.daily-sales-encoder__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.daily-sales-encoder__field--desktop-row-start {
+  grid-column: auto;
+}
+
+.daily-sales-encoder__label {
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.daily-sales-encoder__input,
+.daily-sales-encoder__textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.daily-sales-encoder__input {
+  height: 40px;
+  padding: 0 12px;
+}
+
+.daily-sales-encoder__textarea {
+  min-height: 96px;
+  padding: 12px;
+  resize: vertical;
+}
+
+.daily-sales-encoder__input:focus,
+.daily-sales-encoder__textarea:focus {
+  border-color: #0f1b3d;
+  box-shadow: 0 0 0 3px rgba(15, 27, 61, 0.12);
+}
+
+.daily-sales-encoder__input--readonly,
+.daily-sales-encoder__input:disabled {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.daily-sales-encoder__helper {
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.daily-sales-encoder__helper--error {
+  color: #dc2626;
+}
+
+.daily-sales-encoder__full {
+  grid-column: 1 / -1;
+}
+
+.daily-sales-encoder__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.daily-sales-encoder__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.daily-sales-encoder__action {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.daily-sales-encoder__action:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.daily-sales-encoder__action--secondary {
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #1f2937;
+}
+
+.daily-sales-encoder__action--secondary:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.daily-sales-encoder__action--primary {
+  border: 1px solid #0f1b3d;
+  background: #0f1b3d;
+  color: #ffffff;
+}
+
+.daily-sales-encoder__action--primary:hover:not(:disabled) {
+  background: #162958;
+}
+
+.daily-sales-encoder__placeholder {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .daily-sales-encoder__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .daily-sales-encoder__grid--quad {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .daily-sales-encoder__pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .daily-sales-encoder__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .daily-sales-encoder__grid--quad {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .daily-sales-encoder__field--desktop-row-start {
+    grid-column: 1;
+  }
+
+  .daily-sales-encoder__placeholder {
+    display: block;
+    visibility: hidden;
+  }
+}
