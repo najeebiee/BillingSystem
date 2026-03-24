@@ -105,11 +105,15 @@ export function UsersTab() {
       setAccountRows(accountResult.value);
     } else {
       setAccountRows([]);
+      setNotice({
+        title: "Info",
+        message: "The user_account table is missing or inaccessible. Apply supabase/user_account.sql to create and backfill it.",
+      });
       if (showAccountUnavailableNotice) {
         setNotice({
           title: "Info",
           message:
-            "The user_account table is missing or inaccessible. Apply supabase/user_account.sql to create and backfill it.",
+            "User accounts backend is unavailable. Wire the user_account table to persist changes.",
         });
       }
     }
