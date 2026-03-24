@@ -11,7 +11,7 @@ export type UserAccountRow = {
   group: string;
   accountType: string;
   zeroOne: string;
-  codePayment: UserAccountCodePayment;
+  codePayment: "" | UserAccountCodePayment;
   city: string;
   province: string;
   region: string;
@@ -48,6 +48,7 @@ type SaveUserAccountInput = {
 const USER_ACCOUNT_TABLE = "user_account";
 const USER_ACCOUNT_SELECT =
   "user_account_id,user_name,full_name,sponsor,placement,group,account_type,zero_one,code_payment,city,province,region,country,date_created,date_updated";
+const USER_ACCOUNT_PAGE_SIZE = 1000;
 
 function toText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -57,8 +58,10 @@ function sanitizeSearchTerm(value: string): string {
   return value.replaceAll(",", " ").trim();
 }
 
-function normalizeCodePayment(value: unknown): UserAccountCodePayment {
-  return toText(value).toUpperCase() === "PD" ? "PD" : "FS";
+function normalizeCodePayment(value: unknown): "" | UserAccountCodePayment {
+  const normalized = toText(value).toUpperCase();
+  if (normalized === "PD" || normalized === "FS") return normalized;
+  return "";
 }
 
 function mapUserAccountRow(row: UserAccountDbRow): UserAccountRow {
@@ -81,44 +84,59 @@ function mapUserAccountRow(row: UserAccountDbRow): UserAccountRow {
   };
 }
 
-function clampLimit(value: number): number {
-  if (!Number.isFinite(value) || value <= 0) return 200;
+function clampLimit(value: number | undefined): number | null {
+  if (value === undefined) return null;
+  if (!Number.isFinite(value) || value <= 0) return null;
   return Math.min(Math.floor(value), 1000);
 }
 
 export async function fetchUserAccounts(
   searchQuery = "",
-  limit = 200
+  limit?: number
 ): Promise<UserAccountRow[]> {
   const resolvedLimit = clampLimit(limit);
   const search = sanitizeSearchTerm(searchQuery);
+  const rows: UserAccountDbRow[] = [];
+  let from = 0;
 
-  let query = supabase
-    .from(USER_ACCOUNT_TABLE)
-    .select(USER_ACCOUNT_SELECT)
-    .order("date_updated", { ascending: false })
-    .limit(resolvedLimit);
+  while (true) {
+    const remaining = resolvedLimit === null ? USER_ACCOUNT_PAGE_SIZE : resolvedLimit - rows.length;
+    if (remaining <= 0) break;
 
-  if (search) {
-    query = query.or(
-      [
-        `user_name.ilike.%${search}%`,
-        `full_name.ilike.%${search}%`,
-        `sponsor.ilike.%${search}%`,
-        `zero_one.ilike.%${search}%`,
-        `code_payment.ilike.%${search}%`,
-        `city.ilike.%${search}%`,
-        `province.ilike.%${search}%`,
-        `region.ilike.%${search}%`,
-        `country.ilike.%${search}%`
-      ].join(",")
-    );
+    const batchSize = Math.min(USER_ACCOUNT_PAGE_SIZE, remaining);
+    let query = supabase
+      .from(USER_ACCOUNT_TABLE)
+      .select(USER_ACCOUNT_SELECT)
+      .order("date_updated", { ascending: false })
+      .range(from, from + batchSize - 1);
+
+    if (search) {
+      query = query.or(
+        [
+          `user_name.ilike.%${search}%`,
+          `full_name.ilike.%${search}%`,
+          `sponsor.ilike.%${search}%`,
+          `zero_one.ilike.%${search}%`,
+          `code_payment.ilike.%${search}%`,
+          `city.ilike.%${search}%`,
+          `province.ilike.%${search}%`,
+          `region.ilike.%${search}%`,
+          `country.ilike.%${search}%`
+        ].join(",")
+      );
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const batch = (data as UserAccountDbRow[] | null) ?? [];
+    rows.push(...batch);
+
+    if (batch.length < batchSize) break;
+    from += batchSize;
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
-
-  return ((data as UserAccountDbRow[] | null) ?? []).map(mapUserAccountRow);
+  return rows.map(mapUserAccountRow);
 }
 
 export async function saveUserAccount(
@@ -133,7 +151,7 @@ export async function saveUserAccount(
     user_name: username,
     full_name: toText(input.fullName) || null,
     zero_one: toText(input.zeroOne) || null,
-    code_payment: normalizeCodePayment(input.codePayment),
+    code_payment: input.codePayment,
     date_updated: new Date().toISOString()
   };
 

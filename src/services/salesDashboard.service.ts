@@ -11,6 +11,8 @@ export type SalesDashboardUser = {
 
 type SaveStep = "sales_entries" | "sales_entry_inventory" | "sales_entry_payments";
 const USERS_DIRECTORY_TABLE = "users_directory";
+const USERS_DIRECTORY_SELECT = "id,username,member_name,created_at";
+const USERS_DIRECTORY_PAGE_SIZE = 1000;
 
 const isSalesSaveDebugEnabled =
   import.meta.env.DEV || import.meta.env.VITE_DEBUG_SALES_SAVE === "true";
@@ -172,13 +174,27 @@ async function insertRowsWithColumnFallback(
 }
 
 export async function fetchSalesDashboardUsers(): Promise<SalesDashboardUser[]> {
-  const { data, error } = await supabase
-    .from(USERS_DIRECTORY_TABLE)
-    .select("*")
-    .order("username", { ascending: true });
+  const rows: Array<Record<string, unknown>> = [];
+  let from = 0;
 
-  if (error) throw error;
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map((row) => ({
+  while (true) {
+    const to = from + USERS_DIRECTORY_PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from(USERS_DIRECTORY_TABLE)
+      .select(USERS_DIRECTORY_SELECT)
+      .order("username", { ascending: true })
+      .range(from, to);
+
+    if (error) throw error;
+
+    const batch = (data as Array<Record<string, unknown>> | null) ?? [];
+    rows.push(...batch);
+
+    if (batch.length < USERS_DIRECTORY_PAGE_SIZE) break;
+    from += USERS_DIRECTORY_PAGE_SIZE;
+  }
+
+  return rows.map((row) => ({
     id: String(row.id ?? ""),
     username: toText(row.username),
     member_name: toText(row.member_name) || null,

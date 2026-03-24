@@ -120,7 +120,7 @@ export function UsersTab() {
       setAccountRows([]);
       setNotice({
         title: "Info",
-        message: "User accounts backend is unavailable. Wire the user_account table to persist changes.",
+        message: "The user_account table is missing or inaccessible. Apply supabase/user_account.sql to create and backfill it.",
       });
     }
 
@@ -367,4 +367,3 @@ export function UsersTab() {
     </>
   );
 }
-

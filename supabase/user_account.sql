@@ -68,3 +68,18 @@ for update
 to authenticated
 using (true)
 with check (true);
+
+insert into public.user_account (
+  user_name,
+  full_name,
+  date_created,
+  date_updated
+)
+select
+  trim(u.username),
+  nullif(trim(u.member_name), ''),
+  coalesce(u.created_at, now()),
+  coalesce(u.created_at, now())
+from public.users_directory as u
+where nullif(trim(u.username), '') is not null
+on conflict (user_name) do nothing;
