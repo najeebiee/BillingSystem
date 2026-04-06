@@ -219,10 +219,10 @@ export async function listBills(params: ListBillsParams) {
 
       if (vendorIds.length > 0) {
         request = request.or(
-          `reference_no.ilike.%${escaped}%,vendor_id.in.(${vendorIds.join(",")})`
+          `reference_no.ilike.%${escaped}%,remarks.ilike.%${escaped}%,vendor_id.in.(${vendorIds.join(",")})`
         );
       } else {
-        request = request.ilike("reference_no", `%${escaped}%`);
+        request = request.or(`reference_no.ilike.%${escaped}%,remarks.ilike.%${escaped}%`);
       }
     }
   }
