@@ -63,7 +63,8 @@ export function VoidBillModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-1/2 -translate-y-1/2 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label="Close void modal"
         >
           <X className="w-4 h-4" />
         </button>
@@ -135,7 +136,7 @@ export function VoidBillModal({
           <div className="flex items-start gap-2 text-xs text-gray-600">
             <AlertTriangle className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
             <p>
-              Voided requests are retained for audit history but cannot be edited or paid.
+              Voided requests are retained for audit history and can no longer be paid.
             </p>
           </div>
         </div>

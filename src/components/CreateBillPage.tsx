@@ -2,13 +2,18 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Plus, X, Upload } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
-import { createBill, type ServiceError } from "../services/bills.service";
+import {
+  createBill,
+  isReferenceNoTaken,
+  type ServiceError
+} from "../services/bills.service";
 import { uploadBillAttachments } from "../services/billAttachments.service";
 import { createVendor, listVendors } from "../services/vendors.service";
 import type { PaymentMethod, PriorityLevel, Vendor } from "../types/billing";
 interface PaymentBreakdown {
   id: string;
   payment_method: PaymentMethod;
+  category: string;
   description: string;
   amount: string;
   bank_name: string;
@@ -22,6 +27,8 @@ export function CreateBillPage() {
   const [isVendorLoading, setIsVendorLoading] = useState(false);
   const [referenceNumber, setReferenceNumber] = useState("");
   const [referenceError, setReferenceError] = useState<string | null>(null);
+  const [isCheckingReference, setIsCheckingReference] = useState(false);
+  const [isReferenceTaken, setIsReferenceTaken] = useState(false);
   const [requestDate, setRequestDate] = useState("");
   const [priority, setPriority] = useState("Standard");
   const [reasonForPayment, setReasonForPayment] = useState("");
@@ -35,6 +42,7 @@ export function CreateBillPage() {
     {
       id: "1",
       payment_method: "bank_transfer",
+      category: "",
       description: "",
       amount: "",
       bank_name: "",
@@ -90,6 +98,43 @@ export function CreateBillPage() {
       isMounted = false;
     };
   }, [vendorInput]);
+
+  useEffect(() => {
+    const trimmedReference = referenceNumber.trim();
+
+    if (!trimmedReference) {
+      setReferenceError(null);
+      setIsReferenceTaken(false);
+      setIsCheckingReference(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsCheckingReference(true);
+
+    const timeoutId = window.setTimeout(() => {
+      isReferenceNoTaken(trimmedReference)
+        .then((taken) => {
+          if (!isMounted) return;
+          setIsReferenceTaken(taken);
+          setReferenceError(
+            taken
+              ? "Warning: PRF already existing. Please choose another PRF or leave blank to auto-generate."
+              : null
+          );
+        })
+        .finally(() => {
+          if (!isMounted) return;
+          setIsCheckingReference(false);
+        });
+    }, 350);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [referenceNumber]);
+
   const isDuplicatePrfError = (error: string | ServiceError | null | undefined) =>
     typeof error === "object" && error?.code === "DUPLICATE_PRF";
   const addBreakdownLine = () => {
@@ -98,6 +143,7 @@ export function CreateBillPage() {
       {
         id: Date.now().toString(),
         payment_method: "bank_transfer",
+        category: "",
         description: "",
         amount: "",
         bank_name: "",
@@ -178,6 +224,16 @@ export function CreateBillPage() {
       setErrorMessage("Request date is required.");
       return;
     }
+    if (referenceNumber.trim()) {
+      const referenceTaken = await isReferenceNoTaken(referenceNumber.trim());
+      setIsReferenceTaken(referenceTaken);
+      if (referenceTaken) {
+        setReferenceError(
+          "Warning: PRF already existing. Please choose another PRF or leave blank to auto-generate."
+        );
+        return;
+      }
+    }
     if (breakdowns.length === 0) {
       setErrorMessage("At least one breakdown line is required.");
       return;
@@ -233,6 +289,7 @@ export function CreateBillPage() {
       },
       breakdowns: breakdowns.map((b) => ({
         payment_method: b.payment_method,
+        category: b.category.trim() || null,
         description: b.description ? b.description : "",
         amount: roundMoney(b.amount),
         bank_name: b.payment_method === "bank_transfer" ? b.bank_name || null : null,
@@ -348,13 +405,18 @@ export function CreateBillPage() {
                       value={referenceNumber}
                       onChange={(e) => {
                         setReferenceNumber(e.target.value);
-                        setReferenceError(null);
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent ${
+                        isReferenceTaken
+                          ? "border-amber-400 focus:ring-amber-500"
+                          : "border-gray-300 focus:ring-blue-500"
+                      }`}
                       placeholder="Optional"
                     />
                     {referenceError ? (
-                      <p className="text-xs text-red-600 mt-1">{referenceError}</p>
+                      <p className="text-xs text-amber-700 mt-1">{referenceError}</p>
+                    ) : isCheckingReference ? (
+                      <p className="text-xs text-gray-500 mt-1">Checking PRF number...</p>
                     ) : (
                       <p className="text-xs text-gray-500 mt-1">Leave blank to auto-generate.</p>
                     )}
@@ -402,6 +464,9 @@ export function CreateBillPage() {
                           Payment Method
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                          Category
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                           Description
                         </th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -428,6 +493,15 @@ export function CreateBillPage() {
                                   </option>
                                 ))}
                               </select>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="text"
+                                value={breakdown.category}
+                                onChange={(e) => updateBreakdown(breakdown.id, "category", e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                placeholder="e.g., Food"
+                              />
                             </td>
                             <td className="px-4 py-3">
                               <input
@@ -461,7 +535,7 @@ export function CreateBillPage() {
                           </tr>
                           {breakdown.payment_method === "bank_transfer" && (
                             <tr>
-                              <td colSpan={4} className="px-4 pb-4">
+                              <td colSpan={5} className="px-4 pb-4">
                                 <div className="mt-4 pt-4 border-t border-gray-200">
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>

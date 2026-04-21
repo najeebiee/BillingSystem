@@ -1,0 +1,391 @@
+.daily-sales-metrics {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.daily-sales-metrics__header-card,
+.daily-sales-metrics__section {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.daily-sales-metrics__header-card {
+  padding: 16px;
+}
+
+.daily-sales-metrics__header-row {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.daily-sales-metrics__title {
+  margin: 0;
+  color: #111827;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.daily-sales-metrics__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.daily-sales-metrics__tab {
+  height: 34px;
+  padding: 0 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.daily-sales-metrics__tab:hover {
+  background: #f8fafc;
+}
+
+.daily-sales-metrics__tab--active {
+  border-color: #0f1b3d;
+  background: #0f1b3d;
+  color: #ffffff;
+}
+
+.daily-sales-metrics__custom-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #eef2f7;
+}
+
+.daily-sales-metrics__custom-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.daily-sales-metrics__custom-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.daily-sales-metrics__custom-label {
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.daily-sales-metrics__custom-input {
+  width: 100%;
+  min-width: 180px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  line-height: 20px;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.daily-sales-metrics__custom-input:focus {
+  border-color: #0f1b3d;
+  box-shadow: 0 0 0 3px rgba(15, 27, 61, 0.12);
+}
+
+.daily-sales-metrics__apply {
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.daily-sales-metrics__apply:hover {
+  background: #f8fafc;
+}
+
+.daily-sales-metrics__notice {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.daily-sales-metrics__notice--error {
+  color: #b45309;
+}
+
+.daily-sales-metrics__kpi-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.daily-sales-metrics__kpi-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.daily-sales-metrics__kpi-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.daily-sales-metrics__kpi-label {
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.daily-sales-metrics__kpi-value {
+  margin-top: 18px;
+  color: #111827;
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.daily-sales-metrics__badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.daily-sales-metrics__badge--up,
+.daily-sales-metrics__status--active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.daily-sales-metrics__badge--neutral,
+.daily-sales-metrics__status--idle {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.daily-sales-metrics__badge--down {
+  background: #fef3c7;
+  color: #a16207;
+}
+
+.daily-sales-metrics__section {
+  padding: 18px 18px 20px;
+}
+
+.daily-sales-metrics__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.daily-sales-metrics__section-title {
+  margin: 0;
+  color: #111827;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.daily-sales-metrics__section-subtitle {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.daily-sales-metrics__team-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.daily-sales-metrics__team-card {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-left-width: 4px;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  text-align: left;
+}
+
+.daily-sales-metrics__team-card--active {
+  border-left-color: #4ade80;
+}
+
+.daily-sales-metrics__team-card--idle {
+  border-left-color: #cbd5e1;
+}
+
+.daily-sales-metrics__team-trigger {
+  cursor: pointer;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.daily-sales-metrics__team-trigger:hover {
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.daily-sales-metrics__team-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.daily-sales-metrics__team-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.daily-sales-metrics__rank {
+  color: #0f1b3d;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+}
+
+.daily-sales-metrics__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.daily-sales-metrics__identity {
+  min-width: 0;
+}
+
+.daily-sales-metrics__name {
+  color: #111827;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.daily-sales-metrics__status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.daily-sales-metrics__team-body {
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.daily-sales-metrics__performance {
+  color: #111827;
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.daily-sales-metrics__detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.daily-sales-metrics__detail strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+@media (min-width: 768px) {
+  .daily-sales-metrics__header-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .daily-sales-metrics__kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .daily-sales-metrics__team-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .daily-sales-metrics__kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .daily-sales-metrics__team-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

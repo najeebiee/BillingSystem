@@ -14,7 +14,6 @@ import {
   buildReceiptHtml as buildReceiptPdfHtml,
   type PdfTemplateData
 } from "../pdf/pdfTemplates";
-import { exportHtmlToPdf } from "../pdf/exportPdf";
 import { downloadBillAttachment } from "../services/billAttachments.service";
 
 export function ViewBillPage() {
@@ -229,9 +228,30 @@ export function ViewBillPage() {
     );
   };
 
+  const handleSubmitForApproval = async () => {
+    if (!bill) return;
+    if (isUpdatingStatus) return;
+
+    setActionError(null);
+    setIsUpdatingStatus(true);
+    const result = await updateBillStatus(bill.id, "awaiting_approval");
+    setIsUpdatingStatus(false);
+
+    if (result.error) {
+      setActionError(result.error);
+      return;
+    }
+
+    setBillDetails((prev) =>
+      prev ? { ...prev, bill: { ...prev.bill, status: "awaiting_approval" } } : prev
+    );
+  };
+
   const handleVoid = () => {
     setIsVoidModalOpen(true);
   };
+
+  const canEditBill = bill?.status !== "paid";
 
   const handleConfirmVoid = async (_reason: string) => {
     if (!bill) return;
@@ -326,6 +346,7 @@ export function ViewBillPage() {
     const templateData = buildPdfTemplateData();
     if (!templateData) return;
 
+    const { exportHtmlToPdf } = await import("../pdf/exportPdf");
     const a4Html = buildA4Html(templateData);
     await exportHtmlToPdf({
       html: a4Html,
@@ -338,6 +359,7 @@ export function ViewBillPage() {
     const templateData = buildPdfTemplateData();
     if (!templateData) return;
 
+    const { exportHtmlToPdf } = await import("../pdf/exportPdf");
     const receiptHtml = buildReceiptPdfHtml(templateData, { paper: "80mm" });
     await exportHtmlToPdf({
       html: receiptHtml,
@@ -445,7 +467,8 @@ export function ViewBillPage() {
               )}
               <button
                 onClick={handleEdit}
-                className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors font-medium flex items-center gap-2"
+                disabled={!canEditBill}
+                className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               >
                 <Edit2 className="w-4 h-4" />
                 Edit
@@ -503,6 +526,9 @@ export function ViewBillPage() {
                         Payment Method
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        Category
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                         Description
                       </th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -517,6 +543,9 @@ export function ViewBillPage() {
                           <td className="px-4 py-3 text-sm text-gray-900">
                             {formatPaymentMethod(breakdown.payment_method)}
                           </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {breakdown.category || "—"}
+                          </td>
                           <td className="px-4 py-3 text-sm text-gray-600">
                             {breakdown.description || "—"}
                           </td>
@@ -529,7 +558,7 @@ export function ViewBillPage() {
                         </tr>
                         {breakdown.payment_method === "bank_transfer" && (
                           <tr>
-                            <td colSpan={3} className="px-4 pb-4">
+                            <td colSpan={4} className="px-4 pb-4">
                               <div className="mt-4 pt-4 border-t border-gray-200">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div>
@@ -664,6 +693,16 @@ export function ViewBillPage() {
             >
               Back to List
             </button>
+
+          {bill.status === "draft" && (
+            <button
+              onClick={handleSubmitForApproval}
+              disabled={isUpdatingStatus}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Submit for Approval
+            </button>
+          )}
 
           {bill.status === "awaiting_approval" && (
             <>

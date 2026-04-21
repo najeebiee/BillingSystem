@@ -1,0 +1,207 @@
+.daily-sales-inventory-report {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.daily-sales-inventory-report__card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.daily-sales-inventory-report__toolbar-card {
+  padding: 16px 18px;
+}
+
+.daily-sales-inventory-report__toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: end;
+}
+
+.daily-sales-inventory-report__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.daily-sales-inventory-report__label {
+  color: #475569;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.daily-sales-inventory-report__input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  line-height: 20px;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.daily-sales-inventory-report__input:focus {
+  border-color: #0f1b3d;
+  box-shadow: 0 0 0 3px rgba(15, 27, 61, 0.12);
+}
+
+.daily-sales-inventory-report__action {
+  display: flex;
+  align-items: flex-end;
+}
+
+.daily-sales-inventory-report__button,
+.daily-sales-inventory-report__print {
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.daily-sales-inventory-report__button:hover,
+.daily-sales-inventory-report__print:hover {
+  background: #f1f5f9;
+}
+
+.daily-sales-inventory-report__button:disabled,
+.daily-sales-inventory-report__print:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.daily-sales-inventory-report__search {
+  width: 100%;
+}
+
+.daily-sales-inventory-report__result-card {
+  padding: 18px;
+}
+
+.daily-sales-inventory-report__header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.daily-sales-inventory-report__range {
+  color: #334155;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.daily-sales-inventory-report__message {
+  margin: 0;
+  padding-top: 12px;
+  color: #b45309;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.daily-sales-inventory-report__table-wrap {
+  width: 100%;
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+.daily-sales-inventory-report__table {
+  width: 100%;
+  min-width: 1600px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.daily-sales-inventory-report__table thead th {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.daily-sales-inventory-report__table thead th[data-align="center"] {
+  text-align: center;
+}
+
+.daily-sales-inventory-report__table tbody td {
+  padding: 14px;
+  border-bottom: 1px solid #eef2f7;
+  color: #111827;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.daily-sales-inventory-report__table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.daily-sales-inventory-report__empty {
+  text-align: center;
+  color: #64748b !important;
+  padding-top: 32px !important;
+  padding-bottom: 32px !important;
+}
+
+@media (min-width: 768px) {
+  .daily-sales-inventory-report__toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .daily-sales-inventory-report__header {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1200px) {
+  .daily-sales-inventory-report__toolbar {
+    grid-template-columns:
+      minmax(180px, 220px)
+      minmax(180px, 220px)
+      auto
+      minmax(260px, 1fr);
+  }
+
+  .daily-sales-inventory-report__search {
+    justify-self: end;
+    max-width: 340px;
+  }
+}

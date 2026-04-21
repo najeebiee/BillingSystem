@@ -14,6 +14,7 @@ import type { BillAttachment, PaymentMethod, PriorityLevel, Vendor } from "../ty
 interface PaymentBreakdown {
   id: string;
   payment_method: PaymentMethod;
+  category: string;
   description: string;
   amount: string;
   bank_name: string;
@@ -64,8 +65,7 @@ export function EditBillPage() {
         return "Other";
     }
   };
-  const canEdit =
-    billStatus === "draft" || billStatus === "awaiting_approval" || billStatus === "rejected";
+  const canEdit = billStatus !== null && billStatus !== "paid";
   const isDuplicatePrfError = (error: string | ServiceError | null | undefined) =>
     typeof error === "object" && error?.code === "DUPLICATE_PRF";
   useEffect(() => {
@@ -102,17 +102,31 @@ export function EditBillPage() {
         setAttachments(existingAttachments);
         setAttachmentsToDelete([]);
         setNewFiles([]);
-        setBreakdowns(
-          lineItems.map((b, idx) => ({
-            id: b.id || idx.toString(),
-            payment_method: (b.payment_method ?? bill.payment_method ?? "other") as PaymentMethod,
-            description: b.description || "",
-            amount: String(b.amount ?? ""),
-            bank_name: b.bank_name || "",
-            bank_account_name: b.bank_account_name || "",
-            bank_account_no: b.bank_account_no || ""
-          }))
-        );
+        const nextBreakdowns =
+          lineItems.length > 0
+            ? lineItems.map((b, idx) => ({
+                id: b.id || idx.toString(),
+                payment_method: (b.payment_method ?? bill.payment_method ?? "other") as PaymentMethod,
+                category: b.category || "",
+                description: b.description || "",
+                amount: String(b.amount ?? ""),
+                bank_name: b.bank_name || "",
+                bank_account_name: b.bank_account_name || "",
+                bank_account_no: b.bank_account_no || ""
+              }))
+            : [
+                {
+                  id: "recovered-breakdown",
+                  payment_method: (bill.payment_method ?? "other") as PaymentMethod,
+                  category: "",
+                  description: "",
+                  amount: String(bill.total_amount ?? ""),
+                  bank_name: bill.bank_name || "",
+                  bank_account_name: bill.bank_account_name || "",
+                  bank_account_no: bill.bank_account_no || ""
+                }
+              ];
+        setBreakdowns(nextBreakdowns);
       })
       .catch((error) => {
         if (!isMounted) return;
@@ -192,6 +206,7 @@ export function EditBillPage() {
       {
         id: Date.now().toString(),
         payment_method: "bank_transfer",
+        category: "",
         description: "",
         amount: "",
         bank_name: "",
@@ -267,7 +282,7 @@ export function EditBillPage() {
   const handleSaveChanges = async () => {
     if (!id) return;
     if (!canEdit) {
-      setErrorMessage("This bill can no longer be edited.");
+      setErrorMessage("Paid bills can no longer be edited.");
       return;
     }
     setReferenceError(null);
@@ -334,6 +349,7 @@ export function EditBillPage() {
       },
       breakdowns: breakdowns.map((b) => ({
         payment_method: b.payment_method,
+        category: b.category.trim() || null,
         description: b.description ? b.description : "",
         amount: roundMoney(b.amount),
         bank_name: b.payment_method === "bank_transfer" ? b.bank_name || null : null,
@@ -432,7 +448,7 @@ export function EditBillPage() {
           </div>
           {!canEdit && (
             <div className="mb-4 rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-              This bill is {formatStatus(billStatus)} and can no longer be edited.
+              This bill is {formatStatus(billStatus)} and can no longer be edited because it is paid.
             </div>
           )}
           {errorMessage && (
@@ -599,6 +615,9 @@ export function EditBillPage() {
                           Payment Method
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                          Category
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                           Description
                         </th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -625,6 +644,15 @@ export function EditBillPage() {
                                   </option>
                                 ))}
                               </select>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="text"
+                                value={breakdown.category}
+                                onChange={(e) => updateBreakdown(breakdown.id, "category", e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                placeholder="e.g., Food"
+                              />
                             </td>
                             <td className="px-4 py-3">
                               <input
@@ -658,7 +686,7 @@ export function EditBillPage() {
                           </tr>
                           {breakdown.payment_method === "bank_transfer" && (
                             <tr>
-                              <td colSpan={4} className="px-4 pb-4">
+                              <td colSpan={5} className="px-4 pb-4">
                                 <div className="mt-4 pt-4 border-t border-gray-200">
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>

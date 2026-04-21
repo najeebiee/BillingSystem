@@ -86,7 +86,8 @@ export function ApproveRejectModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-1/2 -translate-y-1/2 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label="Close approval modal"
         >
           <X className="w-4 h-4" />
         </button>

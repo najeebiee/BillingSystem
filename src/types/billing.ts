@@ -39,6 +39,7 @@ export interface BillBreakdown {
   id?: string;
   bill_id: string;
   payment_method: PaymentMethod;
+  category?: string | null;
   description?: string | null;
   amount: number;
   bank_name?: string | null;

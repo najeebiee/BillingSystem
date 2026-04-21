@@ -1,0 +1,322 @@
+.daily-sales-page {
+  width: 100%;
+}
+
+.daily-sales-page__inner {
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.daily-sales-tabs-shell {
+  border: 1px solid #e4e9f2;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 22px;
+  padding: 12px 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(10px);
+}
+
+.daily-sales-tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.daily-sales-tab {
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #334155;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.daily-sales-tab:hover {
+  background: #eef2f8;
+  color: #0f1b3d;
+}
+
+.daily-sales-tab--active {
+  background: #0f1b3d;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 27, 61, 0.18);
+}
+
+.daily-sales-dashboard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.daily-sales-dashboard__card {
+  width: 100%;
+  border: 1px solid #e4e9f2;
+  background: #ffffff;
+  border-radius: 22px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.daily-sales-dashboard__filter-card {
+  padding: 20px 24px;
+}
+
+.daily-sales-dashboard__filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: end;
+}
+
+.daily-sales-dashboard__filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.daily-sales-dashboard__button-wrap {
+  display: flex;
+  align-items: flex-end;
+}
+
+.daily-sales-dashboard__search {
+  width: 100%;
+}
+
+.daily-sales-dashboard__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.daily-sales-dashboard__field {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #d8e0ec;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 0 16px;
+  font-size: 14px;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.02);
+  outline: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.daily-sales-dashboard__field:focus {
+  border-color: #9aa8bf;
+  box-shadow: 0 0 0 4px #dfe9ff;
+}
+
+.daily-sales-dashboard__field::placeholder {
+  color: #94a3b8;
+}
+
+.daily-sales-dashboard__apply {
+  height: 44px;
+  border: 1px solid #d8e0ec;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #1e293b;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.daily-sales-dashboard__apply:hover {
+  background: #f1f5f9;
+}
+
+.daily-sales-dashboard__summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.daily-sales-dashboard__summary-card {
+  border: 1px solid #e4e9f2;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.daily-sales-dashboard__summary-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.daily-sales-dashboard__summary-value {
+  margin-top: 12px;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  color: #0f1b3d;
+}
+
+.daily-sales-dashboard__table-card {
+  overflow: hidden;
+}
+
+.daily-sales-dashboard__table-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.daily-sales-dashboard__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f1b3d;
+}
+
+.daily-sales-dashboard__export {
+  height: 36px;
+  border-radius: 12px;
+  background: #0f1b3d;
+  color: #ffffff;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  box-shadow: 0 10px 24px rgba(15, 27, 61, 0.18);
+}
+
+.daily-sales-dashboard__export:hover {
+  background: #162958;
+}
+
+.daily-sales-dashboard__message {
+  padding: 16px 24px 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.daily-sales-dashboard__message--error {
+  color: #b45309;
+}
+
+.daily-sales-dashboard__table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+}
+
+.daily-sales-dashboard__table thead th {
+  height: 48px;
+  background: #fbfcfe;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 0 16px;
+  border-bottom: 1px solid #e8edf5;
+  white-space: nowrap;
+}
+
+.daily-sales-dashboard__table thead th:first-child,
+.daily-sales-dashboard__table tbody td:first-child {
+  padding-left: 24px;
+}
+
+.daily-sales-dashboard__table thead th:last-child,
+.daily-sales-dashboard__table tbody td:last-child {
+  padding-right: 24px;
+}
+
+.daily-sales-dashboard__table tbody td {
+  padding: 16px;
+  font-size: 13px;
+  color: #334155;
+  border-bottom: 1px solid #edf2f7;
+  white-space: nowrap;
+  background: #ffffff;
+}
+
+.daily-sales-dashboard__table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.daily-sales-dashboard__cell-primary {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.daily-sales-dashboard__cell-sales {
+  font-weight: 600;
+  color: #0f1b3d;
+}
+
+.daily-sales-dashboard__empty {
+  text-align: center;
+  padding: 48px 24px !important;
+  font-size: 14px;
+  color: #64748b !important;
+}
+
+.daily-sales-dashboard__status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #1d3b72;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .daily-sales-dashboard__table-header {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (min-width: 768px) {
+  .daily-sales-dashboard__filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .daily-sales-dashboard__summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .daily-sales-dashboard__filters {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr) auto minmax(280px, 1.25fr);
+  }
+
+  .daily-sales-dashboard__search {
+    justify-self: end;
+    max-width: 360px;
+  }
+
+  .daily-sales-dashboard__summary-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}

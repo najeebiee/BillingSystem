@@ -30,6 +30,138 @@ export type ServiceError =
       message: string;
     };
 
+const BILL_BREAKDOWN_BASE_SELECT =
+  "id,bill_id,payment_method,description,amount,bank_name,bank_account_name,bank_account_no";
+
+function isMissingBillBreakdownsCategoryError(error: PostgrestError | null | undefined) {
+  if (!error) return false;
+  const joined = [error.message, error.details, error.hint]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    joined.includes("bill_breakdowns.category") ||
+    joined.includes("breakdowns(category)") ||
+    joined.includes("could not find the 'category' column") ||
+    joined.includes("could not find the 'category'") ||
+    joined.includes("column category does not exist") ||
+    (joined.includes("bill_breakdowns") && joined.includes("category") && joined.includes("does not exist"))
+  );
+}
+
+function buildBillDetailsSelect(includeCategory: boolean) {
+  const breakdownSelect = includeCategory
+    ? `id,bill_id,payment_method,category,description,amount,bank_name,bank_account_name,bank_account_no`
+    : BILL_BREAKDOWN_BASE_SELECT;
+
+  return `
+      id,
+      vendor_id,
+      reference_no,
+      request_date,
+      priority_level,
+      payment_method,
+      bank_name,
+      bank_account_name,
+      bank_account_no,
+      status,
+      remarks,
+      rejection_reason,
+      total_amount,
+      created_by,
+      created_at,
+      updated_at,
+      vendor:vendors!inner(id,name,address),
+      breakdowns:bill_breakdowns(${breakdownSelect})
+    `;
+}
+
+async function fetchBillBreakdownSummaries(billIds: string[]) {
+  const withCategory = await supabase
+    .from("bill_breakdowns")
+    .select("bill_id,payment_method,category")
+    .in("bill_id", billIds);
+
+  if (!withCategory.error) {
+    return {
+      data: withCategory.data ?? [],
+      hasCategory: true,
+      error: null as PostgrestError | null
+    };
+  }
+
+  if (!isMissingBillBreakdownsCategoryError(withCategory.error)) {
+    return { data: [], hasCategory: false, error: withCategory.error };
+  }
+
+  const fallback = await supabase
+    .from("bill_breakdowns")
+    .select("bill_id,payment_method")
+    .in("bill_id", billIds);
+
+  if (fallback.error) {
+    return { data: [], hasCategory: false, error: fallback.error };
+  }
+
+  return {
+    data: (fallback.data ?? []).map((row) => ({ ...row, category: null })),
+    hasCategory: false,
+    error: null as PostgrestError | null
+  };
+}
+
+function buildBreakdownInsertRows(
+  billId: string,
+  breakdowns: Array<Omit<BillBreakdown, "id" | "bill_id">>,
+  includeCategory: boolean
+) {
+  return breakdowns.map((b) => {
+    const row: Record<string, unknown> = {
+      bill_id: billId,
+      payment_method: b.payment_method,
+      description: b.description ?? "",
+      amount: roundMoney(b.amount),
+      bank_name: b.payment_method === "bank_transfer" ? b.bank_name ?? null : null,
+      bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name ?? null : null,
+      bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no ?? null : null
+    };
+
+    if (includeCategory) {
+      row.category = b.category?.trim() || null;
+    }
+
+    return row;
+  });
+}
+
+async function insertBillBreakdowns(
+  billId: string,
+  breakdowns: Array<Omit<BillBreakdown, "id" | "bill_id">>
+) {
+  const rowsWithCategory = buildBreakdownInsertRows(billId, breakdowns, true);
+  let { error } = await supabase.from("bill_breakdowns").insert(rowsWithCategory);
+
+  if (!error) {
+    return { error: null as string | null, categoryPersisted: true };
+  }
+
+  if (!isMissingBillBreakdownsCategoryError(error)) {
+    return { error: mapDbError(error, "Failed to save breakdown lines."), categoryPersisted: true };
+  }
+
+  const rowsWithoutCategory = buildBreakdownInsertRows(billId, breakdowns, false);
+  ({ error } = await supabase.from("bill_breakdowns").insert(rowsWithoutCategory));
+
+  if (error) {
+    return { error: mapDbError(error, "Failed to save breakdown lines."), categoryPersisted: false };
+  }
+
+  return { error: null as string | null, categoryPersisted: false };
+}
+
 export async function listBills(params: ListBillsParams) {
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? 10;
@@ -95,10 +227,10 @@ export async function listBills(params: ListBillsParams) {
 
       if (vendorIds.length > 0) {
         request = request.or(
-          `reference_no.ilike.%${escaped}%,vendor_id.in.(${vendorIds.join(",")})`
+          `reference_no.ilike.%${escaped}%,remarks.ilike.%${escaped}%,vendor_id.in.(${vendorIds.join(",")})`
         );
       } else {
-        request = request.ilike("reference_no", `%${escaped}%`);
+        request = request.or(`reference_no.ilike.%${escaped}%,remarks.ilike.%${escaped}%`);
       }
     }
   }
@@ -125,29 +257,35 @@ export async function listBills(params: ListBillsParams) {
   }
 
   const billIds = bills.map((bill) => bill.id);
-  const { data: breakdowns, error: breakdownError } = await supabase
-    .from("bill_breakdowns")
-    .select("bill_id,payment_method")
-    .in("bill_id", billIds);
+  const { data: breakdowns, error: breakdownError, hasCategory } =
+    await fetchBillBreakdownSummaries(billIds);
 
   if (breakdownError) {
     return { data: [], count: 0, error: breakdownError.message };
   }
 
   const paymentMethodsByBill = new Map<string, Set<string>>();
+  const categoriesByBill = new Map<string, Set<string>>();
   (breakdowns ?? []).forEach((breakdown) => {
     if (!paymentMethodsByBill.has(breakdown.bill_id)) {
       paymentMethodsByBill.set(breakdown.bill_id, new Set());
     }
+    if (!categoriesByBill.has(breakdown.bill_id)) {
+      categoriesByBill.set(breakdown.bill_id, new Set());
+    }
     if (breakdown.payment_method) {
       paymentMethodsByBill.get(breakdown.bill_id)?.add(breakdown.payment_method);
+    }
+    if (typeof breakdown.category === "string" && breakdown.category.trim()) {
+      categoriesByBill.get(breakdown.bill_id)?.add(breakdown.category.trim());
     }
   });
 
   return {
     data: bills.map((bill) => ({
       ...bill,
-      payment_methods: Array.from(paymentMethodsByBill.get(bill.id) ?? [])
+      payment_methods: Array.from(paymentMethodsByBill.get(bill.id) ?? []),
+      categories: hasCategory ? Array.from(categoriesByBill.get(bill.id) ?? []) : []
     })) as Array<Bill & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
     count: count ?? 0,
     error: null as string | null
@@ -327,32 +465,30 @@ function mapDbError(error: PostgrestError | null | undefined, fallback: string) 
 }
 
 export async function getBillById(id: string) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("bills")
-    .select(
-      `
-      id,
-      vendor_id,
-      reference_no,
-      request_date,
-      priority_level,
-      payment_method,
-      bank_name,
-      bank_account_name,
-      bank_account_no,
-      status,
-      remarks,
-      rejection_reason,
-      total_amount,
-      created_by,
-      created_at,
-      updated_at,
-      vendor:vendors!inner(id,name,address),
-      breakdowns:bill_breakdowns(id,bill_id,payment_method,description,amount,bank_name,bank_account_name,bank_account_no)
-    `
-    )
+    .select(buildBillDetailsSelect(true))
     .eq("id", id)
     .single();
+
+  if (error && isMissingBillBreakdownsCategoryError(error)) {
+    const fallbackResult = await supabase
+      .from("bills")
+      .select(buildBillDetailsSelect(false))
+      .eq("id", id)
+      .single();
+
+    data = fallbackResult.data
+      ? {
+          ...fallbackResult.data,
+          breakdowns: (fallbackResult.data.breakdowns ?? []).map((breakdown) => ({
+            ...breakdown,
+            category: null
+          }))
+        }
+      : fallbackResult.data;
+    error = fallbackResult.error;
+  }
 
   if (error) {
     return { data: null as BillDetails | null, error: error.message };
@@ -448,25 +584,12 @@ export async function createBill(payload: CreateBillPayload) {
     };
   }
 
-  const breakdowns = payload.breakdowns.map((b) => ({
-    bill_id: bill.id,
-    payment_method: b.payment_method,
-    description: b.description ?? "",
-    amount: roundMoney(b.amount),
-    bank_name: b.payment_method === "bank_transfer" ? b.bank_name ?? null : null,
-    bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name ?? null : null,
-    bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no ?? null : null
-  }));
-
-  if (breakdowns.length > 0) {
-    const { error: breakdownError } = await supabase
-      .from("bill_breakdowns")
-      .insert(breakdowns);
-
-    if (breakdownError) {
+  if (payload.breakdowns.length > 0) {
+    const breakdownResult = await insertBillBreakdowns(bill.id, payload.breakdowns);
+    if (breakdownResult.error) {
       return {
         data: bill as Bill,
-        error: mapDbError(breakdownError, "Failed to save breakdown lines.")
+        error: breakdownResult.error
       };
     }
   }
@@ -480,6 +603,18 @@ export interface UpdateBillPayload {
 }
 
 export async function updateBill(id: string, payload: UpdateBillPayload) {
+  const { data: existingBreakdowns, error: existingBreakdownsError } = await supabase
+    .from("bill_breakdowns")
+    .select(BILL_BREAKDOWN_BASE_SELECT)
+    .eq("bill_id", id);
+
+  if (existingBreakdownsError) {
+    return {
+      data: null as Bill | null,
+      error: mapDbError(existingBreakdownsError, "Failed to load current breakdown lines.")
+    };
+  }
+
   const normalizedBill = {
     ...payload.bill,
     total_amount: roundMoney(payload.bill.total_amount)
@@ -527,23 +662,13 @@ export async function updateBill(id: string, payload: UpdateBillPayload) {
     return { data: updated as Bill, error: mapDbError(deleteError, "Failed to update breakdown lines.") };
   }
 
-  const breakdowns = payload.breakdowns.map((b) => ({
-    bill_id: id,
-    payment_method: b.payment_method,
-    description: b.description ?? "",
-    amount: roundMoney(b.amount),
-    bank_name: b.payment_method === "bank_transfer" ? b.bank_name ?? null : null,
-    bank_account_name: b.payment_method === "bank_transfer" ? b.bank_account_name ?? null : null,
-    bank_account_no: b.payment_method === "bank_transfer" ? b.bank_account_no ?? null : null
-  }));
-
-  if (breakdowns.length > 0) {
-    const { error: insertError } = await supabase
-      .from("bill_breakdowns")
-      .insert(breakdowns);
-
-    if (insertError) {
-      return { data: updated as Bill, error: mapDbError(insertError, "Failed to save breakdown lines.") };
+  if (payload.breakdowns.length > 0) {
+    const breakdownResult = await insertBillBreakdowns(id, payload.breakdowns);
+    if (breakdownResult.error) {
+      if ((existingBreakdowns ?? []).length > 0) {
+        await supabase.from("bill_breakdowns").insert(existingBreakdowns);
+      }
+      return { data: updated as Bill, error: breakdownResult.error };
     }
   }
 
