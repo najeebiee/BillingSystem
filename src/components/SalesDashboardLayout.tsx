@@ -18,7 +18,6 @@ export function SalesDashboardLayout() {
                 <NavLink
                   key={tab.label}
                   to={tab.to}
-                  end={tab.end}
                   className={({ isActive }) =>
                     `relative pb-3 text-sm font-medium transition-colors ${
                       isActive

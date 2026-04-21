@@ -63,3 +63,54 @@ export interface BillDetails {
   breakdowns: BillBreakdown[];
   attachments: BillAttachment[];
 }
+
+export type PcfTransactionType =
+  | "beginning_balance"
+  | "replenishment"
+  | "expense";
+
+export type PcfTransactionStatus =
+  | "draft"
+  | "awaiting_approval"
+  | "rejected"
+  | "approved"
+  | "paid"
+  | "void";
+
+export interface PcfTransaction {
+  id: string;
+  date: string;
+  pcv_number: string | null;
+  payee: string | null;
+  invoice_no: string | null;
+  description: string | null;
+  amount_in: number;
+  amount_out: number;
+  balance: number;
+  transaction_type: PcfTransactionType;
+  status: PcfTransactionStatus;
+  is_liquidated: boolean;
+  liquidated_at?: string | null;
+  notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PcfQueryParams {
+  search?: string;
+  type?: Exclude<PcfTransactionType, "beginning_balance"> | PcfTransactionType;
+  status?: PcfTransactionStatus;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+  offset?: number;
+  limit?: number;
+}
+
+export interface PcfSummary {
+  beginningBalance: number;
+  totalIn: number;
+  totalOut: number;
+  endingBalance: number;
+}

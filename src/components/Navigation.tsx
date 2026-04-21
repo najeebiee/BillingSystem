@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, CircleDollarSign } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 
 export function Navigation() {
@@ -9,6 +9,7 @@ export function Navigation() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const isBillsRoute = location.pathname.startsWith('/bills');
+  const isPcfRoute = location.pathname.startsWith('/pcf');
   const isEventFormsRoute =
     location.pathname.startsWith('/event-forms') ||
     location.pathname.startsWith('/forms');
@@ -30,6 +31,17 @@ export function Navigation() {
               }`}
             >
               Bills
+            </Link>
+            <Link
+              to="/pcf"
+              className={`px-4 py-2 rounded-md transition-colors inline-flex items-center gap-2 ${
+                isPcfRoute
+                  ? 'bg-blue-50 text-blue-600 font-medium'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <CircleDollarSign className="w-4 h-4" />
+              Petty Cash
             </Link>
             <Link
               to="/event-forms"
