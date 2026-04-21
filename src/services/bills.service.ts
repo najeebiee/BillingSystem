@@ -16,6 +16,14 @@ export interface ListBillsParams {
   pageSize?: number;
 }
 
+export interface ListBillsForExportParams {
+  status?: BillStatus;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  batchSize?: number;
+}
+
 export type ServiceError =
   | {
       code: "DUPLICATE_PRF";
@@ -280,6 +288,121 @@ export async function listBills(params: ListBillsParams) {
       categories: hasCategory ? Array.from(categoriesByBill.get(bill.id) ?? []) : []
     })) as Array<Bill & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
     count: count ?? 0,
+    error: null as string | null
+  };
+}
+
+export async function listBillsForExport(params: ListBillsForExportParams) {
+  const batchSize = params.batchSize ?? 1000;
+  let offset = 0;
+  const allBills: Array<Bill & { vendor?: { id: string; name: string } }> = [];
+
+  while (true) {
+    let request = supabase
+      .from("bills")
+      .select(
+        `
+        id,
+        vendor_id,
+        reference_no,
+        request_date,
+        priority_level,
+        payment_method,
+        bank_name,
+        bank_account_name,
+        bank_account_no,
+        status,
+        remarks,
+        total_amount,
+        created_by,
+        created_at,
+        updated_at,
+        vendor:vendors!inner(id,name,address)
+      `
+      )
+      .order("request_date", { ascending: false })
+      .range(offset, offset + batchSize - 1);
+
+    if (params.status) {
+      request = request.eq("status", params.status);
+    }
+
+    if (params.dateFrom) {
+      request = request.gte("request_date", params.dateFrom);
+    }
+
+    if (params.dateTo) {
+      request = request.lte("request_date", params.dateTo);
+    }
+
+    if (params.search && params.search.trim()) {
+      const q = params.search.trim();
+      request = request.or(`reference_no.ilike.%${q}%,vendor.name.ilike.%${q}%`);
+    }
+
+    const { data, error } = await request;
+
+    if (error) {
+      return { data: [], error: error.message };
+    }
+
+    const batch = (data ?? []) as unknown as Array<Bill & { vendor?: { id: string; name: string } }>;
+    batch.forEach((bill) => {
+      if (Array.isArray(bill.vendor)) {
+        bill.vendor = bill.vendor[0];
+      }
+    });
+
+    if (!batch.length) {
+      break;
+    }
+
+    allBills.push(...batch);
+
+    if (batch.length < batchSize) {
+      break;
+    }
+
+    offset += batchSize;
+  }
+
+  if (!allBills.length) {
+    return {
+      data: [] as Array<Bill & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
+      error: null as string | null
+    };
+  }
+
+  const paymentMethodsByBill = new Map<string, Set<string>>();
+  const billIds = allBills.map((bill) => bill.id);
+  const chunkSize = 1000;
+
+  for (let start = 0; start < billIds.length; start += chunkSize) {
+    const idChunk = billIds.slice(start, start + chunkSize);
+    const { data: breakdowns, error: breakdownError } = await supabase
+      .from("bill_breakdowns")
+      .select("bill_id,payment_method")
+      .in("bill_id", idChunk);
+
+    if (breakdownError) {
+      return { data: [], error: breakdownError.message };
+    }
+
+    (breakdowns ?? []).forEach((breakdown) => {
+      if (!paymentMethodsByBill.has(breakdown.bill_id)) {
+        paymentMethodsByBill.set(breakdown.bill_id, new Set());
+      }
+      if (breakdown.payment_method) {
+        paymentMethodsByBill.get(breakdown.bill_id)?.add(breakdown.payment_method);
+      }
+    });
+  }
+
+  return {
+    data: allBills.map((bill) => ({
+      ...bill,
+      payment_methods: Array.from(paymentMethodsByBill.get(bill.id) ?? [])
+    })) as Array<Bill & { vendor?: { id: string; name: string }; payment_methods: string[] }>,
     error: null as string | null
   };
 }

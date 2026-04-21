@@ -21,7 +21,9 @@
 }
 
 .screen-form {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .print-only {

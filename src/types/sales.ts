@@ -7,7 +7,7 @@ export type SaleEntry = {
   memberName: string;
   username: string;
   newMember: string;
-  memberType: string;
+  memberType: "distributor" | "platinum" | "gold" | "silver" | "";
   packageType: string;
   toBlister: string;
   originalPrice: string;
@@ -17,11 +17,11 @@ export type SaleEntry = {
   priceAfterDiscount: string;
   oneTimeDiscount: string;
   totalSales: string;
-  modeOfPayment: string;
-  paymentModeType: string;
+  modeOfPayment: "cash" | "bank" | "ewallet" | "cheque" | "";
+  paymentModeType: "maya" | "gcash" | "bdo" | "bpi" | "na" | "";
   referenceNumber: string;
-  modeOfPayment2: string;
-  paymentModeType2: string;
+  modeOfPayment2: "cash" | "bank" | "ewallet" | "cheque" | "";
+  paymentModeType2: "maya" | "gcash" | "bdo" | "bpi" | "na" | "";
   referenceNumber2: string;
   amount2: string;
   releasedBottles: string;
