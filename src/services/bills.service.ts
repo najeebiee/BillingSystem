@@ -326,8 +326,16 @@ export async function listBillsForExport(params: ListBillsForExportParams) {
     }
 
     if (params.search && params.search.trim()) {
-      const q = params.search.trim();
-      request = request.or(`reference_no.ilike.%${q}%,vendor.name.ilike.%${q}%`);
+      const searchTerm = normalizeBillSearchTerm(params.search);
+      if (searchTerm) {
+        const vendorSearch = await findVendorIdsForBillSearch(searchTerm);
+
+        if (vendorSearch.error) {
+          return { data: [], error: vendorSearch.error };
+        }
+
+        request = request.or(buildBillSearchOrFilter(searchTerm, vendorSearch.data));
+      }
     }
 
     const { data, error } = await request;
