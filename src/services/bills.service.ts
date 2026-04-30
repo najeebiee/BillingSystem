@@ -6,6 +6,11 @@ import type {
   BillDetails,
   BillStatus
 } from "../types/billing";
+import {
+  buildBillSearchOrFilter,
+  findVendorIdsForBillSearch,
+  normalizeBillSearchTerm
+} from "./billSearchFilters";
 
 export interface ListBillsParams {
   status?: BillStatus;
@@ -200,30 +205,15 @@ export async function listBills(params: ListBillsParams) {
   }
 
   if (params.search && params.search.trim()) {
-    const q = params.search.trim();
-    const escaped = q.replace(/[%(),]/g, "").trim();
-    if (escaped) {
-      const { data: matchingVendors, error: vendorSearchError } = await supabase
-        .from("vendors")
-        .select("id")
-        .ilike("name", `%${escaped}%`)
-        .limit(100);
+    const searchTerm = normalizeBillSearchTerm(params.search);
+    if (searchTerm) {
+      const vendorSearch = await findVendorIdsForBillSearch(searchTerm);
 
-      if (vendorSearchError) {
-        return { data: [], count: 0, error: vendorSearchError.message };
+      if (vendorSearch.error) {
+        return { data: [], count: 0, error: vendorSearch.error };
       }
 
-      const vendorIds = (matchingVendors ?? [])
-        .map((vendor) => vendor.id)
-        .filter(Boolean);
-
-      if (vendorIds.length > 0) {
-        request = request.or(
-          `reference_no.ilike.%${escaped}%,remarks.ilike.%${escaped}%,vendor_id.in.(${vendorIds.join(",")})`
-        );
-      } else {
-        request = request.or(`reference_no.ilike.%${escaped}%,remarks.ilike.%${escaped}%`);
-      }
+      request = request.or(buildBillSearchOrFilter(searchTerm, vendorSearch.data));
     }
   }
 

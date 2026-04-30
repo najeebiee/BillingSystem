@@ -1,5 +1,10 @@
 import { supabase } from "../lib/supabaseClient";
 import type { BillStatus } from "../types/billing";
+import {
+  buildBillSearchOrFilter,
+  findVendorIdsForBillSearch,
+  normalizeBillSearchTerm
+} from "./billSearchFilters";
 
 type ActiveTab = "All" | "Draft" | "Awaiting Approval" | "Rejected" | "Approved" | "Paid" | "Void";
 
@@ -79,27 +84,15 @@ async function fetchFilteredBillsPage(filters: ExportFilters, from: number, to: 
   }
 
   if (filters.searchQuery.trim()) {
-    const escaped = filters.searchQuery.trim().replace(/[%(),]/g, "").trim();
-    if (escaped) {
-      const { data: matchingVendors, error: vendorSearchError } = await supabase
-        .from("vendors")
-        .select("id")
-        .ilike("name", `%${escaped}%`)
-        .limit(100);
+    const searchTerm = normalizeBillSearchTerm(filters.searchQuery);
+    if (searchTerm) {
+      const vendorSearch = await findVendorIdsForBillSearch(searchTerm);
 
-      if (vendorSearchError) {
-        return { data: [], error: vendorSearchError.message };
+      if (vendorSearch.error) {
+        return { data: [], error: vendorSearch.error };
       }
 
-      const vendorIds = (matchingVendors ?? []).map((vendor) => vendor.id).filter(Boolean);
-
-      if (vendorIds.length > 0) {
-        request = request.or(
-          `reference_no.ilike.%${escaped}%,remarks.ilike.%${escaped}%,vendor_id.in.(${vendorIds.join(",")})`
-        );
-      } else {
-        request = request.or(`reference_no.ilike.%${escaped}%,remarks.ilike.%${escaped}%`);
-      }
+      request = request.or(buildBillSearchOrFilter(searchTerm, vendorSearch.data));
     }
   }
 
