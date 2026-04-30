@@ -193,6 +193,10 @@ type SpecialCompanyEventsFormProps = {
     getState: () => unknown;
     setState: (state: unknown) => void;
     resetState: () => void;
+    save?: () => void;
+    load?: () => void;
+    clear?: () => void;
+    print?: () => void;
   }) => void;
 };
 
@@ -294,6 +298,10 @@ export function SpecialCompanyEventsForm({
       getState: () => formState,
       setState: (nextState) => setFormState(normalizeSpecialCompanyEventsState(nextState)),
       resetState: () => setFormState(initialState),
+      save: handleSave,
+      load: handleLoad,
+      clear: handleClear,
+      print: handlePrint,
     });
   }, [onRegisterActions, formState]);
 
@@ -390,9 +398,17 @@ export function SpecialCompanyEventsForm({
       : null;
 
   return (
-    <div className={embedded ? "sce-page" : "sce-page min-h-screen bg-gray-50"}>
-      <div className={embedded ? "" : "pt-16"}>
-        <div className={embedded ? "" : "sce-shell max-w-[1100px] mx-auto px-4 md:px-6 py-6 md:py-8"}>
+    <div
+      className={
+        embedded ? "sce-page form-page form-page--embedded" : "sce-page min-h-screen bg-gray-50 form-page form-page--standalone"
+      }
+    >
+      <div className={embedded ? "form-page-body" : "pt-16 form-page-body"}>
+        <div
+          className={
+            embedded ? "sce-shell form-shell" : "sce-shell form-shell max-w-[1100px] mx-auto px-4 md:px-6 py-6 md:py-8"
+          }
+        >
           {showToolbar && (
             <div className="form-toolbar no-print">
               {showBackButton ? (
@@ -408,12 +424,13 @@ export function SpecialCompanyEventsForm({
             </div>
           )}
 
-          <div className="screen-form no-print">
-            <header className="sce-screen-head">
-              <div className="sce-title">SPECIAL COMPANY EVENTS</div>
-              <div className="sce-title-sub">(with speaker)</div>
-              <div className="sce-title-sub">FLOW CHECKLIST:</div>
-            </header>
+          <div className="screen-form no-print form-screen">
+            <div className="form-screen__body">
+              <header className="sce-screen-head">
+                <div className="sce-title">SPECIAL COMPANY EVENTS</div>
+                <div className="sce-title-sub">(with speaker)</div>
+                <div className="sce-title-sub">FLOW CHECKLIST:</div>
+              </header>
 
             <div className="sce-top-fields">
               <label className="sce-field">
@@ -506,7 +523,8 @@ export function SpecialCompanyEventsForm({
               </div>
             </div>
 
-            <RecentPrintsTable formType="SC" rows={recentPrints} onLoad={handleLoadSubmission} />
+              <RecentPrintsTable formType="SC" rows={recentPrints} onLoad={handleLoadSubmission} />
+            </div>
 
             {showActions ? (
               <div className="form-actions-bottom no-print">

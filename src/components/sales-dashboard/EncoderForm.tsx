@@ -1,11 +1,6 @@
-
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FormField } from "./form-field";
 import { FormSelect } from "./form-select";
-import {
-  fetchSalesDashboardUsers,
-  type SalesDashboardUser
-} from "../../services/salesDashboard.service";
 import type { SaleEntry } from "../../types/sales";
 
 const PAYMENT_MODES = [
@@ -25,7 +20,7 @@ type PaymentMode = (typeof PAYMENT_MODES)[number];
 type SplitPaymentMode = (typeof SPLIT_PAYMENT_MODES)[number];
 
 type EncoderFormProps = {
-  onSave: (entry: SaleEntry) => Promise<void> | void;
+  onSave: (entry: SaleEntry) => void;
   savedCount: number;
 };
 
@@ -76,14 +71,6 @@ const PACKAGE_PRICE_MAP: Record<string, number> = {
   "Blister (1 blister pack)": 779,
 };
 
-const MEMBER_TYPE_OPTIONS = [
-  { value: "Distributor", label: "Distributor" },
-  { value: "Mobile Stockist", label: "Mobile Stockist" },
-  { value: "City Stockist", label: "City Stockist" },
-  { value: "Center", label: "Center" },
-  { value: "Non-member", label: "Non-member" }
-] as const;
-
 const DISCOUNT_OPTIONS: Array<{ label: string; value: number }> = [
   { label: "No Discount", value: 0 },
   { label: "\u20B150", value: 50 },
@@ -107,8 +94,6 @@ const DISCOUNT_OPTIONS: Array<{ label: string; value: number }> = [
 ];
 
 const POF_PREFIX = "POF-";
-const isEncoderSaveDebugEnabled =
-  import.meta.env.DEV || import.meta.env.VITE_DEBUG_SALES_SAVE === "true";
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
@@ -130,24 +115,6 @@ function formatPofForSave(digits: string) {
   return `${POF_PREFIX}${raw.slice(0, 6)}-${raw.slice(6, 9)}`;
 }
 
-function getTodayLocalDate() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function toNumber(value: string) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function toWholeNumber(value: string) {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 function requiresReference(mode: string) {
   return mode === "GCASH" || mode === "MAYA" || mode === "BANK TRANSFER" || mode === "CHECK" || mode === "CREDIT CARD";
 }
@@ -162,22 +129,15 @@ function requiresCardType(mode: string) {
 
 function normalizeMemberType(value: string): SaleEntry["memberType"] {
   const normalized = value.trim().toLowerCase();
-  if (!normalized) return "";
-
-  const normalizedMap: Record<string, string> = {
-    distributor: "distributor",
-    "mobile stockist": "mobile stockist",
-    "city stockist": "city stockist",
-    center: "center",
-    "non-member": "non-member",
-    // Legacy values kept for safe edit/load compatibility.
-    platinum: "platinum",
-    gold: "gold",
-    silver: "silver",
-    discount: "discount"
-  };
-
-  return normalizedMap[normalized] ?? normalized;
+  if (
+    normalized === "distributor" ||
+    normalized === "platinum" ||
+    normalized === "gold" ||
+    normalized === "silver"
+  ) {
+    return normalized;
+  }
+  return "";
 }
 
 function mapPayment(mode: SplitPaymentMode | ""): {
@@ -202,188 +162,9 @@ function mapPayment(mode: SplitPaymentMode | ""): {
   }
 }
 
-function mapSaveErrorToMessage(error: unknown): string {
-  const fallback = "Unable to save entry. Please check required fields and try again.";
-  if (!error || typeof error !== "object") return fallback;
-
-  const saveError = error as {
-    code?: string;
-    message?: string;
-    details?: string;
-    status?: number;
-    saveStep?: string | null;
-  };
-
-  const joined = [saveError.message, saveError.details]
-    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
-    .join(" ");
-  const columnMatch = joined.match(/column ['"]?([a-zA-Z0-9_]+)['"]?/i);
-  const columnName = columnMatch?.[1] ?? null;
-  const humanizeColumn = (value: string | null) => {
-    if (!value) return null;
-    const labels: Record<string, string> = {
-      pof_number: "POF Number",
-      po_number: "POF Number",
-      member_name: "Member Name",
-      username: "Username",
-      member_type: "Member Type",
-      package_type: "Package Type",
-      quantity: "Quantity",
-      original_price: "Original Price",
-      price_after_discount: "Price After Discount",
-      total_sales: "Total Sales",
-      primary_payment_mode: "Mode of Payment",
-      primary_payment_amount: "Amount",
-      report_date: "Date",
-      entry_date: "Date",
-      sale_date: "Date"
-    };
-    return labels[value] ?? value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-  };
-
-  if (saveError.code === "23502") {
-    const field = humanizeColumn(columnName);
-    return field
-      ? `Unable to save entry. ${field} is required.`
-      : "Unable to save entry. A required field is missing.";
-  }
-
-  if (saveError.code === "23505") {
-    return "Unable to save entry. A duplicate record already exists.";
-  }
-
-  if (saveError.code === "23503") {
-    return "Unable to save entry. A related record is missing or invalid.";
-  }
-
-  if (saveError.code === "23514") {
-    return "Unable to save entry. One or more values failed a database validation rule.";
-  }
-
-  if (saveError.code === "22P02") {
-    return "Unable to save entry. One of the numeric or date fields has an invalid value.";
-  }
-
-  if (saveError.code === "42501" || saveError.status === 401 || saveError.status === 403) {
-    return "Unable to save entry. You do not have permission to perform this action.";
-  }
-
-  if (saveError.code === "PGRST204") {
-    return "Unable to save entry due to a database schema mismatch. Please contact the administrator.";
-  }
-
-  if (saveError.message && /network|fetch|failed to fetch/i.test(saveError.message)) {
-    return "Unable to save entry due to a network/configuration issue. Please try again.";
-  }
-
-  if (saveError.message && /users_directory/i.test(saveError.message)) {
-    return "Unable to save entry because the Users directory table is missing. Run the latest database migration first.";
-  }
-
-  if (saveError.message) {
-    const stepLabel = saveError.saveStep ? ` during ${saveError.saveStep}` : "";
-    const details = saveError.details ? ` ${saveError.details}` : "";
-    return `Unable to save entry${stepLabel}: ${saveError.message}.${details}`.trim();
-  }
-
-  return fallback;
-}
-
-function getExpectedTotal(formData: FormData): number {
-  const quantity = toWholeNumber(formData.quantity);
-  const afterDiscount = toNumber(formData.priceAfterDiscount);
-  const oneTimeDiscount = toNumber(formData.oneTimeDiscount);
-  if (quantity <= 0 || afterDiscount <= 0) return 0;
-  return Math.max(0, quantity * afterDiscount - oneTimeDiscount);
-}
-
-function validateFormData(formData: FormData): string[] {
-  const errors: string[] = [];
-  const quantity = toWholeNumber(formData.quantity);
-  const totalSales = getExpectedTotal(formData);
-  const primaryAmount = toNumber(formData.paymentAmount);
-  const secondaryAmount = toNumber(formData.paymentAmount2);
-  const releasedBottles = toWholeNumber(formData.releasedBottles);
-  const releasedBlister = toWholeNumber(formData.releasedBlister);
-  const toFollowBottles = toWholeNumber(formData.toFollowBottles);
-  const toFollowBlister = toWholeNumber(formData.toFollowBlister);
-
-  if (!formData.date) errors.push("Date is required.");
-  if (!formatPofForSave(formData.pofDigits)) errors.push("POF Number must contain exactly 9 digits.");
-  if (!formData.memberName.trim()) errors.push("Member Name is required.");
-  if (!formData.username.trim()) errors.push("Username is required.");
-  if (!formData.newMember) errors.push("New Member selection is required.");
-  if (!formData.memberType.trim()) errors.push("Member Type is required.");
-  if (!formData.packageType.trim()) errors.push("Package Type is required.");
-  if (quantity <= 0) errors.push("Quantity must be greater than 0.");
-  if (!formData.modeOfPayment) errors.push("Mode of Payment is required.");
-  if (totalSales <= 0) errors.push("Total Sales must be greater than 0.");
-
-  if (
-    releasedBottles < 0 ||
-    releasedBlister < 0 ||
-    toFollowBottles < 0 ||
-    toFollowBlister < 0
-  ) {
-    errors.push("Released and To Follow quantities cannot be negative.");
-  }
-
-  if (formData.modeOfPayment && formData.modeOfPayment !== "MIXED") {
-    if (requiresReference(formData.modeOfPayment) && !formData.referenceNumber.trim()) {
-      errors.push("Reference No is required for the selected mode of payment.");
-    }
-    if (requiresBankName(formData.modeOfPayment) && !formData.bankName.trim()) {
-      errors.push("Bank Name is required for the selected mode of payment.");
-    }
-    if (requiresCardType(formData.modeOfPayment) && !formData.cardType) {
-      errors.push("Card Type is required for Credit Card payments.");
-    }
-    if (primaryAmount <= 0) {
-      errors.push("Amount must be greater than 0.");
-    }
-  }
-
-  if (formData.modeOfPayment === "MIXED") {
-    if (!formData.modeOfPayment1 || !formData.modeOfPayment2) {
-      errors.push("Both payment modes are required for mixed payments.");
-    }
-    if (requiresReference(formData.modeOfPayment1) && !formData.referenceNumber.trim()) {
-      errors.push("Payment 1 reference number is required.");
-    }
-    if (requiresReference(formData.modeOfPayment2) && !formData.referenceNumber2.trim()) {
-      errors.push("Payment 2 reference number is required.");
-    }
-    if (requiresBankName(formData.modeOfPayment1) && !formData.bankName.trim()) {
-      errors.push("Payment 1 bank name is required.");
-    }
-    if (requiresBankName(formData.modeOfPayment2) && !formData.bankName2.trim()) {
-      errors.push("Payment 2 bank name is required.");
-    }
-    if (requiresCardType(formData.modeOfPayment1) && !formData.cardType) {
-      errors.push("Payment 1 card type is required.");
-    }
-    if (requiresCardType(formData.modeOfPayment2) && !formData.cardType2) {
-      errors.push("Payment 2 card type is required.");
-    }
-    if (primaryAmount <= 0 || secondaryAmount <= 0) {
-      errors.push("Both mixed payment amounts must be greater than 0.");
-    }
-    if (Math.abs(primaryAmount + secondaryAmount - totalSales) > 0.001) {
-      errors.push("Mixed payment amounts must equal Total Sales.");
-    }
-  }
-
-  return Array.from(new Set(errors));
-}
-
-function formatValidationMessage(errors: string[]): string {
-  if (errors.length <= 3) return errors.join("\n");
-  return `${errors.slice(0, 3).join("\n")}\n...and ${errors.length - 3} more issue(s).`;
-}
-
 const initialFormData: FormData = {
   event: "Davao City",
-  date: getTodayLocalDate(),
+  date: "",
   pofDigits: "",
   memberName: "",
   username: "",
@@ -470,13 +251,6 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
   const [isRemarksFocused, setIsRemarksFocused] = useState(false);
   const [isSaveHovered, setIsSaveHovered] = useState(false);
   const [isClearHovered, setIsClearHovered] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [users, setUsers] = useState<SalesDashboardUser[]>([]);
-  const [isUsersLoading, setIsUsersLoading] = useState(false);
-  const [usersLoadError, setUsersLoadError] = useState<string | null>(null);
-  const [isUsernameFocused, setIsUsernameFocused] = useState(false);
-  const [isUsernameDropdownOpen, setIsUsernameDropdownOpen] = useState(false);
-  const usernameFieldRef = useRef<HTMLLabelElement | null>(null);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     if (field === "event" || field === "originalPrice" || field === "priceAfterDiscount") {
@@ -503,66 +277,17 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
     });
   };
 
-  const loadUsers = React.useCallback(async () => {
-    setIsUsersLoading(true);
-    setUsersLoadError(null);
-
-    try {
-      const rows = await fetchSalesDashboardUsers();
-      if (isEncoderSaveDebugEnabled) {
-        console.log("USERNAME OPTIONS RAW", rows);
-      }
-      setUsers(rows);
-    } catch (error) {
-      console.error("USERNAME OPTIONS ERROR", error);
-      const message = error instanceof Error ? error.message : "Failed to load usernames.";
-      setUsersLoadError(message);
-      setUsers([]);
-    } finally {
-      setIsUsersLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadUsers();
-  }, [loadUsers]);
-
   useEffect(() => {
     if (formData.event !== "Davao City") {
       setFormData((prev) => ({ ...prev, event: "Davao City" }));
     }
   }, [formData.event]);
 
-  const shouldUseExistingUserDropdown = formData.newMember.trim().toLowerCase() === "no";
-
-  useEffect(() => {
-    if (shouldUseExistingUserDropdown) return;
-    setIsUsernameDropdownOpen(false);
-  }, [shouldUseExistingUserDropdown]);
-
-  useEffect(() => {
-    if (shouldUseExistingUserDropdown && isUsernameFocused) {
-      setIsUsernameDropdownOpen(true);
-    }
-  }, [shouldUseExistingUserDropdown, isUsernameFocused]);
-
-  useEffect(() => {
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!usernameFieldRef.current) return;
-      if (usernameFieldRef.current.contains(event.target as Node)) return;
-      setIsUsernameDropdownOpen(false);
-      setIsUsernameFocused(false);
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, []);
-
   const netAmount = useMemo(() => {
-    return getExpectedTotal(formData);
-  }, [formData]);
+    const afterDiscount = Number(formData.priceAfterDiscount || 0);
+    const oneTimeDiscount = Number(formData.oneTimeDiscount || 0);
+    return Math.max(0, afterDiscount - oneTimeDiscount);
+  }, [formData.priceAfterDiscount, formData.oneTimeDiscount]);
 
   useEffect(() => {
     const price = PACKAGE_PRICE_MAP[formData.packageType] ?? 0;
@@ -610,55 +335,83 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
     });
   }, [netAmount, formData.modeOfPayment]);
 
-  const filteredUsers = useMemo(() => {
-    const query = formData.username.trim().toLowerCase();
-    if (!query) return users;
-
-    return users.filter((user) => {
-      const username = user.username.toLowerCase();
-      const memberName = (user.member_name ?? "").toLowerCase();
-      return username.includes(query) || memberName.includes(query);
-    });
-  }, [users, formData.username]);
-
-  useEffect(() => {
-    if (!isEncoderSaveDebugEnabled) return;
-    console.log("USERNAME INPUT", formData.username);
-    console.log("FILTERED USERNAMES", filteredUsers);
-    console.log("DROPDOWN OPEN", isUsernameDropdownOpen);
-  }, [formData.username, filteredUsers, isUsernameDropdownOpen]);
-
-  const handleUsernameChange = (value: string) => {
-    handleInputChange("username", value);
-    if (shouldUseExistingUserDropdown) {
-      setIsUsernameDropdownOpen(true);
-    }
-  };
-
   const handleClear = () => {
     setFormData(initialFormData);
   };
 
-  const handleSave = async () => {
-    if (isSaving) return;
-
-    const validationErrors = validateFormData(formData);
-    if (isEncoderSaveDebugEnabled) {
-      console.log("ENCODER FORM STATE", formData);
-    }
-    if (validationErrors.length > 0) {
-      console.warn("VALIDATION FAILED", validationErrors);
-      alert(formatValidationMessage(validationErrors));
+  const handleSave = () => {
+    const pofNumber = formatPofForSave(formData.pofDigits);
+    if (!pofNumber) {
+      alert("POF Number must contain exactly 9 digits.");
       return;
     }
 
-    const pofNumber = formatPofForSave(formData.pofDigits);
+    if (!formData.modeOfPayment) {
+      alert("Mode of Payment is required.");
+      return;
+    }
 
     const isMixed = formData.modeOfPayment === "MIXED";
-    const primaryAmount = toNumber(formData.paymentAmount);
-    const secondaryAmount = toNumber(formData.paymentAmount2);
+    const primaryAmount = Number(formData.paymentAmount || 0);
+    const secondaryAmount = Number(formData.paymentAmount2 || 0);
     const paymentMode1 = isMixed ? formData.modeOfPayment1 : formData.modeOfPayment;
     const paymentMode2 = isMixed ? formData.modeOfPayment2 : "";
+
+    if (!isMixed) {
+      if (requiresReference(formData.modeOfPayment) && !formData.referenceNumber.trim()) {
+        alert("Reference No is required for the selected mode of payment.");
+        return;
+      }
+      if (requiresBankName(formData.modeOfPayment) && !formData.bankName.trim()) {
+        alert("Bank Name is required for the selected mode of payment.");
+        return;
+      }
+      if (requiresCardType(formData.modeOfPayment) && !formData.cardType) {
+        alert("Card Type is required for Credit Card payments.");
+        return;
+      }
+      if (primaryAmount <= 0) {
+        alert("Amount is required.");
+        return;
+      }
+    } else {
+      if (!paymentMode1 || !paymentMode2) {
+        alert("Both payment modes are required for mixed payments.");
+        return;
+      }
+      if (requiresReference(paymentMode1) && !formData.referenceNumber.trim()) {
+        alert("Payment 1 reference number is required.");
+        return;
+      }
+      if (requiresReference(paymentMode2) && !formData.referenceNumber2.trim()) {
+        alert("Payment 2 reference number is required.");
+        return;
+      }
+      if (requiresBankName(paymentMode1) && !formData.bankName.trim()) {
+        alert("Payment 1 bank name is required.");
+        return;
+      }
+      if (requiresBankName(paymentMode2) && !formData.bankName2.trim()) {
+        alert("Payment 2 bank name is required.");
+        return;
+      }
+      if (requiresCardType(paymentMode1) && !formData.cardType) {
+        alert("Payment 1 card type is required.");
+        return;
+      }
+      if (requiresCardType(paymentMode2) && !formData.cardType2) {
+        alert("Payment 2 card type is required.");
+        return;
+      }
+      if (primaryAmount <= 0 || secondaryAmount <= 0) {
+        alert("Both mixed payment amounts are required.");
+        return;
+      }
+      if (Math.abs(primaryAmount + secondaryAmount - netAmount) > 0.001) {
+        alert("Mixed payment amounts must equal the net amount.");
+        return;
+      }
+    }
 
     const primaryPayment = mapPayment(paymentMode1 as SplitPaymentMode | "");
     const secondaryPayment = mapPayment(paymentMode2 as SplitPaymentMode | "");
@@ -701,22 +454,9 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
       collectedBy: formData.collectedBy,
     };
 
-    if (isEncoderSaveDebugEnabled) {
-      console.log("ENCODER PAYLOAD", entry);
-    }
-
-    try {
-      setIsSaving(true);
-      await onSave(entry);
-      await loadUsers();
-      alert("Entry saved successfully!");
-      handleClear();
-    } catch (error) {
-      console.error("ENCODER SAVE ERROR", error);
-      alert(mapSaveErrorToMessage(error));
-    } finally {
-      setIsSaving(false);
-    }
+    onSave(entry);
+    alert("Entry saved successfully!");
+    handleClear();
   };
 
   return (
@@ -825,153 +565,12 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
             onChange={(value) => handleInputChange("memberName", value)}
             placeholder="Enter member name"
           />
-          <label className="block relative" ref={usernameFieldRef}>
-            <span
-              className="block mb-2"
-              style={{
-                color: "#374151",
-                fontSize: "14px",
-                lineHeight: "20px",
-                fontWeight: 400,
-              }}
-            >
-              Username
-            </span>
-            <input
-              type="text"
-              value={formData.username}
-              onChange={(event) => handleUsernameChange(event.target.value)}
-              onFocus={() => {
-                setIsUsernameFocused(true);
-                if (shouldUseExistingUserDropdown) {
-                  setIsUsernameDropdownOpen(true);
-                }
-              }}
-              onClick={() => {
-                if (shouldUseExistingUserDropdown) {
-                  setIsUsernameDropdownOpen(true);
-                }
-              }}
-              onBlur={() => setIsUsernameFocused(false)}
-              placeholder={
-                shouldUseExistingUserDropdown
-                  ? "Search or select username"
-                  : "Enter username"
-              }
-              className="w-full px-3"
-              style={{
-                height: "44px",
-                borderWidth: "1px",
-                borderStyle: "solid",
-                borderColor: isUsernameFocused ? "#2E3A8C" : "#D0D5DD",
-                borderRadius: "8px",
-                outline: "none",
-                backgroundColor: "#FFFFFF",
-                color: "#111827",
-                fontSize: "14px",
-                lineHeight: "20px",
-                fontWeight: 400
-              }}
-            />
-            {shouldUseExistingUserDropdown && isUsernameDropdownOpen ? (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 4px)",
-                  left: 0,
-                  right: 0,
-                  zIndex: 30,
-                  backgroundColor: "#FFFFFF",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: "#D0D5DD",
-                  borderRadius: "8px",
-                  boxShadow: "0 10px 24px rgba(0, 0, 0, 0.10)",
-                  maxHeight: "220px",
-                  overflowY: "auto"
-                }}
-              >
-                {isUsersLoading ? (
-                  <div
-                    style={{
-                      padding: "10px 12px",
-                      fontSize: "14px",
-                      lineHeight: "20px",
-                      color: "#6B7280"
-                    }}
-                  >
-                    Loading usernames...
-                  </div>
-                ) : usersLoadError ? (
-                  <div
-                    style={{
-                      padding: "10px 12px",
-                      fontSize: "14px",
-                      lineHeight: "20px",
-                      color: "#B91C1C"
-                    }}
-                  >
-                    {usersLoadError}
-                  </div>
-                ) : filteredUsers.length === 0 ? (
-                  <div
-                    style={{
-                      padding: "10px 12px",
-                      fontSize: "14px",
-                      lineHeight: "20px",
-                      color: "#6B7280"
-                    }}
-                  >
-                    No matching usernames
-                  </div>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <button
-                      key={user.id}
-                      type="button"
-                      onClick={() => {
-                        handleInputChange("username", user.username);
-                        if (!formData.memberName && user.member_name) {
-                          handleInputChange("memberName", user.member_name);
-                        }
-                        setIsUsernameDropdownOpen(false);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        textAlign: "left",
-                        backgroundColor:
-                          formData.username.trim().toLowerCase() === user.username.trim().toLowerCase()
-                            ? "#EFF6FF"
-                            : "#FFFFFF",
-                        color: "#111827",
-                        borderTop: "none",
-                        borderRight: "none",
-                        borderBottom: "1px solid #E5E7EB",
-                        borderLeft: "none",
-                        cursor: "pointer",
-                        fontSize: "14px",
-                        lineHeight: "20px"
-                      }}
-                    >
-                      <div>{user.username}</div>
-                      {user.member_name ? (
-                        <div
-                          style={{
-                            fontSize: "12px",
-                            lineHeight: "18px",
-                            color: "#6B7280"
-                          }}
-                        >
-                          {user.member_name}
-                        </div>
-                      ) : null}
-                    </button>
-                  ))
-                )}
-              </div>
-            ) : null}
-          </label>
+          <FormField
+            label="Username"
+            value={formData.username}
+            onChange={(value) => handleInputChange("username", value)}
+            placeholder="Enter username"
+          />
           <FormSelect
             label="New Member?"
             value={formData.newMember}
@@ -989,10 +588,12 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
             label="Member Type"
             value={formData.memberType}
             onChange={(value) => handleInputChange("memberType", value)}
-            options={MEMBER_TYPE_OPTIONS.map((option) => ({
-              value: option.value,
-              label: option.label
-            }))}
+            options={[
+              { value: "Distributor", label: "Distributor" },
+              { value: "Platinum", label: "Platinum" },
+              { value: "Gold", label: "Gold" },
+              { value: "Silver", label: "Silver" },
+            ]}
           />
           <FormSelect
             label="Package Type"
@@ -1335,27 +936,23 @@ export function EncoderForm({ onSave, savedCount }: EncoderFormProps) {
         <div className="flex flex-row gap-3 pt-4">
           <button
             type="button"
-            disabled={isSaving}
             onClick={handleSave}
             onMouseEnter={() => setIsSaveHovered(true)}
             onMouseLeave={() => setIsSaveHovered(false)}
             style={{
               ...actionButtonStyle,
-              opacity: isSaving ? 0.7 : 1,
               backgroundColor: isSaveHovered ? "#16A34A" : "#22C55E",
             }}
           >
-            {isSaving ? "Saving..." : "Save Entry"}
+            Save Entry
           </button>
           <button
             type="button"
-            disabled={isSaving}
             onClick={handleClear}
             onMouseEnter={() => setIsClearHovered(true)}
             onMouseLeave={() => setIsClearHovered(false)}
             style={{
               ...actionButtonStyle,
-              opacity: isSaving ? 0.7 : 1,
               backgroundColor: isClearHovered ? "#DC2626" : "#EF4444",
             }}
           >

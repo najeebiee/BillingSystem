@@ -1,11 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, FileText } from "lucide-react";
+import { Search, Plus, FileText, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "../auth/AuthContext";
 import { getUserDisplayName } from "../auth/userDisplayName";
-import { listBills } from "../services/bills.service";
-import { BillsExportButtons } from "./bills/BillsExportButtons";
+import { listBills, listBillsForExport } from "../services/bills.service";
 import type { BillStatus } from "../types/billing";
+import {
+  exportBillsToCSV,
+  exportBillsToExcel,
+  exportBillsToPDF
+} from "../utils/billsExport";
 
 type BillRow = {
   id: string;
@@ -33,6 +38,7 @@ export function BillsPage() {
   const [bills, setBills] = useState<BillRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<"csv" | "xlsx" | "pdf" | null>(null);
   const { user } = useAuth();
   const currentUserDisplayName = getUserDisplayName(user);
   const navigate = useNavigate();
@@ -255,6 +261,55 @@ export function BillsPage() {
     visiblePages.push(p);
   }
 
+  const fetchBillsForExport = async () => {
+    const result = await listBillsForExport({
+      status: statusFilter,
+      search: searchQuery,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined
+    });
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    return result.data;
+  };
+
+  const getFilterSummary = () => {
+    const filters: string[] = [];
+    if (activeTab !== "All") filters.push(`Status: ${activeTab}`);
+    if (searchQuery.trim()) filters.push(`Search: ${searchQuery.trim()}`);
+    if (dateFrom) filters.push(`From: ${dateFrom}`);
+    if (dateTo) filters.push(`To: ${dateTo}`);
+    return filters.length ? filters.join(" | ") : "All records";
+  };
+
+  const handleExport = async (type: "csv" | "xlsx" | "pdf") => {
+    setExporting(type);
+    try {
+      const exportBills = await fetchBillsForExport();
+      if (!exportBills.length) {
+        toast.error("No rows to export");
+        return;
+      }
+
+      if (type === "csv") exportBillsToCSV(exportBills);
+      if (type === "xlsx") exportBillsToExcel(exportBills);
+      if (type === "pdf") exportBillsToPDF(exportBills, { filters: getFilterSummary() });
+
+      toast.success(`Exported ${exportBills.length} rows`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Export failed");
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const exportButtonClass =
+    "rounded-full border border-blue-400 bg-white text-blue-500 px-5 py-2 text-sm hover:bg-blue-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors";
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-16">
@@ -265,13 +320,54 @@ export function BillsPage() {
               <h1 className="text-2xl font-semibold text-gray-900">Payment Requests</h1>
               <p className="text-gray-600 mt-1">View and manage payment requests</p>
             </div>
-            <div className="flex items-center gap-2">
-              <BillsExportButtons
-                activeTab={activeTab}
-                searchQuery={searchQuery}
-                dateFrom={dateFrom}
-                dateTo={dateTo}
-              />
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleExport("csv")}
+                  disabled={exporting !== null}
+                  className={exportButtonClass}
+                >
+                  {exporting === "csv" ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Exporting...
+                    </span>
+                  ) : (
+                    "CSV"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExport("xlsx")}
+                  disabled={exporting !== null}
+                  className={exportButtonClass}
+                >
+                  {exporting === "xlsx" ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Exporting...
+                    </span>
+                  ) : (
+                    "Excel"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExport("pdf")}
+                  disabled={exporting !== null}
+                  className={exportButtonClass}
+                >
+                  {exporting === "pdf" ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Exporting...
+                    </span>
+                  ) : (
+                    "PDF"
+                  )}
+                </button>
+              </div>
               <button
                 onClick={() => navigate("/bills/new")}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"

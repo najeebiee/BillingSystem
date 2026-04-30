@@ -4,13 +4,36 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const devBypassAuthEnabled =
+  import.meta.env.DEV && import.meta.env.VITE_DEV_BYPASS_AUTH === "true";
+const devBypassUser = {
+  id: "dev-bypass-user",
+  email: "dev@guildledger.local",
+  app_metadata: {
+    provider: "email",
+    providers: ["email"]
+  },
+  user_metadata: {
+    display_name: "Dev User"
+  },
+  aud: "authenticated",
+  created_at: "1970-01-01T00:00:00.000Z"
+} as User;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDevBypassActive, setIsDevBypassActive] = useState(devBypassAuthEnabled);
 
   useEffect(() => {
+    if (isDevBypassActive) {
+      setSession(null);
+      setUser(devBypassUser);
+      setIsLoading(false);
+      return;
+    }
+
     let isMounted = true;
 
     supabase.auth
@@ -45,9 +68,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isMounted = false;
       subscription.subscription.unsubscribe();
     };
-  }, []);
+  }, [isDevBypassActive]);
 
   const signIn: AuthContextValue["signIn"] = async (email, password) => {
+    if (devBypassAuthEnabled) {
+      setIsDevBypassActive(true);
+      setSession(null);
+      setUser(devBypassUser);
+      setIsLoading(false);
+      return { ok: true };
+    }
+
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
 
@@ -68,6 +99,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut: AuthContextValue["signOut"] = async () => {
+    if (devBypassAuthEnabled) {
+      setIsDevBypassActive(false);
+      setSession(null);
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);

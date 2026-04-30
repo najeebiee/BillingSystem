@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 
+const devAutoLoginEnabled = import.meta.env.DEV && import.meta.env.VITE_DEV_AUTO_LOGIN === 'true';
+const devAutoLoginEmail = import.meta.env.VITE_DEV_AUTO_LOGIN_EMAIL?.trim() ?? '';
+const devAutoLoginPassword = import.meta.env.VITE_DEV_AUTO_LOGIN_PASSWORD?.trim() ?? '';
+
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +18,38 @@ export function LoginPage() {
   useEffect(() => {
     document.title = 'Login | GuildLedger';
   }, []);
+
+  useEffect(() => {
+    if (!devAutoLoginEnabled) return;
+    if (!devAutoLoginEmail || !devAutoLoginPassword) return;
+
+    let cancelled = false;
+
+    setEmail(devAutoLoginEmail);
+    setPassword(devAutoLoginPassword);
+    setErrorMessage(null);
+    setIsSubmitting(true);
+
+    signIn(devAutoLoginEmail, devAutoLoginPassword)
+      .then((result) => {
+        if (cancelled) return;
+
+        if (!result.ok) {
+          setErrorMessage(result.error || 'Auto login failed.');
+          return;
+        }
+
+        navigate('/bills');
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setIsSubmitting(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, signIn]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +134,12 @@ export function LoginPage() {
             <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {errorMessage}
             </div>
+          )}
+
+          {devAutoLoginEnabled && (
+            <p className="mt-4 text-center text-xs text-blue-600">
+              Development auto sign-in is enabled.
+            </p>
           )}
 
           {/* Helper Text */}

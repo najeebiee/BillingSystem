@@ -1,10 +1,18 @@
-import React, { useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Download, Printer, Save, Trash2 } from "lucide-react";
 import { EventRequestForm } from "./EventRequestForm";
 import { ProspectInvitationForm } from "./ProspectInvitationForm";
 import { SpecialCompanyEventsForm } from "./SpecialCompanyEventsForm";
 
 type EventFormTab = "special" | "request" | "prospect";
+
+type FormActions = {
+  save?: () => void;
+  load?: () => void;
+  clear?: () => void;
+  print?: () => void;
+};
 
 type TabItem = {
   key: EventFormTab;
@@ -30,37 +38,14 @@ const getInitialTab = (queryTab: string | null): EventFormTab => {
   return "request";
 };
 
-type EventFormsTabsProps = {
-  activeTab: EventFormTab;
-  onChange: (tab: EventFormTab) => void;
-};
-
-function EventFormsTabs({ activeTab, onChange }: EventFormsTabsProps) {
-  return (
-    <div className="overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      <div className="flex min-w-max items-center gap-1 border-b border-gray-200 mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => onChange(tab.key)}
-            className={`px-4 py-3 font-medium transition-colors relative whitespace-nowrap ${
-              activeTab === tab.key ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            {tab.label}
-            {activeTab === tab.key && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-            )}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function EventFormsHome() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<EventFormTab>(() => getInitialTab(searchParams.get("tab")));
+  const actionsRef = useRef<Record<EventFormTab, FormActions>>({
+    special: {},
+    request: {},
+    prospect: {},
+  });
 
   const setTab = (tab: EventFormTab) => {
     setActiveTab(tab);
@@ -72,43 +57,125 @@ export function EventFormsHome() {
     });
   };
 
+  const registerSpecialActions = useCallback((actions: FormActions) => {
+    actionsRef.current.special = actions;
+  }, []);
+
+  const registerRequestActions = useCallback((actions: FormActions) => {
+    actionsRef.current.request = actions;
+  }, []);
+
+  const registerProspectActions = useCallback((actions: FormActions) => {
+    actionsRef.current.prospect = actions;
+  }, []);
+
+  const runAction = (key: keyof FormActions) => {
+    const actions = actionsRef.current[activeTab];
+    actions?.[key]?.();
+  };
+
   return (
-    <div className="event-forms-page min-h-screen bg-gray-50">
-      <div className="pt-16">
-        <div className="event-forms-shell max-w-[1440px] mx-auto px-6 py-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">Event Forms</h1>
-            <p className="text-gray-600 mt-1">Choose a form to get started with your event requests.</p>
-          </div>
+    <div className="event-forms-page w-full bg-gray-50 pt-16">
+      <div className="w-full max-w-6xl mx-auto px-6 py-8">
+        <div>
+          <h1 className="text-3xl font-semibold">Event Forms</h1>
+          <p className="mt-2 text-gray-500">Choose a form to get started with your event requests.</p>
+        </div>
 
-          <EventFormsTabs activeTab={activeTab} onChange={setTab} />
-
-          <div className="space-y-5">
-            <div className={activeTab === "special" ? "block" : "hidden"}>
-              <SpecialCompanyEventsForm
-                embedded
-                showBackButton={false}
-                showToolbar={false}
-                showPrintRoot={activeTab === "special"}
-              />
-            </div>
-            <div className={activeTab === "request" ? "block" : "hidden"}>
-              <EventRequestForm
-                embedded
-                showBackButton={false}
-                showToolbar={false}
-                showPrintRoot={activeTab === "request"}
-              />
-            </div>
-            <div className={activeTab === "prospect" ? "block" : "hidden"}>
-              <ProspectInvitationForm
-                embedded
-                showBackButton={false}
-                showToolbar={false}
-                showPrintRoot={activeTab === "prospect"}
-              />
-            </div>
+        <div className="mt-6 border-b">
+          <div className="flex flex-wrap gap-6">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setTab(tab.key)}
+                className={`relative pb-3 text-sm font-medium transition-colors ${
+                  activeTab === tab.key ? "text-blue-600 font-semibold" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                {tab.label}
+                {activeTab === tab.key ? (
+                  <span className="absolute left-0 right-0 -bottom-[1px] h-0.5 bg-blue-600" />
+                ) : null}
+              </button>
+            ))}
           </div>
+        </div>
+
+        <div className="mt-8">
+          {activeTab === "special" ? (
+            <SpecialCompanyEventsForm
+              embedded
+              showBackButton={false}
+              showToolbar={false}
+              showPrintRoot={activeTab === "special"}
+              showActions={false}
+              onRegisterActions={registerSpecialActions}
+            />
+          ) : null}
+          {activeTab === "request" ? (
+            <EventRequestForm
+              embedded
+              showBackButton={false}
+              showToolbar={false}
+              showPrintRoot={activeTab === "request"}
+              showActions={false}
+              onRegisterActions={registerRequestActions}
+            />
+          ) : null}
+          {activeTab === "prospect" ? (
+            <ProspectInvitationForm
+              embedded
+              showBackButton={false}
+              showToolbar={false}
+              showPrintRoot={activeTab === "prospect"}
+              showActions={false}
+              onRegisterActions={registerProspectActions}
+            />
+          ) : null}
+        </div>
+
+        <div className="mt-8 border-t bg-white pt-4 no-print">
+          <div className="flex flex-wrap gap-2 justify-end">
+            <button
+              type="button"
+              onClick={() => runAction("save")}
+              aria-label="Save active form"
+              className="bg-black text-white border border-black hover:bg-gray-900 active:bg-black px-4 py-2 rounded-md inline-flex items-center gap-2"
+            >
+              <Save className="h-4 w-4 text-white" />
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => runAction("load")}
+              aria-label="Load active form"
+              className="bg-black text-white border border-black hover:bg-gray-900 active:bg-black px-4 py-2 rounded-md inline-flex items-center gap-2"
+            >
+              <Download className="h-4 w-4 text-white" />
+              Load
+            </button>
+            <button
+              type="button"
+              onClick={() => runAction("clear")}
+              aria-label="Clear active form"
+              className="bg-black text-white border border-black hover:bg-gray-900 active:bg-black px-4 py-2 rounded-md inline-flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4 text-white" />
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => runAction("print")}
+              aria-label="Print active form"
+              className="bg-black text-white border border-black hover:bg-gray-900 active:bg-black px-4 py-2 rounded-md inline-flex items-center gap-2"
+            >
+              <Printer className="h-4 w-4 text-white" />
+              Print
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-gray-500 text-center">
+            Disable Headers and Footers in the print dialog for best results.
+          </p>
         </div>
       </div>
     </div>
