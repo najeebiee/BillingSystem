@@ -20,6 +20,7 @@ import {
   formatPeso as formatExportPeso,
   type PcfExportFilterSummary
 } from "../utils/pcfExport";
+import "./PcfPage.css";
 
 type ExportType = "csv" | "xlsx" | "pdf";
 
@@ -461,9 +462,6 @@ export function PcfPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  From
-                </label>
                 <input
                   type="date"
                   value={dateFrom}
@@ -476,9 +474,6 @@ export function PcfPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  To
-                </label>
                 <input
                   type="date"
                   value={dateTo}
@@ -506,21 +501,21 @@ export function PcfPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <div className="pcf-summary-grid">
             {summaryCards.map((card) => (
               <div
                 key={card.label}
-                className="bg-white rounded-lg border border-gray-200 p-5"
+                className="pcf-summary-card"
               >
-                <p className="text-sm font-medium text-gray-500">{card.label}</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-2">{card.value}</p>
+                <p className="pcf-summary-label">{card.label}</p>
+                <p className="pcf-summary-value">{card.value}</p>
               </div>
             ))}
           </div>
 
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full pcf-table">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
