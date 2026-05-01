@@ -1,18 +1,16 @@
 # Billing System
 
-A web-based billing and sales management system for recording bills, managing petty cash fund requests, handling event forms, and tracking sales reports.
+A web-based billing management system for recording bills, managing petty cash fund requests, and handling event forms.
 
 ## Overview
 
-The Billing System is a React application built to help users organize billing records, petty cash fund transactions, sales dashboard data, and company event forms in one place. It includes protected routes, Supabase-backed data services, printable forms, and export tools so users can manage daily business records more efficiently.
+The Billing System is a React application built to help users organize billing records, petty cash fund transactions, and company event forms in one place. It includes protected routes, Supabase-backed data services, printable forms, and export tools so users can manage daily business records more efficiently.
 
 ## Features
 
 - User login and protected application pages
 - Bill creation, viewing, editing, searching, and voiding
 - Petty Cash Fund (PCF) creation, approval/rejection, viewing, editing, and voiding
-- Daily sales encoder and dashboard pages
-- Sales report, sales metrics, inventory report, and reports modules
 - Event request, prospect invitation, and special company events forms
 - Print-ready receipts, reports, and forms
 - PDF, Excel, and CSV export support
@@ -20,7 +18,7 @@ The Billing System is a React application built to help users organize billing r
 
 ## System Purpose
 
-This system solves the problem of manually tracking billing, sales, PCF, and event form records across separate files or paper-based workflows. It provides a centralized interface where users can encode records, review transaction details, generate reports, print documents, and export data for monitoring and documentation.
+This system solves the problem of manually tracking billing, PCF, and event form records across separate files or paper-based workflows. It provides a centralized interface where users can encode records, review transaction details, generate reports, print documents, and export data for monitoring and documentation.
 
 ## Technologies Used
 
@@ -70,11 +68,13 @@ This system solves the problem of manually tracking billing, sales, PCF, and eve
 
 ## Usage
 
-After starting the system, log in using a valid user account. Once authenticated, users can access the billing page, create and manage bills, process PCF records, open event forms, and use the sales dashboard to encode sales data and review reports. Records can also be printed or exported depending on the available actions on each page.
+After starting the system, log in using a valid user account. Once authenticated, users can access the billing page, create and manage bills, process PCF records, and open event forms. Records can also be printed or exported depending on the available actions on each page.
 
 ## Screenshots
 
-Screenshots can be added here to show the login page, billing list, PCF module, event forms, and sales dashboard.
+<img width="1919" height="958" alt="image" src="https://github.com/user-attachments/assets/5d08890b-896a-4c79-b91b-aa58c60ab004" />
+<img width="1903" height="958" alt="image" src="https://github.com/user-attachments/assets/f74e8b66-08a4-4214-a599-84a06efe499d" />
+<img width="1899" height="956" alt="image" src="https://github.com/user-attachments/assets/50bfcf0f-a5ac-42c8-8021-6876a8c1df80" />
 
 ## Author
 

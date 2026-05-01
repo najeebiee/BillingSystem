@@ -4,6 +4,7 @@ import { Download, Printer, Save, Trash2 } from "lucide-react";
 import { EventRequestForm } from "./EventRequestForm";
 import { ProspectInvitationForm } from "./ProspectInvitationForm";
 import { SpecialCompanyEventsForm } from "./SpecialCompanyEventsForm";
+import "./EventFormsHome.css";
 
 type EventFormTab = "special" | "request" | "prospect";
 
@@ -75,33 +76,69 @@ export function EventFormsHome() {
   };
 
   return (
-    <div className="event-forms-page w-full bg-gray-50 pt-16">
-      <div className="w-full max-w-6xl mx-auto px-6 py-8">
-        <div>
-          <h1 className="text-3xl font-semibold">Event Forms</h1>
-          <p className="mt-2 text-gray-500">Choose a form to get started with your event requests.</p>
+    <div className="event-forms-page">
+      <div className="event-forms-container">
+        <div className="event-forms-header">
+          <div>
+            <h1>Event Forms</h1>
+            <p>Choose, complete, save, and print event request documents.</p>
+          </div>
+
+          <div className="event-forms-header-actions no-print">
+            <button
+              type="button"
+              onClick={() => runAction("save")}
+              aria-label="Save active form"
+              className="event-forms-action-button event-forms-action-button--primary"
+            >
+              <Save className="event-forms-action-icon" />
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => runAction("load")}
+              aria-label="Load active form"
+              className="event-forms-action-button"
+            >
+              <Download className="event-forms-action-icon" />
+              Load
+            </button>
+            <button
+              type="button"
+              onClick={() => runAction("clear")}
+              aria-label="Clear active form"
+              className="event-forms-action-button"
+            >
+              <Trash2 className="event-forms-action-icon" />
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => runAction("print")}
+              aria-label="Print active form"
+              className="event-forms-action-button"
+            >
+              <Printer className="event-forms-action-icon" />
+              Print
+            </button>
+          </div>
         </div>
 
-        <div className="mt-6 border-b">
-          <div className="flex flex-wrap gap-6">
+        <div className="event-forms-tabs">
+          <div className="event-forms-tab-list">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setTab(tab.key)}
-                className={`relative pb-3 text-sm font-medium transition-colors ${
-                  activeTab === tab.key ? "text-blue-600 font-semibold" : "text-gray-600 hover:text-gray-900"
-                }`}
+                className={`event-forms-tab ${activeTab === tab.key ? "event-forms-tab--active" : ""}`}
               >
                 {tab.label}
-                {activeTab === tab.key ? (
-                  <span className="absolute left-0 right-0 -bottom-[1px] h-0.5 bg-blue-600" />
-                ) : null}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="mt-8">
+        <div className="event-forms-content">
           {activeTab === "special" ? (
             <SpecialCompanyEventsForm
               embedded
@@ -134,46 +171,46 @@ export function EventFormsHome() {
           ) : null}
         </div>
 
-        <div className="mt-8 border-t bg-white pt-4 no-print">
-          <div className="flex flex-wrap gap-2 justify-end">
+        <div className="event-forms-footer-actions no-print">
+          <div className="event-forms-footer-buttons">
             <button
               type="button"
               onClick={() => runAction("save")}
               aria-label="Save active form"
-              className="bg-black text-white border border-black hover:bg-gray-900 active:bg-black px-4 py-2 rounded-md inline-flex items-center gap-2"
+              className="event-forms-action-button event-forms-action-button--primary"
             >
-              <Save className="h-4 w-4 text-white" />
+              <Save className="event-forms-action-icon" />
               Save
             </button>
             <button
               type="button"
               onClick={() => runAction("load")}
               aria-label="Load active form"
-              className="bg-black text-white border border-black hover:bg-gray-900 active:bg-black px-4 py-2 rounded-md inline-flex items-center gap-2"
+              className="event-forms-action-button"
             >
-              <Download className="h-4 w-4 text-white" />
+              <Download className="event-forms-action-icon" />
               Load
             </button>
             <button
               type="button"
               onClick={() => runAction("clear")}
               aria-label="Clear active form"
-              className="bg-black text-white border border-black hover:bg-gray-900 active:bg-black px-4 py-2 rounded-md inline-flex items-center gap-2"
+              className="event-forms-action-button"
             >
-              <Trash2 className="h-4 w-4 text-white" />
+              <Trash2 className="event-forms-action-icon" />
               Clear
             </button>
             <button
               type="button"
               onClick={() => runAction("print")}
               aria-label="Print active form"
-              className="bg-black text-white border border-black hover:bg-gray-900 active:bg-black px-4 py-2 rounded-md inline-flex items-center gap-2"
+              className="event-forms-action-button"
             >
-              <Printer className="h-4 w-4 text-white" />
+              <Printer className="event-forms-action-icon" />
               Print
             </button>
           </div>
-          <p className="mt-2 text-xs text-gray-500 text-center">
+          <p>
             Disable Headers and Footers in the print dialog for best results.
           </p>
         </div>

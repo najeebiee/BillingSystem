@@ -10,7 +10,6 @@
       alias: {
         'vaul@1.1.2': 'vaul',
         'sonner@2.0.3': 'sonner',
-        'recharts@2.15.2': 'recharts',
         'react-resizable-panels@2.1.7': 'react-resizable-panels',
         'react-hook-form@7.55.0': 'react-hook-form',
         'react-day-picker@8.10.1': 'react-day-picker',
@@ -76,10 +75,6 @@
 
           if (id.includes('xlsx') || id.includes('file-saver') || id.includes('papaparse')) {
             return 'excel';
-          }
-
-          if (id.includes('recharts')) {
-            return 'charts';
           }
         }
       }
