@@ -72,9 +72,18 @@ After starting the system, log in using a valid user account. Once authenticated
 
 ## Screenshots
 
+### Login Page
 <img width="1919" height="958" alt="image" src="https://github.com/user-attachments/assets/5d08890b-896a-4c79-b91b-aa58c60ab004" />
+
+### Bills Page
 <img width="1903" height="958" alt="image" src="https://github.com/user-attachments/assets/f74e8b66-08a4-4214-a599-84a06efe499d" />
+
+### Petty Cash Page
 <img width="1899" height="956" alt="image" src="https://github.com/user-attachments/assets/50bfcf0f-a5ac-42c8-8021-6876a8c1df80" />
+
+### Event Forms Page
+<img width="1904" height="1079" alt="image" src="https://github.com/user-attachments/assets/36dadbc7-2f4c-4efd-9396-aa330280ed3f" />
+
 
 ## Author
 
